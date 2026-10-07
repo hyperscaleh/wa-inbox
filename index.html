@@ -153,11 +153,32 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
 @keyframes hop { 0%, 60%, 100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-4px); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .typing .dots i, .live-pill i, .row.flash { animation: none; } }
 
-.foot-bar { padding: 14px 22px 18px; }
-.foot-bar .inner { display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 16px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); box-shadow: 0 10px 30px -20px rgba(40, 30, 90, 0.4); color: var(--muted); font-size: 13px; }
-.foot-bar .inner span { flex: 1; min-width: 0; }
-.foot-bar .send { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--grad); display: grid; place-items: center; color: #fff; box-shadow: 0 8px 20px -8px rgba(242, 85, 140, 0.8); }
-.foot-bar .send svg { width: 17px; height: 17px; }
+.foot-bar { padding: 12px 22px 18px; display: grid; gap: 8px; }
+.composer { display: flex; align-items: flex-end; gap: 10px; padding: 8px 8px 8px 18px; border-radius: 26px; background: var(--card); border: 1px solid var(--line); box-shadow: 0 10px 30px -20px rgba(40, 30, 90, 0.4); }
+.composer:focus-within { border-color: color-mix(in srgb, var(--violet) 45%, var(--line)); }
+.composer textarea { flex: 1; min-width: 0; border: 0; outline: none; resize: none; background: transparent; color: var(--ink); font: 500 14px/1.45 var(--f-ui); padding: 9px 0; max-height: 140px; }
+.composer textarea::placeholder { color: var(--muted); }
+.composer.closed { background: var(--soft); }
+.send { flex: none; width: 42px; height: 42px; border: 0; border-radius: 50%; background: var(--grad); display: grid; place-items: center; color: #fff; cursor: pointer; box-shadow: 0 8px 20px -8px rgba(242, 85, 140, 0.8); }
+.send:disabled { background: var(--line); box-shadow: none; cursor: not-allowed; color: var(--muted); }
+.send svg { width: 17px; height: 17px; }
+.hint { display: flex; flex-wrap: wrap; gap: 4px 14px; justify-content: space-between; font-size: 12px; color: var(--muted); padding: 0 10px; }
+.hint .open { color: var(--good); font-weight: 700; }
+.hint .shut { color: var(--bad); font-weight: 700; }
+.hint .err { min-height: 0; }
+
+.mode { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: color-mix(in srgb, var(--good) 12%, transparent); color: var(--good); }
+.mode.human { background: #FFF3E0; color: #B26200; }
+.mode.ask { background: #FFE8F1; color: #C2316B; }
+.take { border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px; padding: 8px 14px; font-weight: 700; font-size: 12.5px; cursor: pointer; white-space: nowrap; }
+.take:hover { border-color: var(--violet); color: var(--violet); }
+.take.back-to-ai { background: var(--grad); color: #fff; border-color: transparent; }
+
+.tag.stage-meet { background: #E6F6EF; color: #17805A; }
+.tag.stage-int { background: #FFF3E0; color: #B26200; }
+.tag.stage-cont { background: var(--soft); color: var(--muted); }
+.tag.human { background: #FFF3E0; color: #B26200; }
+.line.out.human .bubble { background: var(--violet-soft); border-color: color-mix(in srgb, var(--violet) 25%, transparent); }
 
 .welcome { margin: auto; text-align: center; max-width: 380px; display: grid; gap: 10px; justify-items: center; padding: 30px 10px; }
 .welcome h3 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
@@ -201,7 +222,7 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
     <aside class="side">
       <div class="me">
         <div class="av brand">IS<i class="dot" id="meDot"></i></div>
-        <div class="who"><b>IndicoStay</b><span class="mono">+258 86 517 8862</span></div>
+        <div class="who"><b>IndicoStay</b><span><span class="mono">+258 86 517 8862</span> · <span id="agentName">…</span></span></div>
         <button class="icon-btn" id="notifyBtn" type="button" title="Ativar alertas de som e popup" aria-label="Ativar alertas">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
         </button>
@@ -220,8 +241,11 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
       <div class="tabs" id="tabs" role="toolbar" aria-label="Filtros">
         <button class="tab" data-f="all" aria-pressed="true">Todas<span class="n" data-n="all"></span></button>
         <button class="tab" data-f="unread" aria-pressed="false">Por ler<span class="n" data-n="unread"></span></button>
-        <button class="tab" data-f="replied" aria-pressed="false">Responderam<span class="n" data-n="replied"></span></button>
+        <button class="tab" data-f="hotel" aria-pressed="false">Hotéis interessados<span class="n" data-n="hotel"></span></button>
         <button class="tab" data-f="influencer" aria-pressed="false">Influencers<span class="n" data-n="influencer"></span></button>
+        <button class="tab" data-f="guest" aria-pressed="false">Hóspedes<span class="n" data-n="guest"></span></button>
+        <button class="tab" data-f="human" aria-pressed="false">Com humano<span class="n" data-n="human"></span></button>
+        <button class="tab" data-f="hotelall" aria-pressed="false">Todos os hotéis<span class="n" data-n="hotelall"></span></button>
         <button class="tab" data-f="failed" aria-pressed="false">Falhadas<span class="n" data-n="failed"></span></button>
         <button class="tab" data-f="noreply" aria-pressed="false">Sem resposta<span class="n" data-n="noreply"></span></button>
       </div>
@@ -236,6 +260,7 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
         <div class="av lg" id="tAv"></div>
         <div class="who"><h2 id="tName"></h2><div class="sub" id="tSub"></div></div>
         <div class="tools">
+          <button class="take" id="takeBtn" type="button">Assumir conversa</button>
           <button class="icon-btn" id="copyBtn" type="button" title="Copiar número" aria-label="Copiar número">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>
           </button>
@@ -258,9 +283,13 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
           </div>
         </div>
       </div>
-      <div class="foot-bar" id="footBar" hidden>
-        <div class="inner"><span>A Sara (IA) responde automaticamente a esta conversa.</span><span class="send" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12 2-12 2z"/></svg></span></div>
-      </div>
+      <form class="foot-bar" id="footBar" hidden>
+        <div class="composer" id="composer">
+          <textarea id="msgInput" rows="1" placeholder="Escreva uma mensagem…" aria-label="Mensagem"></textarea>
+          <button class="send" id="sendBtn" type="submit" aria-label="Enviar"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12 2-12 2z"/></svg></button>
+        </div>
+        <div class="hint"><span id="windowTxt"></span><span class="err" id="sendErr"></span><span id="pauseTxt">Ao enviar, a Sara fica em pausa nesta conversa.</span></div>
+      </form>
     </section>
   </div>
 </div>
@@ -284,6 +313,17 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
   let filter = 'all';
   let lastMsgSig = '';
   let audioCtx = null;
+  let agent = '';
+  let sending = false;
+
+  async function post(body) {
+    const r = await fetch(API, { method: 'POST', headers: { 'content-type': 'application/json', 'x-inbox-token': token }, body: JSON.stringify(body) });
+    let data = {};
+    try { data = await r.json(); } catch (e) {}
+    if (r.status === 401) { const e = new Error('unauthorized'); e.code = 401; throw e; }
+    if (!r.ok || data.ok === false) throw new Error(data.error || ('HTTP ' + r.status));
+    return data;
+  }
 
   async function api(action, params = {}) {
     const u = new URL(API);
@@ -341,11 +381,28 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
   }
 
   // ---------- roster ----------
+  // Segmentos: quem e cada contacto, e em que fase esta um hotel.
+  function segment(c) {
+    if (c.role === 'influencer') return 'influencer';
+    if (c.role === 'guest') return 'guest';
+    if (c.role === 'prospect' || c.role === 'host' || c.hotel || c.lead_tipo) return 'hotel';
+    return 'other';
+  }
+  function hotelStage(c) {
+    if (c.meeting_booked) return { key: 'meet', label: 'reunião marcada' };
+    if (c.lead_estado === 'teste') return { key: 'cont', label: 'teste' };
+    if (c.has_inbound) return { key: 'int', label: 'interessado' };
+    return { key: 'cont', label: 'contactado' };
+  }
+  const windowOpen = c => c.last_in_at && Date.now() - Date.parse(c.last_in_at) < 24 * 3600e3;
   const FILTERS = {
     all: () => true,
     unread: c => c.unread > 0,
-    replied: c => c.has_inbound,
-    influencer: c => c.role === 'influencer',
+    hotel: c => segment(c) === 'hotel' && c.has_inbound && c.lead_estado !== 'teste',
+    influencer: c => segment(c) === 'influencer',
+    guest: c => segment(c) === 'guest',
+    human: c => c.human_mode,
+    hotelall: c => segment(c) === 'hotel',
     failed: c => c.last_out_status === 'failed',
     noreply: c => !c.has_inbound
   };
@@ -372,7 +429,9 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
     $('#rows').innerHTML = list.map(c => {
       const tags = [];
       if (c.is_new && c.has_inbound) tags.push('<span class="tag novo">novo</span>');
-      else if (c.role && roleName[c.role]) tags.push(`<span class="tag ${esc(c.role)}">${esc(roleName[c.role])}</span>`);
+      if (c.human_mode) tags.push(`<span class="tag human">${c.human_by ? esc(c.human_by) : 'quer pessoa'}</span>`);
+      else if (segment(c) === 'hotel') { const s = hotelStage(c); tags.push(`<span class="tag stage-${s.key}">${esc(s.label)}</span>`); }
+      else if (c.role && roleName[c.role] && !(c.is_new && c.has_inbound)) tags.push(`<span class="tag ${esc(c.role)}">${esc(roleName[c.role])}</span>`);
       if (c.last_out_status === 'failed') tags.push('<span class="tag failed">falhou</span>');
       const prefix = c.last_dir === 'out' ? 'Nós: ' : '';
       const last = c.last_text || (c.last_out_status ? 'Mensagem enviada' : '');
@@ -390,10 +449,11 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
     const k = (label, val, cls = '') => `<div class="kpi ${cls}"><b>${val ?? 0}</b><span>${label}</span></div>`;
     $('#kpis').innerHTML = [
       k('Por ler', s.unread, s.unread > 0 ? 'hot' : ''),
-      k('Recebidas 24h', s.in_24h),
-      k('Lidas 24h', by.read || 0),
+      k('Hotéis interessados', contacts.filter(FILTERS.hotel).length),
+      k('Influencers', contacts.filter(FILTERS.influencer).length),
       k('Falhadas 24h', by.failed || 0, by.failed > 0 ? 'bad' : '')
     ].join('');
+    if (s.agent) { agent = s.agent; $('#agentName').textContent = 'ligado como ' + s.agent; }
     const unread = Number(s.unread) || 0;
     document.title = (unread ? `(${unread}) ` : '') + 'IndicoStay WhatsApp Inbox';
   }
@@ -408,13 +468,9 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
     $('#footBar').hidden = false;
     $('#tAv').outerHTML = avatar(c, 'lg').replace('class="av lg"', 'class="av lg" id="tAv"');
     $('#tName').textContent = displayName(c);
-    const recent = c.last_dir === 'in' && Date.now() - Date.parse(c.last_at) < 15 * 60e3;
-    $('#tSub').innerHTML = [
-      recent ? '<span style="color:var(--good);font-weight:700">● ativo agora</span>' : '',
-      `<span class="mono">${esc(phone(id))}</span>`,
-      c.name && c.name !== displayName(c) ? 'perfil: ' + esc(c.name) : '',
-      c.role && roleName[c.role] ? `<span class="tag ${esc(c.role)}">${esc(roleName[c.role])}</span>` : ''
-    ].filter(Boolean).join(' · ');
+    $('#msgInput').value = '';
+    $('#sendErr').textContent = '';
+    threadChrome(c);
     document.querySelectorAll('.row').forEach(r => r.setAttribute('aria-current', String(r.dataset.id === id)));
     lastMsgSig = '';
     await loadThread(true);
@@ -422,6 +478,36 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
       try { await api('read', { wa_id: id }); c.unread = 0; renderRows(); } catch (e) {}
     }
   }
+  // Cabecalho (quem responde) e caixa de mensagem (janela de 24h) da conversa aberta.
+  function threadChrome(c) {
+    const seg = segment(c);
+    const segTag = seg === 'hotel' ? (() => { const s = hotelStage(c); return `<span class="tag stage-${s.key}">hotel · ${esc(s.label)}${c.meeting_when ? ' · ' + esc(c.meeting_when) : ''}</span>`; })()
+      : c.role && roleName[c.role] ? `<span class="tag ${esc(c.role)}">${esc(roleName[c.role])}</span>` : '';
+    const mode = c.human_mode
+      ? (c.human_by ? `<span class="mode human">● ${esc(c.human_by)} a responder · Sara em pausa</span>` : '<span class="mode ask">● Pediu uma pessoa · Sara em pausa</span>')
+      : '<span class="mode">● Sara (IA) a responder</span>';
+    $('#tSub').innerHTML = [mode, `<span class="mono">${esc(phone(c.wa_id))}</span>`, c.name && c.name !== displayName(c) ? 'perfil: ' + esc(c.name) : '', segTag].filter(Boolean).join(' ');
+    const tb = $('#takeBtn');
+    tb.textContent = c.human_mode ? 'Devolver à Sara' : 'Assumir conversa';
+    tb.classList.toggle('back-to-ai', !!c.human_mode);
+    const open = windowOpen(c);
+    $('#composer').classList.toggle('closed', !open);
+    $('#msgInput').disabled = !open || sending;
+    $('#sendBtn').disabled = !open || sending;
+    $('#msgInput').placeholder = open ? 'Escreva uma mensagem…' : 'Janela de 24 horas fechada';
+    if (open) {
+      const closes = Date.parse(c.last_in_at) + 24 * 3600e3;
+      const left = closes - Date.now();
+      const h = Math.floor(left / 3600e3), m = Math.floor((left % 3600e3) / 60e3);
+      $('#windowTxt').innerHTML = `<span class="open">Janela aberta</span> até ${esc(hm(closes))} · faltam ${h}h${String(m).padStart(2, '0')}`;
+    } else {
+      $('#windowTxt').innerHTML = c.has_inbound
+        ? '<span class="shut">Janela fechada</span> · o cliente não escreve há mais de 24h, só um template aprovado'
+        : '<span class="shut">Sem janela</span> · esta pessoa ainda não escreveu para o número';
+    }
+    $('#pauseTxt').textContent = c.human_mode ? 'A Sara não responde enquanto a conversa estiver consigo.' : 'Ao enviar, a Sara fica em pausa nesta conversa.';
+  }
+
   async function loadThread(scroll) {
     if (!current) return;
     const id = current;
@@ -446,10 +532,11 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
       const out = m.direction === 'out';
       const ghost = !m.body;
       const body = m.body || (out ? 'Mensagem enviada antes de o dashboard existir. O WhatsApp só devolveu o estado de entrega.' : '[sem texto]');
-      const who = out ? (m.source === 'campanha' ? 'Campanha' : /Sara/.test(m.source || '') ? 'Sara · IA' : 'IndicoStay') : them;
+      const human = out && !!m.sent_by;
+      const who = out ? (human ? m.sent_by + ' · equipa' : m.source === 'campanha' ? 'Campanha' : /Sara/.test(m.source || '') ? 'Sara · IA' : 'IndicoStay') : them;
       const t = isHist(m.created_at) ? '' : hm(m.created_at);
-      return dayHtml + `<div class="line ${out ? 'out' : 'in'}${m.status === 'failed' ? ' failed' : ''}">
-        ${out ? usAv : themAv}
+      return dayHtml + `<div class="line ${out ? 'out' : 'in'}${human ? ' human' : ''}${m.status === 'failed' ? ' failed' : ''}">
+        ${out ? (human ? `<div class="av sm" style="background:linear-gradient(135deg,#F08A24,#F2558C)">${esc(String(m.sent_by).slice(0, 2).toUpperCase())}</div>` : usAv) : themAv}
         <div class="bubble">
           <div class="hd"><span>${esc(who)}</span><span>${esc(t)}</span></div>
           <div class="body${ghost ? ' ghost' : ''}">${esc(body)}</div>
@@ -458,7 +545,7 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
         </div>
       </div>`;
     }).join('');
-    if (lastIn) html += `<div class="typing"><div class="av sm brand">IS</div><span class="dots"><i></i><i></i><i></i></span>Sara está a responder…</div>`;
+    if (lastIn && !c.human_mode) html +=`<div class="typing"><div class="av sm brand">IS</div><span class="dots"><i></i><i></i><i></i></span>Sara está a responder…</div>`;
     box.innerHTML = html;
     if (scroll || nearBottom) box.scrollTop = box.scrollHeight;
   }
@@ -507,6 +594,8 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
       renderRows(flash);
       setLive(true);
       if (current) {
+        const cc = contacts.find(x => x.wa_id === current);
+        if (cc) threadChrome(cc);
         await loadThread(false);
         const c = contacts.find(x => x.wa_id === current);
         if (c && c.unread > 0 && document.visibilityState === 'visible' && document.body.classList.contains('chat-open')) api('read', { wa_id: current }).catch(() => {});
@@ -556,6 +645,46 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
   });
   $('#q').addEventListener('input', () => renderRows());
   $('#backBtn').addEventListener('click', () => { document.body.classList.remove('chat-open'); current = null; history.replaceState(null, '', location.pathname); renderRows(); });
+  // Enviar mensagem (so dentro da janela de 24h; o servidor confirma outra vez).
+  async function sendMessage() {
+    const text = $('#msgInput').value.trim();
+    if (!text || !current || sending) return;
+    sending = true;
+    $('#sendBtn').disabled = true;
+    $('#sendErr').textContent = 'A enviar…';
+    try {
+      await post({ action: 'send', wa_id: current, text });
+      $('#msgInput').value = '';
+      autosize();
+      $('#sendErr').textContent = '';
+      const c = contacts.find(x => x.wa_id === current);
+      if (c && !c.human_mode) { c.human_mode = true; c.human_by = agent; }
+    } catch (e) {
+      if (e.code === 401) return logout('O código deixou de ser válido. Entre outra vez.');
+      $('#sendErr').textContent = e.message;
+    } finally {
+      sending = false;
+      const c = contacts.find(x => x.wa_id === current);
+      if (c) threadChrome(c);
+      lastMsgSig = '';
+      refresh();
+    }
+  }
+  function autosize() { const t = $('#msgInput'); t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight, 140) + 'px'; }
+  $('#footBar').addEventListener('submit', e => { e.preventDefault(); sendMessage(); });
+  $('#msgInput').addEventListener('input', autosize);
+  $('#msgInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendMessage(); } });
+  $('#takeBtn').addEventListener('click', async () => {
+    const c = contacts.find(x => x.wa_id === current); if (!c) return;
+    const on = !c.human_mode;
+    $('#takeBtn').disabled = true;
+    try {
+      const r = await post({ action: 'takeover', wa_id: current, on });
+      c.human_mode = r.human_mode; c.human_by = r.human_by;
+      threadChrome(c); renderRows();
+    } catch (e) { $('#sendErr').textContent = e.message; }
+    finally { $('#takeBtn').disabled = false; }
+  });
   $('#reloadBtn').addEventListener('click', () => { lastMsgSig = ''; refresh(); });
   $('#copyBtn').addEventListener('click', async () => {
     const t = current ? phone(current) : '';
