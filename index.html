@@ -315,6 +315,7 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
   let audioCtx = null;
   let agent = '';
   let sending = false;
+  let pending = []; // mensagens enviadas que o servidor ainda nao confirmou
 
   async function post(body) {
     const r = await fetch(API, { method: 'POST', headers: { 'content-type': 'application/json', 'x-inbox-token': token }, body: JSON.stringify(body) });
@@ -513,6 +514,10 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
     const id = current;
     const msgs = await api('messages', { wa_id: id });
     if (id !== current) return;
+    renderThread(id, msgs, scroll);
+  }
+  function renderThread(id, msgs, scroll) {
+    if (id !== current) return;
     const lastIn = msgs.length && msgs[msgs.length - 1].direction === 'in' && Date.now() - Date.parse(msgs[msgs.length - 1].created_at) < 90e3;
     const sig = msgs.map(m => m.id + (m.status || '') + (m.body || '').length).join('|') + (lastIn ? 't' : '');
     if (sig === lastMsgSig) return;
@@ -577,9 +582,16 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
   }
 
   // ---------- polling ----------
+  // Um so pedido por ciclo: lista, totais e a conversa aberta.
+  let inFlight = false;
   async function refresh() {
+    if (inFlight) return;
+    inFlight = true;
+    const id = current;
     try {
-      const [cs, st] = await Promise.all([api('contacts'), api('stats')]);
+      const d = await api('sync', id ? { wa_id: id } : {});
+      const cs = d.contacts || [];
+      const st = { ...(d.stats || {}), agent: d.agent };
       const flash = new Set();
       if (seen) {
         for (const c of cs) {
@@ -593,17 +605,17 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
       renderStats(st);
       renderRows(flash);
       setLive(true);
-      if (current) {
+      if (id && id === current) {
         const cc = contacts.find(x => x.wa_id === current);
         if (cc) threadChrome(cc);
-        await loadThread(false);
-        const c = contacts.find(x => x.wa_id === current);
-        if (c && c.unread > 0 && document.visibilityState === 'visible' && document.body.classList.contains('chat-open')) api('read', { wa_id: current }).catch(() => {});
+        if (!pending.length) renderThread(id, d.messages || [], false);
+        if (cc && cc.unread > 0 && document.visibilityState === 'visible' && document.body.classList.contains('chat-open')) api('read', { wa_id: current }).catch(() => {});
       }
     } catch (e) {
-      if (e.code === 401) return logout('O código deixou de ser válido. Entre outra vez.');
+      if (e.code === 401) { inFlight = false; return logout('O código deixou de ser válido. Entre outra vez.'); }
       setLive(false);
     }
+    inFlight = false;
   }
   function setLive(ok) {
     $('#live').classList.toggle('off', !ok);
@@ -611,13 +623,24 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
     $('#liveTxt').textContent = ok ? 'ao vivo' : 'sem ligação';
     $('#live').title = ok ? 'Atualizado às ' + new Intl.DateTimeFormat('pt-PT', { timeZone: TZ, hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date()) : 'A tentar ligar de novo';
   }
+  // Ciclo rapido com o separador visivel (1s entre pedidos), lento em segundo plano.
   let timer = null;
-  function startPolling() { clearInterval(timer); refresh(); timer = setInterval(refresh, 4000); }
+  let running = false;
+  async function loop() {
+    if (!running) return;
+    await refresh();
+    if (!running) return;
+    clearTimeout(timer);
+    timer = setTimeout(loop, document.visibilityState === 'visible' ? 1000 : 6000);
+  }
+  function startPolling() { running = true; clearTimeout(timer); loop(); }
+  function stopPolling() { running = false; clearTimeout(timer); }
+  document.addEventListener('visibilitychange', () => { if (running && document.visibilityState === 'visible') { clearTimeout(timer); loop(); } });
 
   // ---------- auth ----------
   function showApp() { $('#login').hidden = true; $('#app').hidden = false; updateNotifyBtn(); startPolling(); if (current) openThread(current, { markRead: false }); }
   function logout(msg) {
-    clearInterval(timer); token = ''; store.del('wa_inbox_token'); seen = null;
+    stopPolling(); token = ''; store.del('wa_inbox_token'); seen = null;
     $('#app').hidden = true; $('#login').hidden = false; $('#loginErr').textContent = msg || '';
   }
   $('#loginForm').addEventListener('submit', async e => {
@@ -651,18 +674,35 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
     if (!text || !current || sending) return;
     sending = true;
     $('#sendBtn').disabled = true;
-    $('#sendErr').textContent = 'A enviar…';
+    $('#sendErr').textContent = '';
+    $('#msgInput').value = '';
+    autosize();
+    // Mostra a mensagem logo, antes da confirmacao do servidor.
+    const box = $('#msgs');
+    const el = document.createElement('div');
+    el.className = 'line out human';
+    el.innerHTML = `<div class="av sm" style="background:linear-gradient(135deg,#F08A24,#F2558C)">${esc((agent || 'EU').slice(0, 2).toUpperCase())}</div>
+      <div class="bubble"><div class="hd"><span>${esc(agent || 'Eu')} · equipa</span><span>${esc(hm(Date.now()))}</span></div>
+      <div class="body">${esc(text)}</div><div class="ft"><span class="st">◷ a enviar</span></div></div>`;
+    box.querySelector('.typing')?.remove();
+    box.appendChild(el);
+    box.scrollTop = box.scrollHeight;
+    pending.push(el);
     try {
       await post({ action: 'send', wa_id: current, text });
-      $('#msgInput').value = '';
-      autosize();
-      $('#sendErr').textContent = '';
+      el.querySelector('.ft').innerHTML = statusMark('accepted');
       const c = contacts.find(x => x.wa_id === current);
       if (c && !c.human_mode) { c.human_mode = true; c.human_by = agent; }
     } catch (e) {
-      if (e.code === 401) return logout('O código deixou de ser válido. Entre outra vez.');
+      if (e.code === 401) { pending = []; sending = false; return logout('O código deixou de ser válido. Entre outra vez.'); }
+      el.classList.add('failed');
+      el.querySelector('.ft').innerHTML = `<span class="st failed">⚠ não enviada</span>`;
       $('#sendErr').textContent = e.message;
+      $('#msgInput').value = text;
+      autosize();
+      await new Promise(r => setTimeout(r, 4000));
     } finally {
+      pending = pending.filter(x => x !== el);
       sending = false;
       const c = contacts.find(x => x.wa_id === current);
       if (c) threadChrome(c);
