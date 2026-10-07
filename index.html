@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>IndicoStay WhatsApp Inbox</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: two-pane ops console. Left = live roster of conversations with delivery state, right = the thread. Stacks to one pane on phones. */
+:root {
+  --ground: #EEF2F1;
+  --panel: #FFFFFF;
+  --ink: #12201D;
+  --muted: #5C6E6A;
+  --line: #D6DFDC;
+  --accent: #0C6A80;        /* Indian Ocean blue */
+  --accent-soft: #DCEEF2;
+  --sand: #F3E7CF;          /* outbound bubble */
+  --sand-ink: #4A3B1E;
+  --in-bubble: #FFFFFF;
+  --good: #1E7F52;
+  --warn: #A86A00;
+  --bad: #B3261E;
+  --bad-soft: #FBE4E2;
+  --new: #C2410C;
+  --f-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0D1514; --panel: #141F1D; --ink: #E4ECEA; --muted: #8FA29E; --line: #24332F;
+    --accent: #5BC0D6; --accent-soft: #15333A; --sand: #3A2F1C; --sand-ink: #F1E2C2; --in-bubble: #1B2826;
+    --good: #4CC38A; --warn: #E3A73A; --bad: #F2867D; --bad-soft: #3A1C1A; --new: #FB923C;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #0D1514; --panel: #141F1D; --ink: #E4ECEA; --muted: #8FA29E; --line: #24332F;
+  --accent: #5BC0D6; --accent-soft: #15333A; --sand: #3A2F1C; --sand-ink: #F1E2C2; --in-bubble: #1B2826;
+  --good: #4CC38A; --warn: #E3A73A; --bad: #F2867D; --bad-soft: #3A1C1A; --new: #FB923C;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--ground); color: var(--ink); font: 14px/1.45 var(--f-body); }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- login ---------- */
+#login { min-height: 100%; display: grid; place-items: center; padding: 24px 16px; }
+.login-card { width: 100%; max-width: 380px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 28px 24px; display: grid; gap: 14px; }
+.login-card h1 { font: 700 26px/1.1 var(--f-display); margin: 0; text-wrap: balance; }
+.login-card p { margin: 0; color: var(--muted); }
+.login-card input { width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); font: 14px var(--f-mono); }
+.btn { border: 0; border-radius: 8px; padding: 10px 14px; background: var(--accent); color: var(--panel); font-weight: 600; cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); font-weight: 500; padding: 6px 10px; }
+.err { color: var(--bad); font-size: 13px; min-height: 18px; }
+
+/* ---------- app shell ---------- */
+#app { height: 100%; display: grid; grid-template-rows: auto 1fr; }
+header.top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; padding: 12px 16px; background: var(--panel); border-bottom: 1px solid var(--line); }
+.brand { display: flex; align-items: baseline; gap: 10px; margin-right: auto; }
+.brand b { font: 700 19px/1 var(--f-display); letter-spacing: -0.01em; }
+.brand span { font: 12px var(--f-mono); color: var(--muted); }
+.live { display: inline-flex; align-items: center; gap: 6px; font: 500 12px var(--f-mono); color: var(--muted); }
+.live i { width: 8px; height: 8px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 0 var(--good); animation: pulse 2s infinite; }
+.live.off i { background: var(--bad); animation: none; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--good) 60%, transparent); } 70% { box-shadow: 0 0 0 7px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { .live i { animation: none; } }
+
+.stats { display: flex; flex-wrap: wrap; gap: 6px; }
+.stat { display: flex; align-items: baseline; gap: 6px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; color: var(--muted); }
+.stat b { font: 600 14px var(--f-mono); color: var(--ink); font-variant-numeric: tabular-nums; }
+.stat.bad b { color: var(--bad); }
+.stat.hot b { color: var(--new); }
+
+main.panes { min-height: 0; display: grid; grid-template-columns: minmax(300px, 380px) 1fr; }
+aside.list { min-height: 0; display: grid; grid-template-rows: auto auto 1fr; background: var(--panel); border-right: 1px solid var(--line); }
+.search { padding: 12px 12px 8px; }
+.search input { width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); }
+.chips { display: flex; gap: 6px; padding: 0 12px 10px; overflow-x: auto; }
+.chip { flex: none; border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 4px 10px; font-size: 12px; cursor: pointer; color: var(--muted); }
+.chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--ink); font-weight: 600; }
+.rows { overflow-y: auto; border-top: 1px solid var(--line); }
+.row { width: 100%; display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; text-align: left; padding: 11px 14px; border: 0; border-bottom: 1px solid var(--line); background: transparent; cursor: pointer; position: relative; }
+.row:hover { background: var(--ground); }
+.row[aria-current="true"] { background: var(--accent-soft); }
+.row.flash { animation: flash 2.4s ease-out; }
+@keyframes flash { from { background: color-mix(in srgb, var(--new) 22%, transparent); } }
+.row .who { min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; }
+.row .when { font: 12px var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.row .last { min-width: 0; grid-column: 1; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
+.row .meta { grid-column: 2; display: flex; gap: 6px; align-items: center; justify-content: flex-end; }
+.row .num { grid-column: 1 / -1; font: 11.5px var(--f-mono); color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; }
+.badge { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--new); color: var(--panel); font: 600 11.5px/20px var(--f-mono); text-align: center; }
+.tag { font: 500 10.5px var(--f-mono); letter-spacing: 0.04em; text-transform: uppercase; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line); color: var(--muted); }
+.tag.influencer { border-color: var(--new); color: var(--new); }
+.tag.prospect, .tag.host { border-color: var(--accent); color: var(--accent); }
+.tag.novo { background: var(--new); border-color: var(--new); color: var(--panel); }
+.tag.failed { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.empty { padding: 28px 18px; color: var(--muted); text-align: center; }
+
+/* ---------- thread ---------- */
+section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr; }
+.thead { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.thead .back { display: none; }
+.thead h2 { margin: 0; font: 700 18px/1.2 var(--f-display); }
+.thead .sub { font: 12px var(--f-mono); color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; }
+.thead .tools { margin-left: auto; display: flex; gap: 8px; }
+.msgs { overflow-y: auto; padding: 18px 16px 28px; display: flex; flex-direction: column; gap: 8px; }
+.day { align-self: center; font: 500 11px var(--f-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 6px 0; }
+.msg { max-width: min(560px, 82%); padding: 8px 11px 6px; border-radius: 12px; display: grid; gap: 4px; }
+.msg.in { align-self: flex-start; background: var(--in-bubble); border: 1px solid var(--line); border-top-left-radius: 4px; }
+.msg.out { align-self: flex-end; background: var(--sand); color: var(--sand-ink); border-top-right-radius: 4px; }
+.msg.out.failed { background: var(--bad-soft); color: var(--ink); outline: 1px solid var(--bad); }
+.msg .body { white-space: pre-wrap; overflow-wrap: anywhere; }
+.msg .body.ghost { font-style: italic; opacity: 0.75; }
+.msg .foot { display: flex; gap: 8px; justify-content: flex-end; align-items: center; font: 11px var(--f-mono); opacity: 0.8; }
+.msg .src { margin-right: auto; }
+.st { display: inline-flex; align-items: center; gap: 3px; }
+.st.read { color: var(--accent); opacity: 1; }
+.st.failed { color: var(--bad); }
+.msg .errtxt { font: 12px var(--f-mono); color: var(--bad); }
+.placeholder { display: grid; place-items: center; text-align: center; color: var(--muted); padding: 40px 20px; }
+.placeholder h3 { font: 700 22px var(--f-display); color: var(--ink); margin: 0 0 6px; }
+.legend { margin-top: 18px; display: grid; gap: 6px; font: 12px var(--f-mono); text-align: left; }
+
+/* ---------- phone ---------- */
+@media (max-width: 760px) {
+  main.panes { grid-template-columns: 1fr; }
+  aside.list { border-right: 0; }
+  body.chat-open aside.list { display: none; }
+  body:not(.chat-open) section.thread { display: none; }
+  .thead .back { display: inline-block; }
+  .stats { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<div id="login" hidden>
+  <form class="login-card" id="loginForm">
+    <h1>Inbox WhatsApp da IndicoStay</h1>
+    <p>Conversas do número oficial +258 86 517 8862, com o estado de entrega de cada mensagem, ao vivo.</p>
+    <label for="tokenInput" class="tag" style="justify-self:start">Código de acesso</label>
+    <input id="tokenInput" type="password" autocomplete="current-password" placeholder="Cole aqui o código" required>
+    <div class="err" id="loginErr"></div>
+    <button class="btn" type="submit">Entrar</button>
+  </form>
+</div>
+
+<div id="app" hidden>
+  <header class="top">
+    <div class="brand"><b>IndicoStay · WhatsApp</b><span>+258 86 517 8862</span></div>
+    <div class="stats" id="stats"></div>
+    <span class="live" id="live"><i></i><span id="liveTxt">ao vivo</span></span>
+    <button class="btn ghost" id="notifyBtn" type="button">Ativar alertas</button>
+    <button class="btn ghost" id="logoutBtn" type="button">Sair</button>
+  </header>
+  <main class="panes">
+    <aside class="list">
+      <div class="search"><input id="q" type="search" placeholder="Procurar nome, hotel ou número"></div>
+      <div class="chips" id="chips" role="toolbar" aria-label="Filtros">
+        <button class="chip" data-f="all" aria-pressed="true">Todas</button>
+        <button class="chip" data-f="unread" aria-pressed="false">Não lidas</button>
+        <button class="chip" data-f="replied" aria-pressed="false">Responderam</button>
+        <button class="chip" data-f="influencer" aria-pressed="false">Influencers</button>
+        <button class="chip" data-f="failed" aria-pressed="false">Falhadas</button>
+        <button class="chip" data-f="noreply" aria-pressed="false">Sem resposta</button>
+      </div>
+      <div class="rows" id="rows"><div class="empty">A carregar conversas…</div></div>
+    </aside>
+    <section class="thread" id="thread">
+      <div class="thead" id="thead" hidden>
+        <button class="btn ghost back" id="backBtn" type="button">← Voltar</button>
+        <div>
+          <h2 id="tName"></h2>
+          <div class="sub" id="tSub"></div>
+        </div>
+      </div>
+      <div class="msgs" id="msgs">
+        <div class="placeholder">
+          <div>
+            <h3>Escolha uma conversa</h3>
+            <p>Cada mensagem enviada mostra o estado que o WhatsApp devolve.</p>
+            <div class="legend">
+              <span><span class="st">◷</span> aceite pelo WhatsApp</span>
+              <span><span class="st">✓</span> enviada</span>
+              <span><span class="st">✓✓</span> entregue no telemóvel</span>
+              <span><span class="st read">✓✓</span> lida</span>
+              <span><span class="st failed">⚠</span> falhou (com o motivo)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+(() => {
+  const API = 'https://backend.automationbig8agency.com/webhook/wa-inbox-api';
+  const TZ = 'Africa/Maputo';
+  const HIST_BEFORE = Date.parse('2026-10-01T12:00:00Z'); // linhas importadas do historico tem hora aproximada
+  const $ = s => document.querySelector(s);
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+    del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  };
+
+  let token = store.get('wa_inbox_token') || '';
+  let contacts = [];
+  let seen = null;           // wa_id -> last_at das mensagens recebidas, para detetar novas
+  let current = location.hash.replace('#', '').replace(/\D/g, '') || null;
+  let filter = 'all';
+  let lastMsgSig = '';
+  let unreadTotal = 0;
+  let audioCtx = null;
+
+  async function api(action, params = {}) {
+    const u = new URL(API);
+    u.searchParams.set('action', action);
+    for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
+    const r = await fetch(u, { headers: { 'x-inbox-token': token }, cache: 'no-store' });
+    if (r.status === 401) { const e = new Error('unauthorized'); e.code = 401; throw e; }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }
+
+  // ---------- formatting ----------
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const isHist = ts => Date.parse(ts) < HIST_BEFORE;
+  const dayKey = ts => new Intl.DateTimeFormat('pt-PT', { timeZone: TZ, day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(ts));
+  function when(ts) {
+    if (!ts) return '';
+    if (isHist(ts)) return 'histórico';
+    const d = new Date(ts);
+    const today = dayKey(Date.now());
+    const k = dayKey(ts);
+    const hm = new Intl.DateTimeFormat('pt-PT', { timeZone: TZ, hour: '2-digit', minute: '2-digit' }).format(d);
+    if (k === today) return hm;
+    return k.slice(0, 5) + ' ' + hm;
+  }
+  function dayLabel(ts) {
+    if (isHist(ts)) return 'Histórico, antes do dashboard (hora aproximada)';
+    const k = dayKey(ts);
+    if (k === dayKey(Date.now())) return 'Hoje';
+    if (k === dayKey(Date.now() - 864e5)) return 'Ontem';
+    return new Intl.DateTimeFormat('pt-PT', { timeZone: TZ, weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(ts));
+  }
+  const phone = w => '+' + String(w).replace(/^(\d{3})(\d{2})(\d{3})(\d{4})$/, '$1 $2 $3 $4');
+  const roleName = { influencer: 'influencer', prospect: 'anfitrião novo', host: 'parceiro', guest: 'hóspede', awaiting_menu: 'no menu' };
+  function statusMark(s) {
+    switch (s) {
+      case 'read': return '<span class="st read" title="Lida">✓✓ lida</span>';
+      case 'delivered': return '<span class="st" title="Entregue">✓✓ entregue</span>';
+      case 'sent': return '<span class="st" title="Enviada">✓ enviada</span>';
+      case 'failed': return '<span class="st failed" title="Falhou">⚠ falhou</span>';
+      case 'accepted': return '<span class="st" title="Aceite pelo WhatsApp, a aguardar entrega">◷ aceite</span>';
+      case 'received': return '';
+      default: return '<span class="st" title="Sem estado registado">· sem estado</span>';
+    }
+  }
+  const displayName = c => c.hotel || c.name || phone(c.wa_id);
+
+  // ---------- roster ----------
+  function matches(c) {
+    const q = $('#q').value.trim().toLowerCase();
+    if (q && !(`${c.name || ''} ${c.hotel || ''} ${c.wa_id}`.toLowerCase().includes(q.replace(/[\s+]/g, '')) || `${c.name || ''} ${c.hotel || ''}`.toLowerCase().includes(q))) return false;
+    switch (filter) {
+      case 'unread': return c.unread > 0;
+      case 'replied': return c.has_inbound;
+      case 'influencer': return c.role === 'influencer';
+      case 'failed': return c.last_out_status === 'failed';
+      case 'noreply': return !c.has_inbound;
+      default: return true;
+    }
+  }
+  function renderRows(flashIds = new Set()) {
+    const list = contacts.filter(matches);
+    if (!list.length) {
+      $('#rows').innerHTML = `<div class="empty">${contacts.length ? 'Nenhuma conversa com este filtro.' : 'Ainda não há conversas. Assim que alguém escrever para o número, aparece aqui.'}</div>`;
+      return;
+    }
+    $('#rows').innerHTML = list.map(c => {
+      const tags = [];
+      if (c.is_new && c.has_inbound) tags.push('<span class="tag novo">novo</span>');
+      if (c.role && roleName[c.role]) tags.push(`<span class="tag ${esc(c.role)}">${esc(roleName[c.role])}</span>`);
+      if (c.last_out_status === 'failed') tags.push('<span class="tag failed">falhou</span>');
+      const prefix = c.last_dir === 'out' ? 'Nós: ' : '';
+      return `<button class="row${flashIds.has(c.wa_id) ? ' flash' : ''}" data-id="${esc(c.wa_id)}" aria-current="${c.wa_id === current}">
+        <span class="who">${esc(displayName(c))}</span>
+        <span class="when">${esc(when(c.last_at))}</span>
+        <span class="last">${esc(prefix + (c.last_text || (c.last_out_status ? 'Mensagem enviada' : '')))}</span>
+        <span class="meta">${c.last_dir === 'out' ? statusMark(c.last_out_status) : ''}${c.unread > 0 ? `<span class="badge">${c.unread}</span>` : ''}</span>
+        <span class="num">${esc(phone(c.wa_id))}${c.hotel && c.name && c.name !== c.hotel ? ' · ' + esc(c.name) : ''} ${tags.join(' ')}</span>
+      </button>`;
+    }).join('');
+  }
+  function renderStats(s) {
+    const by = s.by_status || {};
+    const item = (label, val, cls = '') => `<span class="stat ${cls}">${label} <b>${val ?? 0}</b></span>`;
+    $('#stats').innerHTML = [
+      item('Conversas', s.contacts),
+      item('Responderam', s.replied),
+      item('Por ler', s.unread, s.unread > 0 ? 'hot' : ''),
+      item('Recebidas 24h', s.in_24h),
+      item('Enviadas 24h', s.out_24h),
+      item('Entregues', (by.delivered || 0) + (by.read || 0)),
+      item('Lidas', by.read),
+      item('Falhadas', by.failed, by.failed > 0 ? 'bad' : '')
+    ].join('');
+    unreadTotal = Number(s.unread) || 0;
+    document.title = (unreadTotal ? `(${unreadTotal}) ` : '') + 'IndicoStay WhatsApp Inbox';
+  }
+
+  // ---------- thread ----------
+  async function openThread(id, { markRead = true } = {}) {
+    current = id;
+    if (location.hash !== '#' + id) history.replaceState(null, '', '#' + id);
+    document.body.classList.add('chat-open');
+    const c = contacts.find(x => x.wa_id === id) || { wa_id: id };
+    $('#thead').hidden = false;
+    $('#tName').textContent = displayName(c);
+    $('#tSub').innerHTML = [phone(id), c.name && c.name !== displayName(c) ? 'perfil: ' + esc(c.name) : '', c.role && roleName[c.role] ? esc(roleName[c.role]) : '', c.first_seen && !isHist(c.first_seen) ? 'desde ' + esc(when(c.first_seen)) : ''].filter(Boolean).join(' · ');
+    document.querySelectorAll('.row').forEach(r => r.setAttribute('aria-current', String(r.dataset.id === id)));
+    lastMsgSig = '';
+    await loadThread(true);
+    if (markRead && c.unread > 0) {
+      try { await api('read', { wa_id: id }); c.unread = 0; renderRows(); } catch (e) {}
+    }
+  }
+  async function loadThread(scroll) {
+    if (!current) return;
+    const id = current;
+    const msgs = await api('messages', { wa_id: id });
+    if (id !== current) return;
+    const sig = msgs.map(m => m.id + (m.status || '') + (m.body || '').length).join('|');
+    if (sig === lastMsgSig) return;
+    const box = $('#msgs');
+    const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+    lastMsgSig = sig;
+    if (!msgs.length) { box.innerHTML = '<div class="placeholder"><p>Sem mensagens guardadas para este número.</p></div>'; return; }
+    let lastDay = '';
+    box.innerHTML = msgs.map(m => {
+      const dl = dayLabel(m.created_at);
+      const dayHtml = dl !== lastDay ? `<div class="day">${esc(dl)}</div>` : '';
+      lastDay = dl;
+      const out = m.direction === 'out';
+      const ghost = !m.body;
+      const body = m.body || (out ? 'Mensagem enviada antes de o dashboard existir. O WhatsApp só devolveu o estado de entrega.' : '[sem texto]');
+      const src = out ? (m.source === 'campanha' ? 'campanha' : m.source && m.source !== 'desconhecido' ? m.source : 'enviada') : '';
+      const t = isHist(m.created_at) ? '' : when(m.status_at && out ? m.created_at : m.created_at);
+      return dayHtml + `<div class="msg ${out ? 'out' : 'in'}${m.status === 'failed' ? ' failed' : ''}">
+        <div class="body${ghost ? ' ghost' : ''}">${esc(body)}</div>
+        ${m.error ? `<div class="errtxt">${esc(m.error)}</div>` : ''}
+        <div class="foot"><span class="src">${esc(src)}</span><span>${esc(t)}</span>${out ? statusMark(m.status) : ''}</div>
+      </div>`;
+    }).join('');
+    if (scroll || nearBottom) box.scrollTop = box.scrollHeight;
+  }
+
+  // ---------- alerts ----------
+  function beep() {
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(880, audioCtx.currentTime); o.frequency.setValueAtTime(1320, audioCtx.currentTime + 0.12);
+      g.gain.setValueAtTime(0.0001, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.25, audioCtx.currentTime + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.35);
+      o.connect(g).connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + 0.36);
+    } catch (e) {}
+  }
+  function notify(c, isNew) {
+    beep();
+    try {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        const n = new Notification((isNew ? 'Nova conversa: ' : 'Mensagem de ') + displayName(c), { body: c.last_text || '', tag: 'wa-' + c.wa_id });
+        n.onclick = () => { window.focus(); openThread(c.wa_id); n.close(); };
+      }
+    } catch (e) {}
+  }
+  function updateNotifyBtn() {
+    const b = $('#notifyBtn');
+    if (!('Notification' in window)) { b.textContent = 'Som ativo'; return; }
+    b.textContent = Notification.permission === 'granted' ? 'Alertas ativos' : Notification.permission === 'denied' ? 'Alertas bloqueados no browser' : 'Ativar alertas';
+  }
+
+  // ---------- polling ----------
+  async function refresh() {
+    try {
+      const [cs, st] = await Promise.all([api('contacts'), api('stats')]);
+      const flash = new Set();
+      if (seen) {
+        for (const c of cs) {
+          if (c.last_dir !== 'in') continue;
+          const prev = seen.get(c.wa_id);
+          if (!prev || Date.parse(c.last_at) > prev) {
+            flash.add(c.wa_id);
+            notify(c, !prev);
+          }
+        }
+      }
+      seen = new Map(cs.filter(c => c.last_dir === 'in').map(c => [c.wa_id, Date.parse(c.last_at)]));
+      for (const c of cs) if (!seen.has(c.wa_id)) seen.set(c.wa_id, Date.parse(c.last_at));
+      contacts = cs;
+      renderStats(st);
+      renderRows(flash);
+      setLive(true);
+      if (current) {
+        await loadThread(false);
+        const c = contacts.find(x => x.wa_id === current);
+        if (c && c.unread > 0 && document.visibilityState === 'visible' && document.body.classList.contains('chat-open')) {
+          api('read', { wa_id: current }).catch(() => {});
+        }
+      }
+    } catch (e) {
+      if (e.code === 401) return logout('O código deixou de ser válido. Entre outra vez.');
+      setLive(false);
+    }
+  }
+  function setLive(ok) {
+    $('#live').classList.toggle('off', !ok);
+    $('#liveTxt').textContent = ok ? 'ao vivo · ' + new Intl.DateTimeFormat('pt-PT', { timeZone: TZ, hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date()) : 'sem ligação, a tentar de novo';
+  }
+  let timer = null;
+  function startPolling() {
+    clearInterval(timer);
+    refresh();
+    timer = setInterval(refresh, 4000);
+  }
+
+  // ---------- auth ----------
+  function showApp() { $('#login').hidden = true; $('#app').hidden = false; updateNotifyBtn(); startPolling(); if (current) openThread(current, { markRead: false }); }
+  function logout(msg) {
+    clearInterval(timer); token = ''; store.del('wa_inbox_token'); seen = null;
+    $('#app').hidden = true; $('#login').hidden = false; $('#loginErr').textContent = msg || '';
+  }
+  $('#loginForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    token = $('#tokenInput').value.trim();
+    $('#loginErr').textContent = '';
+    try { await api('stats'); store.set('wa_inbox_token', token); showApp(); }
+    catch (err) { $('#loginErr').textContent = err.code === 401 ? 'Código errado. Confirme com o Dellon.' : 'Não foi possível ligar ao servidor. Tente outra vez.'; }
+  });
+  $('#logoutBtn').addEventListener('click', () => logout());
+  $('#notifyBtn').addEventListener('click', async () => {
+    beep();
+    if ('Notification' in window && Notification.permission === 'default') { try { await Notification.requestPermission(); } catch (e) {} }
+    updateNotifyBtn();
+  });
+
+  // ---------- interactions ----------
+  $('#rows').addEventListener('click', e => { const r = e.target.closest('.row'); if (r) openThread(r.dataset.id); });
+  $('#chips').addEventListener('click', e => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    filter = b.dataset.f;
+    document.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    renderRows();
+  });
+  $('#q').addEventListener('input', () => renderRows());
+  $('#backBtn').addEventListener('click', () => { document.body.classList.remove('chat-open'); current = null; history.replaceState(null, '', location.pathname); renderRows(); });
+  window.addEventListener('hashchange', () => { const id = location.hash.replace('#', '').replace(/\D/g, ''); if (id && id !== current) openThread(id); });
+
+  if (token) showApp(); else { $('#login').hidden = false; }
+})();
+</script>
+</body>
+</html>
