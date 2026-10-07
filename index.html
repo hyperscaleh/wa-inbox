@@ -7,138 +7,178 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: two-pane ops console. Left = live roster of conversations with delivery state, right = the thread. Stacks to one pane on phones. */
+/* Layout: a floating white chat app on a soft ground with one violet-to-pink glow behind it.
+   Left = conversations (profile, live stats, search, tabs, roster). Right = thread with gradient bubbles. One pane on phones. */
 :root {
-  --ground: #EEF2F1;
-  --panel: #FFFFFF;
-  --ink: #12201D;
-  --muted: #5C6E6A;
-  --line: #D6DFDC;
-  --accent: #0C6A80;        /* Indian Ocean blue */
-  --accent-soft: #DCEEF2;
-  --sand: #F3E7CF;          /* outbound bubble */
-  --sand-ink: #4A3B1E;
-  --in-bubble: #FFFFFF;
-  --good: #1E7F52;
-  --warn: #A86A00;
-  --bad: #B3261E;
-  --bad-soft: #FBE4E2;
-  --new: #C2410C;
-  --f-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
-  --f-body: "IBM Plex Sans", -apple-system, "Segoe UI", system-ui, sans-serif;
-  --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --ground: #F3F2F8;
+  --card: #FFFFFF;
+  --soft: #F7F6FB;
+  --ink: #1B1830;
+  --muted: #8A87A0;
+  --line: #ECEAF3;
+  --violet: #7B5CFA;
+  --pink: #F2558C;
+  --grad: linear-gradient(135deg, #7B5CFA 0%, #B45CF0 55%, #F2558C 100%);
+  --violet-soft: #EFEBFF;
+  --good: #22B07D;
+  --warn: #E79A1B;
+  --bad: #E5484D;
+  --bad-soft: #FDECEC;
+  --f-ui: "Plus Jakarta Sans", "Avenir Next", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --shadow: 0 30px 80px -30px rgba(70, 50, 140, 0.28), 0 8px 24px -12px rgba(70, 50, 140, 0.16);
   color-scheme: light;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --ground: #0D1514; --panel: #141F1D; --ink: #E4ECEA; --muted: #8FA29E; --line: #24332F;
-    --accent: #5BC0D6; --accent-soft: #15333A; --sand: #3A2F1C; --sand-ink: #F1E2C2; --in-bubble: #1B2826;
-    --good: #4CC38A; --warn: #E3A73A; --bad: #F2867D; --bad-soft: #3A1C1A; --new: #FB923C;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --ground: #0D1514; --panel: #141F1D; --ink: #E4ECEA; --muted: #8FA29E; --line: #24332F;
-  --accent: #5BC0D6; --accent-soft: #15333A; --sand: #3A2F1C; --sand-ink: #F1E2C2; --in-bubble: #1B2826;
-  --good: #4CC38A; --warn: #E3A73A; --bad: #F2867D; --bad-soft: #3A1C1A; --new: #FB923C;
-  color-scheme: dark;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html, body { height: 100%; }
-body { margin: 0; background: var(--ground); color: var(--ink); font: 14px/1.45 var(--f-body); }
+body { margin: 0; background: var(--ground); color: var(--ink); font: 14px/1.45 var(--f-ui); overflow: hidden; }
+body::before { content: ""; position: fixed; z-index: 0; width: 46vmax; height: 46vmax; right: -12vmax; top: -18vmax; border-radius: 50%; background: var(--grad); opacity: 0.22; filter: blur(70px); pointer-events: none; }
+body::after { content: ""; position: fixed; z-index: 0; width: 30vmax; height: 30vmax; left: -10vmax; bottom: -14vmax; border-radius: 50%; background: #7B5CFA; opacity: 0.12; filter: blur(80px); pointer-events: none; }
 button { font: inherit; color: inherit; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--violet); outline-offset: 2px; }
+.mono { font-family: var(--f-mono); }
+
+/* ---------- avatars ---------- */
+.av { position: relative; flex: none; width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 14px; letter-spacing: 0.02em; }
+.av.sm { width: 32px; height: 32px; font-size: 12px; }
+.av.lg { width: 46px; height: 46px; font-size: 16px; }
+.av .dot { position: absolute; right: 0; top: 0; width: 11px; height: 11px; border-radius: 50%; border: 2px solid var(--card); background: var(--good); }
+.av .dot.warn { background: var(--warn); }
+.av .dot.bad { background: var(--bad); }
+.av.brand { background: var(--grad); }
 
 /* ---------- login ---------- */
-#login { min-height: 100%; display: grid; place-items: center; padding: 24px 16px; }
-.login-card { width: 100%; max-width: 380px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 28px 24px; display: grid; gap: 14px; }
-.login-card h1 { font: 700 26px/1.1 var(--f-display); margin: 0; text-wrap: balance; }
+#login { position: relative; z-index: 1; height: 100%; display: grid; place-items: center; padding: 24px 16px; overflow-y: auto; }
+.login-card { width: 100%; max-width: 400px; background: var(--card); border-radius: 26px; box-shadow: var(--shadow); padding: 32px 28px; display: grid; gap: 14px; }
+.login-card .av { margin-bottom: 4px; }
+.login-card h1 { font-size: 26px; line-height: 1.15; font-weight: 800; margin: 0; letter-spacing: -0.02em; text-wrap: balance; }
 .login-card p { margin: 0; color: var(--muted); }
-.login-card input { width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); font: 14px var(--f-mono); }
-.btn { border: 0; border-radius: 8px; padding: 10px 14px; background: var(--accent); color: var(--panel); font-weight: 600; cursor: pointer; }
-.btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); font-weight: 500; padding: 6px 10px; }
+.login-card label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.login-card input { width: 100%; padding: 13px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--soft); color: var(--ink); font: 14px var(--f-mono); }
+.btn { border: 0; border-radius: 14px; padding: 12px 16px; background: var(--grad); color: #fff; font-weight: 700; cursor: pointer; box-shadow: 0 10px 24px -10px rgba(180, 92, 240, 0.7); }
 .err { color: var(--bad); font-size: 13px; min-height: 18px; }
 
-/* ---------- app shell ---------- */
-#app { height: 100%; display: grid; grid-template-rows: auto 1fr; }
-header.top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; padding: 12px 16px; background: var(--panel); border-bottom: 1px solid var(--line); }
-.brand { display: flex; align-items: baseline; gap: 10px; margin-right: auto; }
-.brand b { font: 700 19px/1 var(--f-display); letter-spacing: -0.01em; }
-.brand span { font: 12px var(--f-mono); color: var(--muted); }
-.live { display: inline-flex; align-items: center; gap: 6px; font: 500 12px var(--f-mono); color: var(--muted); }
-.live i { width: 8px; height: 8px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 0 var(--good); animation: pulse 2s infinite; }
-.live.off i { background: var(--bad); animation: none; }
-@keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--good) 60%, transparent); } 70% { box-shadow: 0 0 0 7px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
-@media (prefers-reduced-motion: reduce) { .live i { animation: none; } }
+/* ---------- app frame ---------- */
+#app { position: relative; z-index: 1; height: 100%; padding: 22px; }
+.frame { height: 100%; max-width: 1380px; margin: 0 auto; background: var(--card); border-radius: 28px; box-shadow: var(--shadow); display: grid; grid-template-columns: minmax(310px, 370px) 1fr; overflow: hidden; }
 
-.stats { display: flex; flex-wrap: wrap; gap: 6px; }
-.stat { display: flex; align-items: baseline; gap: 6px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; color: var(--muted); }
-.stat b { font: 600 14px var(--f-mono); color: var(--ink); font-variant-numeric: tabular-nums; }
-.stat.bad b { color: var(--bad); }
-.stat.hot b { color: var(--new); }
+/* sidebar */
+aside.side { min-height: 0; display: grid; grid-template-rows: auto auto auto auto 1fr; border-right: 1px solid var(--line); }
+.me { display: flex; align-items: center; gap: 12px; padding: 20px 20px 14px; }
+.me .who { min-width: 0; margin-right: auto; }
+.me b { display: block; font-size: 16px; font-weight: 800; letter-spacing: -0.01em; }
+.me span { font-size: 12px; color: var(--muted); }
+.icon-btn { flex: none; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); display: grid; place-items: center; cursor: pointer; color: var(--muted); }
+.icon-btn:hover { color: var(--violet); border-color: var(--violet-soft); background: var(--violet-soft); }
+.icon-btn.on { color: #fff; background: var(--grad); border-color: transparent; }
+.icon-btn svg { width: 17px; height: 17px; }
 
-main.panes { min-height: 0; display: grid; grid-template-columns: minmax(300px, 380px) 1fr; }
-aside.list { min-height: 0; display: grid; grid-template-rows: auto auto 1fr; background: var(--panel); border-right: 1px solid var(--line); }
-.search { padding: 12px 12px 8px; }
-.search input { width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--ground); color: var(--ink); }
-.chips { display: flex; gap: 6px; padding: 0 12px 10px; overflow-x: auto; }
-.chip { flex: none; border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 4px 10px; font-size: 12px; cursor: pointer; color: var(--muted); }
-.chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--ink); font-weight: 600; }
-.rows { overflow-y: auto; border-top: 1px solid var(--line); }
-.row { width: 100%; display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; text-align: left; padding: 11px 14px; border: 0; border-bottom: 1px solid var(--line); background: transparent; cursor: pointer; position: relative; }
-.row:hover { background: var(--ground); }
-.row[aria-current="true"] { background: var(--accent-soft); }
-.row.flash { animation: flash 2.4s ease-out; }
-@keyframes flash { from { background: color-mix(in srgb, var(--new) 22%, transparent); } }
-.row .who { min-width: 0; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; }
-.row .when { font: 12px var(--f-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
-.row .last { min-width: 0; grid-column: 1; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
-.row .meta { grid-column: 2; display: flex; gap: 6px; align-items: center; justify-content: flex-end; }
-.row .num { grid-column: 1 / -1; font: 11.5px var(--f-mono); color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; }
-.badge { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--new); color: var(--panel); font: 600 11.5px/20px var(--f-mono); text-align: center; }
-.tag { font: 500 10.5px var(--f-mono); letter-spacing: 0.04em; text-transform: uppercase; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line); color: var(--muted); }
-.tag.influencer { border-color: var(--new); color: var(--new); }
-.tag.prospect, .tag.host { border-color: var(--accent); color: var(--accent); }
-.tag.novo { background: var(--new); border-color: var(--new); color: var(--panel); }
-.tag.failed { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
-.empty { padding: 28px 18px; color: var(--muted); text-align: center; }
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 0 20px 14px; }
+.kpi { background: var(--soft); border-radius: 14px; padding: 9px 10px; display: grid; gap: 1px; }
+.kpi b { font: 600 17px var(--f-mono); font-variant-numeric: tabular-nums; }
+.kpi span { font-size: 10.5px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi.hot b { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.kpi.bad b { color: var(--bad); }
 
-/* ---------- thread ---------- */
-section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr; }
-.thead { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.search { display: flex; align-items: center; gap: 8px; padding: 0 20px 12px; }
+.search label { flex: 1; display: flex; align-items: center; gap: 8px; padding: 0 12px; height: 40px; background: var(--soft); border-radius: 999px; color: var(--muted); }
+.search input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--ink); font: inherit; outline: none; }
+.live-pill { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 12px; border-radius: 999px; font-size: 11.5px; font-weight: 700; color: var(--good); background: color-mix(in srgb, var(--good) 10%, transparent); }
+.live-pill i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: pulse 1.8s infinite; }
+.live-pill.off { color: var(--bad); background: var(--bad-soft); }
+.live-pill.off i { animation: none; }
+@keyframes pulse { 50% { opacity: 0.3; } }
+
+.tabs { display: flex; gap: 18px; padding: 0 20px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+.tab { flex: none; border: 0; background: none; padding: 10px 0 11px; font-size: 11.5px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); cursor: pointer; position: relative; }
+.tab[aria-pressed="true"] { color: var(--ink); }
+.tab[aria-pressed="true"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: var(--grad); }
+.tab .n { margin-left: 4px; font-family: var(--f-mono); font-weight: 500; }
+
+.rows { min-height: 0; overflow-y: auto; padding: 8px 10px 16px; }
+.row { width: 100%; display: flex; gap: 12px; align-items: center; text-align: left; padding: 11px 10px; border: 0; border-radius: 16px; background: transparent; cursor: pointer; }
+.row:hover { background: var(--soft); }
+.row[aria-current="true"] { background: var(--violet-soft); }
+.row.flash { animation: flash 2.6s ease-out; }
+@keyframes flash { from { background: color-mix(in srgb, var(--pink) 18%, transparent); } }
+.row .txt { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.row .l1, .row .l2 { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.row .name { flex: 1; min-width: 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .when { flex: none; font-size: 11.5px; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
+.row .last { flex: 1; min-width: 0; font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row.unread .last { color: var(--ink); font-weight: 600; }
+.badge { flex: none; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--grad); color: #fff; font: 600 11px/20px var(--f-mono); text-align: center; }
+.tag { flex: none; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; background: var(--soft); color: var(--muted); }
+.tag.influencer { background: #FFE8F1; color: #C2316B; }
+.tag.prospect, .tag.host { background: var(--violet-soft); color: var(--violet); }
+.tag.guest { background: #E6F6EF; color: #17805A; }
+.tag.novo { background: var(--grad); color: #fff; }
+.tag.failed { background: var(--bad-soft); color: var(--bad); }
+.empty { padding: 34px 18px; color: var(--muted); text-align: center; }
+
+/* thread */
+section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto; background: linear-gradient(180deg, var(--card) 0%, var(--soft) 100%); }
+.thead { display: flex; align-items: center; gap: 14px; padding: 16px 22px; border-bottom: 1px solid var(--line); background: var(--card); }
 .thead .back { display: none; }
-.thead h2 { margin: 0; font: 700 18px/1.2 var(--f-display); }
-.thead .sub { font: 12px var(--f-mono); color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; }
-.thead .tools { margin-left: auto; display: flex; gap: 8px; }
-.msgs { overflow-y: auto; padding: 18px 16px 28px; display: flex; flex-direction: column; gap: 8px; }
-.day { align-self: center; font: 500 11px var(--f-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 6px 0; }
-.msg { max-width: min(560px, 82%); padding: 8px 11px 6px; border-radius: 12px; display: grid; gap: 4px; }
-.msg.in { align-self: flex-start; background: var(--in-bubble); border: 1px solid var(--line); border-top-left-radius: 4px; }
-.msg.out { align-self: flex-end; background: var(--sand); color: var(--sand-ink); border-top-right-radius: 4px; }
-.msg.out.failed { background: var(--bad-soft); color: var(--ink); outline: 1px solid var(--bad); }
-.msg .body { white-space: pre-wrap; overflow-wrap: anywhere; }
-.msg .body.ghost { font-style: italic; opacity: 0.75; }
-.msg .foot { display: flex; gap: 8px; justify-content: flex-end; align-items: center; font: 11px var(--f-mono); opacity: 0.8; }
-.msg .src { margin-right: auto; }
-.st { display: inline-flex; align-items: center; gap: 3px; }
-.st.read { color: var(--accent); opacity: 1; }
+.thead .who { min-width: 0; margin-right: auto; }
+.thead h2 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.thead .sub { font-size: 12px; color: var(--muted); display: flex; gap: 6px 10px; flex-wrap: wrap; align-items: center; }
+.thead .tools { display: flex; gap: 8px; }
+
+.msgs { min-height: 0; overflow-y: auto; padding: 22px 22px 18px; display: flex; flex-direction: column; gap: 14px; }
+.day { align-self: center; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); background: var(--card); border: 1px solid var(--line); padding: 4px 12px; border-radius: 999px; }
+.line { display: flex; gap: 10px; align-items: flex-end; max-width: 100%; }
+.line.out { flex-direction: row-reverse; }
+.bubble { max-width: min(540px, 76%); padding: 10px 14px 9px; border-radius: 18px; display: grid; gap: 5px; min-width: 0; }
+.line.in .bubble { background: var(--grad); color: #fff; border-bottom-left-radius: 6px; box-shadow: 0 12px 26px -14px rgba(123, 92, 250, 0.7); }
+.line.out .bubble { background: var(--card); color: var(--ink); border: 1px solid var(--line); border-bottom-right-radius: 6px; box-shadow: 0 8px 20px -16px rgba(40, 30, 90, 0.35); }
+.line.out.failed .bubble { background: var(--bad-soft); border-color: color-mix(in srgb, var(--bad) 40%, transparent); }
+.bubble .hd { display: flex; gap: 12px; justify-content: space-between; font-size: 11px; font-weight: 700; opacity: 0.85; }
+.line.out .bubble .hd { color: var(--muted); opacity: 1; }
+.bubble .body { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13.5px; font-weight: 500; }
+.bubble .body.ghost { font-style: italic; opacity: 0.7; font-weight: 400; }
+.bubble .ft { display: flex; justify-content: flex-end; font-size: 11px; font-weight: 600; }
+.st { display: inline-flex; gap: 4px; align-items: center; color: var(--muted); }
+.st.read { color: var(--violet); }
 .st.failed { color: var(--bad); }
-.msg .errtxt { font: 12px var(--f-mono); color: var(--bad); }
-.placeholder { display: grid; place-items: center; text-align: center; color: var(--muted); padding: 40px 20px; }
-.placeholder h3 { font: 700 22px var(--f-display); color: var(--ink); margin: 0 0 6px; }
-.legend { margin-top: 18px; display: grid; gap: 6px; font: 12px var(--f-mono); text-align: left; }
+.errtxt { font: 11.5px var(--f-mono); color: var(--bad); }
+.typing { display: flex; gap: 10px; align-items: center; color: var(--muted); font-size: 12px; font-weight: 600; }
+.typing .dots { display: inline-flex; gap: 4px; padding: 12px 14px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; }
+.typing .dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--violet); animation: hop 1.2s infinite; }
+.typing .dots i:nth-child(2) { animation-delay: 0.15s; background: #B45CF0; }
+.typing .dots i:nth-child(3) { animation-delay: 0.3s; background: var(--pink); }
+@keyframes hop { 0%, 60%, 100% { transform: translateY(0); opacity: 0.5; } 30% { transform: translateY(-4px); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .typing .dots i, .live-pill i, .row.flash { animation: none; } }
+
+.foot-bar { padding: 14px 22px 18px; }
+.foot-bar .inner { display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 16px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); box-shadow: 0 10px 30px -20px rgba(40, 30, 90, 0.4); color: var(--muted); font-size: 13px; }
+.foot-bar .inner span { flex: 1; min-width: 0; }
+.foot-bar .send { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--grad); display: grid; place-items: center; color: #fff; box-shadow: 0 8px 20px -8px rgba(242, 85, 140, 0.8); }
+.foot-bar .send svg { width: 17px; height: 17px; }
+
+.welcome { margin: auto; text-align: center; max-width: 380px; display: grid; gap: 10px; justify-items: center; padding: 30px 10px; }
+.welcome h3 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+.welcome p { margin: 0; color: var(--muted); }
+.legend { margin-top: 8px; display: grid; gap: 8px; text-align: left; font-size: 12.5px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 14px 16px; }
+.legend div { display: flex; gap: 10px; align-items: center; }
+.legend .st { width: 38px; justify-content: center; font-weight: 700; }
 
 /* ---------- phone ---------- */
-@media (max-width: 760px) {
-  main.panes { grid-template-columns: 1fr; }
-  aside.list { border-right: 0; }
-  body.chat-open aside.list { display: none; }
+@media (max-width: 820px) {
+  #app { padding: 0; }
+  .frame { border-radius: 0; grid-template-columns: 1fr; }
+  aside.side { border-right: 0; }
+  body.chat-open aside.side { display: none; }
   body:not(.chat-open) section.thread { display: none; }
-  .thead .back { display: inline-block; }
-  .stats { width: 100%; }
+  .thead { padding: 12px 14px; }
+  .thead .back { display: grid; }
+  .msgs { padding: 16px 14px; }
+  .foot-bar { padding: 10px 14px 14px; }
+  .bubble { max-width: 84%; }
+  .me, .kpis, .search, .tabs { padding-left: 16px; padding-right: 16px; }
 }
 </style>
 </head>
@@ -146,9 +186,10 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr; }
 
 <div id="login" hidden>
   <form class="login-card" id="loginForm">
+    <div class="av lg brand">IS</div>
     <h1>Inbox WhatsApp da IndicoStay</h1>
-    <p>Conversas do número oficial +258 86 517 8862, com o estado de entrega de cada mensagem, ao vivo.</p>
-    <label for="tokenInput" class="tag" style="justify-self:start">Código de acesso</label>
+    <p>Todas as conversas do número oficial +258 86 517 8862, com o estado de entrega de cada mensagem, ao vivo.</p>
+    <label for="tokenInput">Código de acesso</label>
     <input id="tokenInput" type="text" name="wa-inbox-code" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-1p-ignore data-lpignore="true" placeholder="Cole aqui o código" required>
     <div class="err" id="loginErr"></div>
     <button class="btn" type="submit">Entrar</button>
@@ -156,51 +197,72 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr; }
 </div>
 
 <div id="app" hidden>
-  <header class="top">
-    <div class="brand"><b>IndicoStay · WhatsApp</b><span>+258 86 517 8862</span></div>
-    <div class="stats" id="stats"></div>
-    <span class="live" id="live"><i></i><span id="liveTxt">ao vivo</span></span>
-    <button class="btn ghost" id="notifyBtn" type="button">Ativar alertas</button>
-    <button class="btn ghost" id="logoutBtn" type="button">Sair</button>
-  </header>
-  <main class="panes">
-    <aside class="list">
-      <div class="search"><input id="q" type="search" placeholder="Procurar nome, hotel ou número"></div>
-      <div class="chips" id="chips" role="toolbar" aria-label="Filtros">
-        <button class="chip" data-f="all" aria-pressed="true">Todas</button>
-        <button class="chip" data-f="unread" aria-pressed="false">Não lidas</button>
-        <button class="chip" data-f="replied" aria-pressed="false">Responderam</button>
-        <button class="chip" data-f="influencer" aria-pressed="false">Influencers</button>
-        <button class="chip" data-f="failed" aria-pressed="false">Falhadas</button>
-        <button class="chip" data-f="noreply" aria-pressed="false">Sem resposta</button>
+  <div class="frame">
+    <aside class="side">
+      <div class="me">
+        <div class="av brand">IS<i class="dot" id="meDot"></i></div>
+        <div class="who"><b>IndicoStay</b><span class="mono">+258 86 517 8862</span></div>
+        <button class="icon-btn" id="notifyBtn" type="button" title="Ativar alertas de som e popup" aria-label="Ativar alertas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        </button>
+        <button class="icon-btn" id="logoutBtn" type="button" title="Sair" aria-label="Sair">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+        </button>
+      </div>
+      <div class="kpis" id="kpis"></div>
+      <div class="search">
+        <label for="q">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="q" type="search" placeholder="Procurar nome, hotel ou número">
+        </label>
+        <span class="live-pill" id="live" title="Atualiza a cada 4 segundos"><i></i><span id="liveTxt">ao vivo</span></span>
+      </div>
+      <div class="tabs" id="tabs" role="toolbar" aria-label="Filtros">
+        <button class="tab" data-f="all" aria-pressed="true">Todas<span class="n" data-n="all"></span></button>
+        <button class="tab" data-f="unread" aria-pressed="false">Por ler<span class="n" data-n="unread"></span></button>
+        <button class="tab" data-f="replied" aria-pressed="false">Responderam<span class="n" data-n="replied"></span></button>
+        <button class="tab" data-f="influencer" aria-pressed="false">Influencers<span class="n" data-n="influencer"></span></button>
+        <button class="tab" data-f="failed" aria-pressed="false">Falhadas<span class="n" data-n="failed"></span></button>
+        <button class="tab" data-f="noreply" aria-pressed="false">Sem resposta<span class="n" data-n="noreply"></span></button>
       </div>
       <div class="rows" id="rows"><div class="empty">A carregar conversas…</div></div>
     </aside>
+
     <section class="thread" id="thread">
       <div class="thead" id="thead" hidden>
-        <button class="btn ghost back" id="backBtn" type="button">← Voltar</button>
-        <div>
-          <h2 id="tName"></h2>
-          <div class="sub" id="tSub"></div>
+        <button class="icon-btn back" id="backBtn" type="button" aria-label="Voltar à lista">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <div class="av lg" id="tAv"></div>
+        <div class="who"><h2 id="tName"></h2><div class="sub" id="tSub"></div></div>
+        <div class="tools">
+          <button class="icon-btn" id="copyBtn" type="button" title="Copiar número" aria-label="Copiar número">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>
+          </button>
+          <button class="icon-btn" id="reloadBtn" type="button" title="Atualizar agora" aria-label="Atualizar agora">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>
+          </button>
         </div>
       </div>
       <div class="msgs" id="msgs">
-        <div class="placeholder">
-          <div>
-            <h3>Escolha uma conversa</h3>
-            <p>Cada mensagem enviada mostra o estado que o WhatsApp devolve.</p>
-            <div class="legend">
-              <span><span class="st">◷</span> aceite pelo WhatsApp</span>
-              <span><span class="st">✓</span> enviada</span>
-              <span><span class="st">✓✓</span> entregue no telemóvel</span>
-              <span><span class="st read">✓✓</span> lida</span>
-              <span><span class="st failed">⚠</span> falhou (com o motivo)</span>
-            </div>
+        <div class="welcome">
+          <div class="av lg brand">IS</div>
+          <h3>Escolha uma conversa</h3>
+          <p>As mensagens dos clientes aparecem a cor. As da Sara e da campanha mostram o estado que o WhatsApp devolve.</p>
+          <div class="legend">
+            <div><span class="st">◷</span> aceite pelo WhatsApp</div>
+            <div><span class="st">✓</span> enviada</div>
+            <div><span class="st">✓✓</span> entregue no telemóvel</div>
+            <div><span class="st read">✓✓</span> lida</div>
+            <div><span class="st failed">⚠</span> falhou, com o motivo</div>
           </div>
         </div>
       </div>
+      <div class="foot-bar" id="footBar" hidden>
+        <div class="inner"><span>A Sara (IA) responde automaticamente a esta conversa.</span><span class="send" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12 2-12 2z"/></svg></span></div>
+      </div>
     </section>
-  </main>
+  </div>
 </div>
 
 <script>
@@ -217,11 +279,10 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr; }
 
   let token = store.get('wa_inbox_token') || '';
   let contacts = [];
-  let seen = null;           // wa_id -> last_at das mensagens recebidas, para detetar novas
+  let seen = null;
   let current = location.hash.replace('#', '').replace(/\D/g, '') || null;
   let filter = 'all';
   let lastMsgSig = '';
-  let unreadTotal = 0;
   let audioCtx = null;
 
   async function api(action, params = {}) {
@@ -238,18 +299,17 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr; }
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const isHist = ts => Date.parse(ts) < HIST_BEFORE;
   const dayKey = ts => new Intl.DateTimeFormat('pt-PT', { timeZone: TZ, day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(ts));
+  const hm = ts => new Intl.DateTimeFormat('pt-PT', { timeZone: TZ, hour: '2-digit', minute: '2-digit' }).format(new Date(ts));
   function when(ts) {
     if (!ts) return '';
-    if (isHist(ts)) return 'histórico';
-    const d = new Date(ts);
-    const today = dayKey(Date.now());
+    if (isHist(ts)) return 'antes';
     const k = dayKey(ts);
-    const hm = new Intl.DateTimeFormat('pt-PT', { timeZone: TZ, hour: '2-digit', minute: '2-digit' }).format(d);
-    if (k === today) return hm;
-    return k.slice(0, 5) + ' ' + hm;
+    if (k === dayKey(Date.now())) return hm(ts);
+    if (k === dayKey(Date.now() - 864e5)) return 'Ontem';
+    return k.slice(0, 5);
   }
   function dayLabel(ts) {
-    if (isHist(ts)) return 'Histórico, antes do dashboard (hora aproximada)';
+    if (isHist(ts)) return 'Antes do dashboard · hora aproximada';
     const k = dayKey(ts);
     if (k === dayKey(Date.now())) return 'Hoje';
     if (k === dayKey(Date.now() - 864e5)) return 'Ontem';
@@ -257,6 +317,17 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr; }
   }
   const phone = w => '+' + String(w).replace(/^(\d{3})(\d{2})(\d{3})(\d{4})$/, '$1 $2 $3 $4');
   const roleName = { influencer: 'influencer', prospect: 'anfitrião novo', host: 'parceiro', guest: 'hóspede', awaiting_menu: 'no menu' };
+  const displayName = c => c.hotel || c.name || phone(c.wa_id);
+  const PALETTE = ['#7B5CFA', '#F2558C', '#1FA67A', '#F08A24', '#2F7FE0', '#B45CF0', '#E5484D', '#0E9AA7'];
+  function avatar(c, size = '') {
+    const name = displayName(c);
+    const letters = /^\+/.test(name) ? name.replace(/\D/g, '').slice(-2) : name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+    let h = 0; for (const ch of String(c.wa_id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    const a = PALETTE[h % PALETTE.length], b = PALETTE[(h >> 3) % PALETTE.length];
+    const recent = c.last_dir === 'in' && Date.now() - Date.parse(c.last_at) < 15 * 60e3;
+    const dot = c.last_out_status === 'failed' ? '<i class="dot bad"></i>' : recent ? '<i class="dot"></i>' : c.unread > 0 ? '<i class="dot warn"></i>' : '';
+    return `<div class="av ${size}" style="background:linear-gradient(135deg,${a},${b})">${esc(letters || '?')}${dot}</div>`;
+  }
   function statusMark(s) {
     switch (s) {
       case 'read': return '<span class="st read" title="Lida">✓✓ lida</span>';
@@ -268,22 +339,31 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr; }
       default: return '<span class="st" title="Sem estado registado">· sem estado</span>';
     }
   }
-  const displayName = c => c.hotel || c.name || phone(c.wa_id);
 
   // ---------- roster ----------
+  const FILTERS = {
+    all: () => true,
+    unread: c => c.unread > 0,
+    replied: c => c.has_inbound,
+    influencer: c => c.role === 'influencer',
+    failed: c => c.last_out_status === 'failed',
+    noreply: c => !c.has_inbound
+  };
   function matches(c) {
     const q = $('#q').value.trim().toLowerCase();
-    if (q && !(`${c.name || ''} ${c.hotel || ''} ${c.wa_id}`.toLowerCase().includes(q.replace(/[\s+]/g, '')) || `${c.name || ''} ${c.hotel || ''}`.toLowerCase().includes(q))) return false;
-    switch (filter) {
-      case 'unread': return c.unread > 0;
-      case 'replied': return c.has_inbound;
-      case 'influencer': return c.role === 'influencer';
-      case 'failed': return c.last_out_status === 'failed';
-      case 'noreply': return !c.has_inbound;
-      default: return true;
+    if (q) {
+      const digits = q.replace(/\D/g, '');
+      const hay = `${c.name || ''} ${c.hotel || ''}`.toLowerCase();
+      if (!hay.includes(q) && !(digits && String(c.wa_id).includes(digits))) return false;
     }
+    return FILTERS[filter](c);
   }
   function renderRows(flashIds = new Set()) {
+    for (const [k, fn] of Object.entries(FILTERS)) {
+      const n = contacts.filter(fn).length;
+      const el = document.querySelector(`[data-n="${k}"]`);
+      if (el) el.textContent = n ? n : '';
+    }
     const list = contacts.filter(matches);
     if (!list.length) {
       $('#rows').innerHTML = `<div class="empty">${contacts.length ? 'Nenhuma conversa com este filtro.' : 'Ainda não há conversas. Assim que alguém escrever para o número, aparece aqui.'}</div>`;
@@ -292,33 +372,30 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr; }
     $('#rows').innerHTML = list.map(c => {
       const tags = [];
       if (c.is_new && c.has_inbound) tags.push('<span class="tag novo">novo</span>');
-      if (c.role && roleName[c.role]) tags.push(`<span class="tag ${esc(c.role)}">${esc(roleName[c.role])}</span>`);
+      else if (c.role && roleName[c.role]) tags.push(`<span class="tag ${esc(c.role)}">${esc(roleName[c.role])}</span>`);
       if (c.last_out_status === 'failed') tags.push('<span class="tag failed">falhou</span>');
       const prefix = c.last_dir === 'out' ? 'Nós: ' : '';
-      return `<button class="row${flashIds.has(c.wa_id) ? ' flash' : ''}" data-id="${esc(c.wa_id)}" aria-current="${c.wa_id === current}">
-        <span class="who">${esc(displayName(c))}</span>
-        <span class="when">${esc(when(c.last_at))}</span>
-        <span class="last">${esc(prefix + (c.last_text || (c.last_out_status ? 'Mensagem enviada' : '')))}</span>
-        <span class="meta">${c.last_dir === 'out' ? statusMark(c.last_out_status) : ''}${c.unread > 0 ? `<span class="badge">${c.unread}</span>` : ''}</span>
-        <span class="num">${esc(phone(c.wa_id))}${c.hotel && c.name && c.name !== c.hotel ? ' · ' + esc(c.name) : ''} ${tags.join(' ')}</span>
+      const last = c.last_text || (c.last_out_status ? 'Mensagem enviada' : '');
+      return `<button class="row${c.unread > 0 ? ' unread' : ''}${flashIds.has(c.wa_id) ? ' flash' : ''}" data-id="${esc(c.wa_id)}" aria-current="${c.wa_id === current}">
+        ${avatar(c)}
+        <span class="txt">
+          <span class="l1"><span class="name">${esc(displayName(c))}</span><span class="when">${esc(when(c.last_at))}</span></span>
+          <span class="l2"><span class="last">${esc(prefix + last)}</span>${tags.join('')}${c.unread > 0 ? `<span class="badge">${c.unread}</span>` : ''}</span>
+        </span>
       </button>`;
     }).join('');
   }
   function renderStats(s) {
     const by = s.by_status || {};
-    const item = (label, val, cls = '') => `<span class="stat ${cls}">${label} <b>${val ?? 0}</b></span>`;
-    $('#stats').innerHTML = [
-      item('Conversas', s.contacts),
-      item('Responderam', s.replied),
-      item('Por ler', s.unread, s.unread > 0 ? 'hot' : ''),
-      item('Recebidas 24h', s.in_24h),
-      item('Enviadas 24h', s.out_24h),
-      item('Entregues', (by.delivered || 0) + (by.read || 0)),
-      item('Lidas', by.read),
-      item('Falhadas', by.failed, by.failed > 0 ? 'bad' : '')
+    const k = (label, val, cls = '') => `<div class="kpi ${cls}"><b>${val ?? 0}</b><span>${label}</span></div>`;
+    $('#kpis').innerHTML = [
+      k('Por ler', s.unread, s.unread > 0 ? 'hot' : ''),
+      k('Recebidas 24h', s.in_24h),
+      k('Lidas 24h', by.read || 0),
+      k('Falhadas 24h', by.failed || 0, by.failed > 0 ? 'bad' : '')
     ].join('');
-    unreadTotal = Number(s.unread) || 0;
-    document.title = (unreadTotal ? `(${unreadTotal}) ` : '') + 'IndicoStay WhatsApp Inbox';
+    const unread = Number(s.unread) || 0;
+    document.title = (unread ? `(${unread}) ` : '') + 'IndicoStay WhatsApp Inbox';
   }
 
   // ---------- thread ----------
@@ -328,8 +405,16 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr; }
     document.body.classList.add('chat-open');
     const c = contacts.find(x => x.wa_id === id) || { wa_id: id };
     $('#thead').hidden = false;
+    $('#footBar').hidden = false;
+    $('#tAv').outerHTML = avatar(c, 'lg').replace('class="av lg"', 'class="av lg" id="tAv"');
     $('#tName').textContent = displayName(c);
-    $('#tSub').innerHTML = [phone(id), c.name && c.name !== displayName(c) ? 'perfil: ' + esc(c.name) : '', c.role && roleName[c.role] ? esc(roleName[c.role]) : '', c.first_seen && !isHist(c.first_seen) ? 'desde ' + esc(when(c.first_seen)) : ''].filter(Boolean).join(' · ');
+    const recent = c.last_dir === 'in' && Date.now() - Date.parse(c.last_at) < 15 * 60e3;
+    $('#tSub').innerHTML = [
+      recent ? '<span style="color:var(--good);font-weight:700">● ativo agora</span>' : '',
+      `<span class="mono">${esc(phone(id))}</span>`,
+      c.name && c.name !== displayName(c) ? 'perfil: ' + esc(c.name) : '',
+      c.role && roleName[c.role] ? `<span class="tag ${esc(c.role)}">${esc(roleName[c.role])}</span>` : ''
+    ].filter(Boolean).join(' · ');
     document.querySelectorAll('.row').forEach(r => r.setAttribute('aria-current', String(r.dataset.id === id)));
     lastMsgSig = '';
     await loadThread(true);
@@ -342,28 +427,39 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr; }
     const id = current;
     const msgs = await api('messages', { wa_id: id });
     if (id !== current) return;
-    const sig = msgs.map(m => m.id + (m.status || '') + (m.body || '').length).join('|');
+    const lastIn = msgs.length && msgs[msgs.length - 1].direction === 'in' && Date.now() - Date.parse(msgs[msgs.length - 1].created_at) < 90e3;
+    const sig = msgs.map(m => m.id + (m.status || '') + (m.body || '').length).join('|') + (lastIn ? 't' : '');
     if (sig === lastMsgSig) return;
     const box = $('#msgs');
-    const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+    const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 140;
     lastMsgSig = sig;
-    if (!msgs.length) { box.innerHTML = '<div class="placeholder"><p>Sem mensagens guardadas para este número.</p></div>'; return; }
+    if (!msgs.length) { box.innerHTML = '<div class="welcome"><p>Sem mensagens guardadas para este número.</p></div>'; return; }
+    const c = contacts.find(x => x.wa_id === id) || { wa_id: id };
+    const them = c.name || displayName(c);
+    const themAv = avatar({ ...c, last_dir: '', unread: 0, last_out_status: '' }, 'sm');
+    const usAv = '<div class="av sm brand">IS</div>';
     let lastDay = '';
-    box.innerHTML = msgs.map(m => {
+    let html = msgs.map(m => {
       const dl = dayLabel(m.created_at);
       const dayHtml = dl !== lastDay ? `<div class="day">${esc(dl)}</div>` : '';
       lastDay = dl;
       const out = m.direction === 'out';
       const ghost = !m.body;
       const body = m.body || (out ? 'Mensagem enviada antes de o dashboard existir. O WhatsApp só devolveu o estado de entrega.' : '[sem texto]');
-      const src = out ? (m.source === 'campanha' ? 'campanha' : m.source && m.source !== 'desconhecido' ? m.source : 'enviada') : '';
-      const t = isHist(m.created_at) ? '' : when(m.status_at && out ? m.created_at : m.created_at);
-      return dayHtml + `<div class="msg ${out ? 'out' : 'in'}${m.status === 'failed' ? ' failed' : ''}">
-        <div class="body${ghost ? ' ghost' : ''}">${esc(body)}</div>
-        ${m.error ? `<div class="errtxt">${esc(m.error)}</div>` : ''}
-        <div class="foot"><span class="src">${esc(src)}</span><span>${esc(t)}</span>${out ? statusMark(m.status) : ''}</div>
+      const who = out ? (m.source === 'campanha' ? 'Campanha' : /Sara/.test(m.source || '') ? 'Sara · IA' : 'IndicoStay') : them;
+      const t = isHist(m.created_at) ? '' : hm(m.created_at);
+      return dayHtml + `<div class="line ${out ? 'out' : 'in'}${m.status === 'failed' ? ' failed' : ''}">
+        ${out ? usAv : themAv}
+        <div class="bubble">
+          <div class="hd"><span>${esc(who)}</span><span>${esc(t)}</span></div>
+          <div class="body${ghost ? ' ghost' : ''}">${esc(body)}</div>
+          ${m.error ? `<div class="errtxt">${esc(m.error)}</div>` : ''}
+          ${out ? `<div class="ft">${statusMark(m.status)}</div>` : ''}
+        </div>
       </div>`;
     }).join('');
+    if (lastIn) html += `<div class="typing"><div class="av sm brand">IS</div><span class="dots"><i></i><i></i><i></i></span>Sara está a responder…</div>`;
+    box.innerHTML = html;
     if (scroll || nearBottom) box.scrollTop = box.scrollHeight;
   }
 
@@ -388,8 +484,9 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr; }
   }
   function updateNotifyBtn() {
     const b = $('#notifyBtn');
-    if (!('Notification' in window)) { b.textContent = 'Som ativo'; return; }
-    b.textContent = Notification.permission === 'granted' ? 'Alertas ativos' : Notification.permission === 'denied' ? 'Alertas bloqueados no browser' : 'Ativar alertas';
+    const on = 'Notification' in window && Notification.permission === 'granted';
+    b.classList.toggle('on', on);
+    b.title = on ? 'Alertas ativos' : ('Notification' in window && Notification.permission === 'denied') ? 'Alertas bloqueados no browser' : 'Ativar alertas de som e popup';
   }
 
   // ---------- polling ----------
@@ -401,14 +498,10 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr; }
         for (const c of cs) {
           if (c.last_dir !== 'in') continue;
           const prev = seen.get(c.wa_id);
-          if (!prev || Date.parse(c.last_at) > prev) {
-            flash.add(c.wa_id);
-            notify(c, !prev);
-          }
+          if (prev === undefined || Date.parse(c.last_at) > prev) { flash.add(c.wa_id); notify(c, prev === undefined); }
         }
       }
-      seen = new Map(cs.filter(c => c.last_dir === 'in').map(c => [c.wa_id, Date.parse(c.last_at)]));
-      for (const c of cs) if (!seen.has(c.wa_id)) seen.set(c.wa_id, Date.parse(c.last_at));
+      seen = new Map(cs.map(c => [c.wa_id, Date.parse(c.last_at)]));
       contacts = cs;
       renderStats(st);
       renderRows(flash);
@@ -416,9 +509,7 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr; }
       if (current) {
         await loadThread(false);
         const c = contacts.find(x => x.wa_id === current);
-        if (c && c.unread > 0 && document.visibilityState === 'visible' && document.body.classList.contains('chat-open')) {
-          api('read', { wa_id: current }).catch(() => {});
-        }
+        if (c && c.unread > 0 && document.visibilityState === 'visible' && document.body.classList.contains('chat-open')) api('read', { wa_id: current }).catch(() => {});
       }
     } catch (e) {
       if (e.code === 401) return logout('O código deixou de ser válido. Entre outra vez.');
@@ -427,14 +518,12 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr; }
   }
   function setLive(ok) {
     $('#live').classList.toggle('off', !ok);
-    $('#liveTxt').textContent = ok ? 'ao vivo · ' + new Intl.DateTimeFormat('pt-PT', { timeZone: TZ, hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date()) : 'sem ligação, a tentar de novo';
+    $('#meDot').classList.toggle('bad', !ok);
+    $('#liveTxt').textContent = ok ? 'ao vivo' : 'sem ligação';
+    $('#live').title = ok ? 'Atualizado às ' + new Intl.DateTimeFormat('pt-PT', { timeZone: TZ, hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date()) : 'A tentar ligar de novo';
   }
   let timer = null;
-  function startPolling() {
-    clearInterval(timer);
-    refresh();
-    timer = setInterval(refresh, 4000);
-  }
+  function startPolling() { clearInterval(timer); refresh(); timer = setInterval(refresh, 4000); }
 
   // ---------- auth ----------
   function showApp() { $('#login').hidden = true; $('#app').hidden = false; updateNotifyBtn(); startPolling(); if (current) openThread(current, { markRead: false }); }
@@ -444,7 +533,6 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr; }
   }
   $('#loginForm').addEventListener('submit', async e => {
     e.preventDefault();
-    // O codigo e hexadecimal: limpa espacos, aspas, crases e quebras de linha que vem ao copiar do chat.
     token = $('#tokenInput').value.toLowerCase().replace(/[^0-9a-f]/g, '');
     $('#loginErr').textContent = '';
     if (token.length !== 32) { $('#loginErr').textContent = `O código tem 32 caracteres e este tem ${token.length}. Copie-o outra vez.`; return; }
@@ -460,17 +548,22 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr; }
 
   // ---------- interactions ----------
   $('#rows').addEventListener('click', e => { const r = e.target.closest('.row'); if (r) openThread(r.dataset.id); });
-  $('#chips').addEventListener('click', e => {
-    const b = e.target.closest('.chip'); if (!b) return;
+  $('#tabs').addEventListener('click', e => {
+    const b = e.target.closest('.tab'); if (!b) return;
     filter = b.dataset.f;
-    document.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
     renderRows();
   });
   $('#q').addEventListener('input', () => renderRows());
   $('#backBtn').addEventListener('click', () => { document.body.classList.remove('chat-open'); current = null; history.replaceState(null, '', location.pathname); renderRows(); });
+  $('#reloadBtn').addEventListener('click', () => { lastMsgSig = ''; refresh(); });
+  $('#copyBtn').addEventListener('click', async () => {
+    const t = current ? phone(current) : '';
+    try { await navigator.clipboard.writeText(t); $('#copyBtn').title = 'Copiado: ' + t; } catch (e) { $('#copyBtn').title = t; }
+  });
   window.addEventListener('hashchange', () => { const id = location.hash.replace('#', '').replace(/\D/g, ''); if (id && id !== current) openThread(id); });
 
-  if (token) showApp(); else { $('#login').hidden = false; }
+  if (token) showApp(); else $('#login').hidden = false;
 })();
 </script>
 </body>
