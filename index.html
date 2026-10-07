@@ -148,7 +148,7 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr; }
     <h1>Inbox WhatsApp da IndicoStay</h1>
     <p>Conversas do número oficial +258 86 517 8862, com o estado de entrega de cada mensagem, ao vivo.</p>
     <label for="tokenInput" class="tag" style="justify-self:start">Código de acesso</label>
-    <input id="tokenInput" type="password" autocomplete="current-password" placeholder="Cole aqui o código" required>
+    <input id="tokenInput" type="text" name="wa-inbox-code" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-1p-ignore data-lpignore="true" placeholder="Cole aqui o código" required>
     <div class="err" id="loginErr"></div>
     <button class="btn" type="submit">Entrar</button>
   </form>
@@ -443,10 +443,12 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr; }
   }
   $('#loginForm').addEventListener('submit', async e => {
     e.preventDefault();
-    token = $('#tokenInput').value.trim();
+    // O codigo e hexadecimal: limpa espacos, aspas, crases e quebras de linha que vem ao copiar do chat.
+    token = $('#tokenInput').value.toLowerCase().replace(/[^0-9a-f]/g, '');
     $('#loginErr').textContent = '';
+    if (token.length !== 32) { $('#loginErr').textContent = `O código tem 32 caracteres e este tem ${token.length}. Copie-o outra vez.`; return; }
     try { await api('stats'); store.set('wa_inbox_token', token); showApp(); }
-    catch (err) { $('#loginErr').textContent = err.code === 401 ? 'Código errado. Confirme com o Dellon.' : 'Não foi possível ligar ao servidor. Tente outra vez.'; }
+    catch (err) { $('#loginErr').textContent = err.code === 401 ? 'Código errado. Confirme com o Dellon.' : 'Não foi possível ligar ao servidor (' + (err.message || 'erro de rede') + '). Tente outra vez.'; }
   });
   $('#logoutBtn').addEventListener('click', () => logout());
   $('#notifyBtn').addEventListener('click', async () => {
