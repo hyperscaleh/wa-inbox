@@ -63,7 +63,17 @@ button { font: inherit; color: inherit; }
 
 /* ---------- app frame ---------- */
 #app { position: relative; z-index: 1; height: 100%; padding: 22px; }
-.frame { height: 100%; max-width: 1380px; margin: 0 auto; background: var(--card); border-radius: 28px; box-shadow: var(--shadow); display: grid; grid-template-columns: minmax(310px, 370px) 1fr; overflow: hidden; }
+.frame { height: 100%; max-width: 1480px; margin: 0 auto; background: var(--card); border-radius: 28px; box-shadow: var(--shadow); display: grid; grid-template-columns: 76px minmax(310px, 370px) 1fr; overflow: hidden; }
+
+/* rail: WhatsApp, Chamadas, Email */
+nav.rail { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 20px 0; border-right: 1px solid var(--line); background: var(--soft); }
+nav.rail .logo { margin-bottom: 14px; }
+.rbtn { position: relative; width: 58px; border: 0; background: transparent; border-radius: 16px; padding: 9px 0 7px; display: grid; justify-items: center; gap: 3px; cursor: pointer; color: var(--muted); font-size: 10.5px; font-weight: 700; }
+.rbtn svg { width: 22px; height: 22px; }
+.rbtn:hover { color: var(--violet); background: var(--card); }
+.rbtn[aria-pressed="true"] { color: var(--violet); background: var(--card); box-shadow: 0 6px 16px -10px rgba(70, 50, 140, 0.45); }
+.rbtn .rb { position: absolute; top: 4px; right: 6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--grad); color: #fff; font: 600 10px/18px var(--f-mono); }
+.rbtn .rb:empty { display: none; }
 
 /* sidebar */
 aside.side { min-height: 0; display: grid; grid-template-rows: auto auto auto auto 1fr; border-right: 1px solid var(--line); }
@@ -187,13 +197,80 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
 .legend div { display: flex; gap: 10px; align-items: center; }
 .legend .st { width: 38px; justify-content: center; font-weight: 700; }
 
+/* ---------- rename ---------- */
+.name-edit { border: 0; background: none; padding: 4px; margin-left: 4px; color: var(--muted); cursor: pointer; border-radius: 8px; vertical-align: middle; }
+.name-edit:hover { color: var(--violet); background: var(--violet-soft); }
+.name-edit svg { width: 15px; height: 15px; display: block; }
+.thead h2 { display: flex; align-items: center; min-width: 0; }
+.thead h2 .nm { overflow: hidden; text-overflow: ellipsis; }
+dialog.sheet { border: 0; border-radius: 24px; padding: 24px; width: min(420px, calc(100vw - 32px)); box-shadow: var(--shadow); color: var(--ink); }
+dialog.sheet::backdrop { background: rgba(27, 24, 48, 0.35); backdrop-filter: blur(3px); }
+dialog.sheet h3 { margin: 0 0 4px; font-size: 19px; font-weight: 800; letter-spacing: -0.01em; }
+dialog.sheet p { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
+dialog.sheet input { width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--soft); color: var(--ink); font: 500 15px var(--f-ui); }
+dialog.sheet .acts { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+.ghost-btn { border: 1px solid var(--line); background: var(--card); border-radius: 14px; padding: 11px 14px; font-weight: 700; cursor: pointer; }
+.ghost-btn:hover { border-color: var(--violet); color: var(--violet); }
+.ghost-btn.danger { color: var(--bad); }
+
+/* ---------- calls ---------- */
+.pane-body { min-height: 0; overflow-y: auto; padding: 22px; display: grid; gap: 16px; align-content: start; }
+.cardx { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 16px 18px; box-shadow: 0 8px 20px -18px rgba(40, 30, 90, 0.35); }
+.cardx h4 { margin: 0 0 10px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.cardx .summary { font-size: 14px; line-height: 1.6; }
+.player { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.player audio { flex: 1; min-width: 240px; height: 40px; }
+.player a { font-size: 12.5px; font-weight: 700; color: var(--violet); text-decoration: none; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.fact { background: var(--soft); border-radius: 14px; padding: 10px 12px; display: grid; gap: 2px; min-width: 0; }
+.fact span { font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.fact b { font-size: 13.5px; font-weight: 700; overflow-wrap: anywhere; }
+.fact b.good { color: var(--good); } .fact b.bad { color: var(--bad); }
+.kv { display: grid; grid-template-columns: minmax(130px, 34%) 1fr; gap: 0; }
+.kv div { padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; overflow-wrap: anywhere; }
+.kv div:nth-child(odd) { color: var(--muted); font-weight: 600; padding-right: 12px; }
+.kv div:nth-last-child(-n+2) { border-bottom: 0; }
+.tscript { display: grid; gap: 10px; }
+.tscript .line .bubble { max-width: min(560px, 82%); }
+.tts { border: 0; background: none; padding: 0; font: 600 11px var(--f-mono); color: inherit; opacity: 0.8; cursor: pointer; }
+.tts:hover { text-decoration: underline; }
+.tag.meeting { background: #E6F6EF; color: #17805A; }
+.tag.missed { background: var(--bad-soft); color: var(--bad); }
+.tag.answered { background: var(--violet-soft); color: var(--violet); }
+.tag.live { background: var(--grad); color: #fff; }
+.dirm { font-size: 11px; color: var(--muted); font-weight: 700; }
+.row .dur { flex: none; font: 500 11.5px var(--f-mono); color: var(--muted); }
+
+/* ---------- email ---------- */
+.mail { background: var(--card); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; box-shadow: 0 8px 20px -18px rgba(40, 30, 90, 0.35); }
+.mail.out { border-color: color-mix(in srgb, var(--violet) 25%, var(--line)); background: color-mix(in srgb, var(--violet-soft) 40%, var(--card)); }
+.mail .mh { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px 10px; }
+.mail .mh .who { min-width: 0; flex: 1; }
+.mail .mh b { display: block; font-size: 14px; }
+.mail .mh span { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.mail .mh time { flex: none; font-size: 12px; color: var(--muted); font-weight: 600; }
+.mail .subj { padding: 0 16px 8px; font-weight: 800; font-size: 14.5px; }
+.mail .mb { padding: 0 16px 16px; font-size: 13.5px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.mail iframe { width: 100%; border: 0; display: block; min-height: 80px; background: #fff; }
+.mail-compose { padding: 12px 22px 18px; display: grid; gap: 8px; border-top: 1px solid var(--line); background: var(--card); }
+.mail-compose .fld { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); font-weight: 700; }
+.mail-compose .fld input { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; background: var(--soft); color: var(--ink); font: 500 13.5px var(--f-ui); }
+.mail-compose textarea { width: 100%; border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; resize: vertical; min-height: 96px; max-height: 300px; font: 500 14px/1.5 var(--f-ui); color: var(--ink); background: var(--card); }
+.mail-compose .row2 { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.side-new { border: 0; border-radius: 999px; padding: 0 14px; height: 40px; background: var(--grad); color: #fff; font-weight: 700; font-size: 12.5px; cursor: pointer; white-space: nowrap; }
+
 /* ---------- phone ---------- */
 @media (max-width: 820px) {
-  #app { padding: 0; }
+  #app { padding: 0 0 62px; }
   .frame { border-radius: 0; grid-template-columns: 1fr; }
+  nav.rail { position: fixed; z-index: 5; left: 0; right: 0; bottom: 0; height: 62px; flex-direction: row; justify-content: space-around; padding: 0 8px; border-right: 0; border-top: 1px solid var(--line); background: var(--card); }
+  nav.rail .logo { display: none; }
+  .rbtn { padding: 6px 0 4px; }
   aside.side { border-right: 0; }
   body.chat-open aside.side { display: none; }
   body:not(.chat-open) section.thread { display: none; }
+  .pane-body { padding: 14px; }
+  .mail-compose { padding: 10px 14px 14px; }
   .thead { padding: 12px 14px; }
   .thead .back { display: grid; }
   .msgs { padding: 16px 14px; }
@@ -208,8 +285,8 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
 <div id="login" hidden>
   <form class="login-card" id="loginForm">
     <div class="av lg brand">IS</div>
-    <h1>Inbox WhatsApp da IndicoStay</h1>
-    <p>Todas as conversas do número oficial +258 86 517 8862, com o estado de entrega de cada mensagem, ao vivo.</p>
+    <h1>Central da IA da IndicoStay</h1>
+    <p>WhatsApp do número +258 86 517 8862, as chamadas da Sara e o email info@indicostay.com, ao vivo e num só sítio.</p>
     <label for="tokenInput">Código de acesso</label>
     <input id="tokenInput" type="text" name="wa-inbox-code" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" data-1p-ignore data-lpignore="true" placeholder="Cole aqui o código" required>
     <div class="err" id="loginErr"></div>
@@ -219,7 +296,22 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
 
 <div id="app" hidden>
   <div class="frame">
-    <aside class="side">
+    <nav class="rail" id="rail" aria-label="Canais">
+      <div class="av brand logo">IS</div>
+      <button class="rbtn" data-view="wa" aria-pressed="true" type="button" title="Conversas de WhatsApp">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l1.7-5.1A8.5 8.5 0 1 1 8.1 19.3L3 21z"/><path d="M9 9.5c.3 1.6 1.9 3.7 3.8 4.5l1.2-1.1 2 .8c-.2 1-1 1.7-2 1.7-3.3 0-6.5-3.2-6.5-6.5 0-1 .7-1.8 1.7-2l.8 2L9 9.5z"/></svg>
+        WhatsApp<span class="rb" id="rbWa"></span>
+      </button>
+      <button class="rbtn" data-view="calls" aria-pressed="false" type="button" title="Chamadas da Sara">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>
+        Chamadas<span class="rb" id="rbCalls"></span>
+      </button>
+      <button class="rbtn" data-view="mail" aria-pressed="false" type="button" title="Email info@indicostay.com">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
+        Email<span class="rb" id="rbMail"></span>
+      </button>
+    </nav>
+    <aside class="side" data-view="wa">
       <div class="me">
         <div class="av brand">IS<i class="dot" id="meDot"></i></div>
         <div class="who"><b>IndicoStay</b><span><span class="mono">+258 86 517 8862</span> · <span id="agentName">…</span></span></div>
@@ -252,13 +344,13 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
       <div class="rows" id="rows"><div class="empty">A carregar conversas…</div></div>
     </aside>
 
-    <section class="thread" id="thread">
+    <section class="thread" id="thread" data-view="wa">
       <div class="thead" id="thead" hidden>
         <button class="icon-btn back" id="backBtn" type="button" aria-label="Voltar à lista">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
         </button>
         <div class="av lg" id="tAv"></div>
-        <div class="who"><h2 id="tName"></h2><div class="sub" id="tSub"></div></div>
+        <div class="who"><h2><span class="nm" id="tName"></span><button class="name-edit" id="tRename" type="button" title="Mudar o nome que a equipa vê" aria-label="Mudar nome"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button></h2><div class="sub" id="tSub"></div></div>
         <div class="tools">
           <button class="take" id="takeBtn" type="button">Assumir conversa</button>
           <button class="icon-btn" id="copyBtn" type="button" title="Copiar número" aria-label="Copiar número">
@@ -291,8 +383,96 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
         <div class="hint"><span id="windowTxt"></span><span class="err" id="sendErr"></span><span id="pauseTxt">Ao enviar, a Sara fica em pausa nesta conversa.</span></div>
       </form>
     </section>
+
+    <!-- ===== CHAMADAS ===== -->
+    <aside class="side" data-view="calls" hidden>
+      <div class="me">
+        <div class="av brand">IS</div>
+        <div class="who"><b>Chamadas da Sara</b><span>Voz · <span class="mono">+351 300 602 521</span></span></div>
+        <button class="icon-btn" id="cReload" type="button" title="Atualizar agora" aria-label="Atualizar chamadas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>
+        </button>
+      </div>
+      <div class="kpis" id="cKpis"></div>
+      <div class="search">
+        <label for="cq"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="cq" type="search" placeholder="Procurar hotel, nome ou número"></label>
+      </div>
+      <div class="tabs" id="cTabs" role="toolbar" aria-label="Filtros de chamadas">
+        <button class="tab" data-f="all" aria-pressed="true">Todas<span class="n" data-cn="all"></span></button>
+        <button class="tab" data-f="meeting" aria-pressed="false">Reunião marcada<span class="n" data-cn="meeting"></span></button>
+        <button class="tab" data-f="answered" aria-pressed="false">Atendidas<span class="n" data-cn="answered"></span></button>
+        <button class="tab" data-f="missed" aria-pressed="false">Não atendidas<span class="n" data-cn="missed"></span></button>
+        <button class="tab" data-f="inbound" aria-pressed="false">Recebidas<span class="n" data-cn="inbound"></span></button>
+      </div>
+      <div class="rows" id="cRows"><div class="empty">A carregar chamadas…</div></div>
+    </aside>
+    <section class="thread" data-view="calls" hidden style="grid-template-rows:auto 1fr">
+      <div class="thead" id="cHead" hidden>
+        <button class="icon-btn back" data-back type="button" aria-label="Voltar à lista"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+        <div class="av lg" id="cAv"></div>
+        <div class="who"><h2><span class="nm" id="cName"></span><button class="name-edit" id="cRename" type="button" title="Mudar o nome que a equipa vê" aria-label="Mudar nome"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button></h2><div class="sub" id="cSub"></div></div>
+        <div class="tools">
+          <button class="take" id="cToWa" type="button" hidden>Abrir no WhatsApp</button>
+          <button class="icon-btn" id="cCopy" type="button" title="Copiar número" aria-label="Copiar número"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg></button>
+        </div>
+      </div>
+      <div class="pane-body" id="cBody">
+        <div class="welcome"><div class="av lg brand">IS</div><h3>Escolha uma chamada</h3><p>Gravação, resumo, dados recolhidos pela Sara e a transcrição completa de cada chamada.</p></div>
+      </div>
+    </section>
+
+    <!-- ===== EMAIL ===== -->
+    <aside class="side" data-view="mail" hidden>
+      <div class="me">
+        <div class="av brand">IS</div>
+        <div class="who"><b>Email</b><span class="mono">info@indicostay.com</span></div>
+        <button class="side-new" id="mNew" type="button">Novo email</button>
+      </div>
+      <div class="kpis" id="mKpis" style="grid-template-columns:repeat(2,1fr)"></div>
+      <div class="search">
+        <label for="mq"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="mq" type="search" placeholder="Procurar remetente ou assunto"></label>
+      </div>
+      <div class="tabs" id="mTabs" role="toolbar" aria-label="Filtros de email">
+        <button class="tab" data-f="all" aria-pressed="true">Todos<span class="n" data-mn="all"></span></button>
+        <button class="tab" data-f="unread" aria-pressed="false">Por ler<span class="n" data-mn="unread"></span></button>
+        <button class="tab" data-f="sent" aria-pressed="false">Respondidos<span class="n" data-mn="sent"></span></button>
+      </div>
+      <div class="rows" id="mRows"><div class="empty">A carregar emails…</div></div>
+    </aside>
+    <section class="thread" data-view="mail" hidden>
+      <div class="thead" id="mHead" hidden>
+        <button class="icon-btn back" data-back type="button" aria-label="Voltar à lista"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+        <div class="av lg" id="mAv"></div>
+        <div class="who"><h2><span class="nm" id="mName"></span></h2><div class="sub" id="mSub"></div></div>
+      </div>
+      <div class="pane-body" id="mBody">
+        <div class="welcome"><div class="av lg brand">IS</div><h3>Escolha um email</h3><p>Os emails que chegam a info@indicostay.com aparecem aqui. Pode responder daqui, sai do mesmo endereço.</p></div>
+      </div>
+      <form class="mail-compose" id="mCompose" hidden>
+        <div class="fld">Para <input id="mTo" type="email" autocomplete="off" required></div>
+        <div class="fld">Assunto <input id="mSubj" type="text" autocomplete="off"></div>
+        <textarea id="mText" placeholder="Escreva a resposta…" aria-label="Mensagem"></textarea>
+        <div class="row2"><span>Sai de <b class="mono">info@indicostay.com</b> · <span class="err" id="mErr"></span></span><button class="btn" id="mSend" type="submit">Enviar email</button></div>
+      </form>
+    </section>
   </div>
 </div>
+
+<dialog class="sheet" id="renameDlg">
+  <form method="dialog" id="renameForm">
+    <h3>Nome para a equipa</h3>
+    <p id="renameHint">Só a equipa vê este nome. Fica igual no WhatsApp e nas chamadas deste número.</p>
+    <input id="renameInput" type="text" maxlength="80" autocomplete="off" placeholder="Ex.: Fred, Hotel 2010">
+    <div class="err" id="renameErr"></div>
+    <div class="acts">
+      <button class="ghost-btn danger" id="renameClear" type="button">Repor original</button>
+      <button class="ghost-btn" value="cancel" type="submit" formnovalidate>Cancelar</button>
+      <button class="btn" id="renameSave" type="button">Guardar</button>
+    </div>
+  </form>
+</dialog>
 
 <script>
 (() => {
@@ -358,13 +538,14 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
   }
   const phone = w => '+' + String(w).replace(/^(\d{3})(\d{2})(\d{3})(\d{4})$/, '$1 $2 $3 $4');
   const roleName = { influencer: 'influencer', prospect: 'anfitrião novo', host: 'parceiro', guest: 'hóspede', awaiting_menu: 'no menu' };
-  const displayName = c => c.hotel || c.name || phone(c.wa_id);
+  // Nome escolhido pela equipa primeiro, depois o hotel, depois o nome do perfil do WhatsApp.
+  const displayName = c => c.custom_name || c.hotel || c.name || phone(c.wa_id);
   const PALETTE = ['#7B5CFA', '#F2558C', '#1FA67A', '#F08A24', '#2F7FE0', '#B45CF0', '#E5484D', '#0E9AA7'];
   function avatar(c, size = '') {
     const name = displayName(c);
     const letters = /^\+/.test(name) ? name.replace(/\D/g, '').slice(-2) : name.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
     let h = 0; for (const ch of String(c.wa_id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-    const a = PALETTE[h % PALETTE.length], b = PALETTE[(h >> 3) % PALETTE.length];
+    const a = PALETTE[h % PALETTE.length], b = PALETTE[(h >>> 3) % PALETTE.length];
     const recent = c.last_dir === 'in' && Date.now() - Date.parse(c.last_at) < 15 * 60e3;
     const dot = c.last_out_status === 'failed' ? '<i class="dot bad"></i>' : recent ? '<i class="dot"></i>' : c.unread > 0 ? '<i class="dot warn"></i>' : '';
     return `<div class="av ${size}" style="background:linear-gradient(135deg,${a},${b})">${esc(letters || '?')}${dot}</div>`;
@@ -411,7 +592,7 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
     const q = $('#q').value.trim().toLowerCase();
     if (q) {
       const digits = q.replace(/\D/g, '');
-      const hay = `${c.name || ''} ${c.hotel || ''}`.toLowerCase();
+      const hay = `${c.custom_name || ''} ${c.name || ''} ${c.hotel || ''}`.toLowerCase();
       if (!hay.includes(q) && !(digits && String(c.wa_id).includes(digits))) return false;
     }
     return FILTERS[filter](c);
@@ -456,7 +637,8 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
     ].join('');
     if (s.agent) { agent = s.agent; $('#agentName').textContent = 'ligado como ' + s.agent; }
     const unread = Number(s.unread) || 0;
-    document.title = (unread ? `(${unread}) ` : '') + 'IndicoStay WhatsApp Inbox';
+    $('#rbWa').textContent = unread ? unread : '';
+    document.title = (unread ? `(${unread}) ` : '') + 'IndicoStay Inbox';
   }
 
   // ---------- thread ----------
@@ -487,6 +669,7 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
     const mode = c.human_mode
       ? (c.human_by ? `<span class="mode human">● ${esc(c.human_by)} a responder · Sara em pausa</span>` : '<span class="mode ask">● Pediu uma pessoa · Sara em pausa</span>')
       : '<span class="mode">● Sara (IA) a responder</span>';
+    $('#tName').textContent = displayName(c);
     $('#tSub').innerHTML = [mode, `<span class="mono">${esc(phone(c.wa_id))}</span>`, c.name && c.name !== displayName(c) ? 'perfil: ' + esc(c.name) : '', segTag].filter(Boolean).join(' ');
     const tb = $('#takeBtn');
     tb.textContent = c.human_mode ? 'Devolver à Sara' : 'Assumir conversa';
@@ -638,9 +821,14 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
   document.addEventListener('visibilitychange', () => { if (running && document.visibilityState === 'visible') { clearTimeout(timer); loop(); } });
 
   // ---------- auth ----------
-  function showApp() { $('#login').hidden = true; $('#app').hidden = false; updateNotifyBtn(); startPolling(); if (current) openThread(current, { markRead: false }); }
+  function showApp() {
+    $('#login').hidden = true; $('#app').hidden = false; updateNotifyBtn(); startPolling(); startHub();
+    const v = location.hash ? 'wa' : (store.get('hub_view') || 'wa');
+    setView(v);
+    if (current && v === 'wa') openThread(current, { markRead: false });
+  }
   function logout(msg) {
-    stopPolling(); token = ''; store.del('wa_inbox_token'); seen = null;
+    stopPolling(); stopHub(); token = ''; store.del('wa_inbox_token'); seen = null;
     $('#app').hidden = true; $('#login').hidden = false; $('#loginErr').textContent = msg || '';
   }
   $('#loginForm').addEventListener('submit', async e => {
@@ -731,6 +919,378 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
     try { await navigator.clipboard.writeText(t); $('#copyBtn').title = 'Copiado: ' + t; } catch (e) { $('#copyBtn').title = t; }
   });
   window.addEventListener('hashchange', () => { const id = location.hash.replace('#', '').replace(/\D/g, ''); if (id && id !== current) openThread(id); });
+
+  // =====================================================================
+  // HUB: canais (WhatsApp, Chamadas, Email) e nomes escolhidos pela equipa
+  // =====================================================================
+  const HUB = 'https://backend.automationbig8agency.com/webhook/inbox-hub-api';
+  async function hub(action, params = {}) {
+    const u = new URL(HUB);
+    u.searchParams.set('action', action);
+    for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
+    const r = await fetch(u, { headers: { 'x-inbox-token': token }, cache: 'no-store' });
+    if (r.status === 401) { const e = new Error('unauthorized'); e.code = 401; throw e; }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
+  }
+  async function hubPost(body) {
+    const r = await fetch(HUB, { method: 'POST', headers: { 'content-type': 'application/json', 'x-inbox-token': token }, body: JSON.stringify(body) });
+    let data = {};
+    try { data = await r.json(); } catch (e) {}
+    if (r.status === 401) { const e = new Error('unauthorized'); e.code = 401; throw e; }
+    if (!r.ok || data.ok === false) throw new Error(data.error || ('HTTP ' + r.status));
+    return data;
+  }
+  const key9 = p => String(p || '').replace(/\D/g, '').slice(-9);
+  const fmtPhone = p => { const d = String(p || '').replace(/\D/g, ''); return d ? phone(d) : 'Número oculto'; };
+  function avatarFor(name, seed, size = '') {
+    const letters = /^[+\d\s]+$/.test(name) ? String(name).replace(/\D/g, '').slice(-2) : String(name).split(/[\s@.]+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+    let h = 0; for (const ch of String(seed)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    const a = PALETTE[h % PALETTE.length], b = PALETTE[(h >>> 3) % PALETTE.length];
+    return `<div class="av ${size}" style="background:linear-gradient(135deg,${a},${b})">${esc(letters || '?')}</div>`;
+  }
+  const fullDate = ms => new Intl.DateTimeFormat('pt-PT', { timeZone: TZ, weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(ms));
+
+  // ---------- vistas ----------
+  let view = 'wa';
+  function setView(v) {
+    if (!['wa', 'calls', 'mail'].includes(v)) v = 'wa';
+    view = v;
+    document.querySelectorAll('[data-view]').forEach(el => {
+      if (el.classList.contains('rbtn')) el.setAttribute('aria-pressed', String(el.dataset.view === v));
+      else el.hidden = el.dataset.view !== v;
+    });
+    document.body.classList.remove('chat-open');
+    store.set('hub_view', v);
+    if (v === 'calls') loadCalls(true);
+    if (v === 'mail') loadMail(true);
+  }
+  $('#rail').addEventListener('click', e => { const b = e.target.closest('.rbtn'); if (b) setView(b.dataset.view); });
+  document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', () => document.body.classList.remove('chat-open')));
+
+  // ---------- mudar nome (WhatsApp + chamadas, por numero) ----------
+  let renameCtx = null;
+  function openRename(ctx) {
+    renameCtx = ctx;
+    $('#renameInput').value = ctx.current || '';
+    $('#renameInput').placeholder = ctx.original || 'Nome';
+    $('#renameHint').textContent = `Número ${fmtPhone(ctx.phone)}. Só a equipa vê este nome, e fica igual no WhatsApp e nas chamadas.`;
+    $('#renameErr').textContent = '';
+    $('#renameClear').hidden = !ctx.current;
+    $('#renameDlg').showModal();
+    setTimeout(() => $('#renameInput').select(), 30);
+  }
+  async function saveRename(name) {
+    if (!renameCtx) return;
+    $('#renameSave').disabled = true;
+    try {
+      const r = await hubPost({ action: 'rename', phone: renameCtx.phone, name });
+      const k = key9(renameCtx.phone), nm = r.name || null;
+      contacts.forEach(c => { if (key9(c.wa_id) === k) c.custom_name = nm; });
+      calls.forEach(c => { if (c.key === k) c.custom_name = nm; });
+      if (callDetail && callDetail.key === k) callDetail.custom_name = nm;
+      $('#renameDlg').close();
+      renderRows(); renderCalls();
+      const cc = contacts.find(x => x.wa_id === current); if (cc) threadChrome(cc);
+      if (callDetail && callDetail.key === k) callHeader(callDetail);
+    } catch (e) {
+      if (e.code === 401) return logout('O código deixou de ser válido. Entre outra vez.');
+      $('#renameErr').textContent = 'Não foi possível guardar: ' + e.message;
+    } finally { $('#renameSave').disabled = false; }
+  }
+  $('#renameSave').addEventListener('click', () => saveRename($('#renameInput').value.trim()));
+  $('#renameClear').addEventListener('click', () => saveRename(''));
+  $('#renameInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); saveRename($('#renameInput').value.trim()); } });
+  $('#tRename').addEventListener('click', () => {
+    const c = contacts.find(x => x.wa_id === current); if (!c) return;
+    openRename({ phone: c.wa_id, current: c.custom_name, original: c.hotel || c.name || '' });
+  });
+  $('#cRename').addEventListener('click', () => {
+    if (!callDetail) return;
+    openRename({ phone: callDetail.phone, current: callDetail.custom_name, original: callDetail.hotel || (callDetail.lead && callDetail.lead.nome) || '' });
+  });
+
+  // ---------- chamadas ----------
+  let calls = [], cFilter = 'all', cCurrent = null, cLoadedAt = 0, callDetail = null;
+  const dur = ms => { const s = Math.round((ms || 0) / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+  const callName = c => c.custom_name || c.hotel || c.contact || fmtPhone(c.phone);
+  const DISC = { agent_hangup: 'a Sara terminou', user_hangup: 'o contacto desligou', dial_no_answer: 'não atendeu', user_declined: 'recusada', dial_busy: 'ocupado', dial_failed: 'falhou a ligar', voicemail_reached: 'caixa de correio', machine_detected: 'caixa de correio', inactivity: 'silêncio prolongado', max_duration_reached: 'tempo máximo', call_transfer: 'transferida', invalid_destination: 'número inválido', concurrency_limit_reached: 'limite de chamadas' };
+  const SENT = { Positive: 'positivo', Negative: 'negativo', Neutral: 'neutro', Unknown: 'desconhecido' };
+  const C_FILTERS = {
+    all: () => true,
+    meeting: c => c.outcome === 'meeting',
+    answered: c => c.outcome === 'answered' || c.outcome === 'meeting',
+    missed: c => c.outcome === 'missed',
+    inbound: c => c.dir === 'inbound'
+  };
+  async function loadCalls(force) {
+    if (!force && Date.now() - cLoadedAt < 15000) return;
+    cLoadedAt = Date.now();
+    try {
+      const d = await hub('calls');
+      calls = d.calls || [];
+      renderCalls();
+    } catch (e) {
+      if (e.code === 401) return logout('O código deixou de ser válido. Entre outra vez.');
+      if (!calls.length) $('#cRows').innerHTML = `<div class="empty">Não foi possível carregar as chamadas (${esc(e.message)}).</div>`;
+    }
+  }
+  function renderCalls() {
+    const today = calls.filter(c => c.start && dayKey(c.start) === dayKey(Date.now()));
+    const meetToday = today.filter(c => c.outcome === 'meeting').length;
+    $('#rbCalls').textContent = meetToday ? meetToday : '';
+    const cost = today.reduce((s, c) => s + (c.cost || 0), 0);
+    const k = (label, val, cls = '') => `<div class="kpi ${cls}"><b>${val}</b><span>${label}</span></div>`;
+    $('#cKpis').innerHTML = [
+      k('Hoje', today.length),
+      k('Atendidas hoje', today.filter(C_FILTERS.answered).length),
+      k('Reuniões hoje', meetToday, meetToday ? 'hot' : ''),
+      k('Custo hoje', '$' + cost.toFixed(2))
+    ].join('');
+    for (const [f, fn] of Object.entries(C_FILTERS)) { const el = document.querySelector(`[data-cn="${f}"]`); if (el) { const n = calls.filter(fn).length; el.textContent = n ? n : ''; } }
+    const q = $('#cq').value.trim().toLowerCase(), qd = q.replace(/\D/g, '');
+    const list = calls.filter(c => C_FILTERS[cFilter](c) && (!q || `${c.custom_name || ''} ${c.hotel || ''} ${c.contact || ''}`.toLowerCase().includes(q) || (qd && String(c.phone || '').includes(qd))));
+    if (!list.length) { $('#cRows').innerHTML = `<div class="empty">${calls.length ? 'Nenhuma chamada com este filtro.' : 'Ainda não há chamadas da Sara.'}</div>`; return; }
+    $('#cRows').innerHTML = list.map(c => `<button class="row" data-cid="${esc(c.id)}" aria-current="${c.id === cCurrent}">
+      ${avatarFor(callName(c), c.key || c.id)}
+      <span class="txt">
+        <span class="l1"><span class="name">${esc(callName(c))}</span><span class="when">${esc(c.start ? when(c.start) : '')}</span></span>
+        <span class="l2"><span class="last"><span class="dirm">${c.dir === 'inbound' ? '↙ recebida' : '↗ feita'}</span> · ${esc(c.summary || fmtPhone(c.phone))}</span><span class="dur">${c.dur ? dur(c.dur) : ''}</span><span class="tag ${esc(c.outcome)}">${esc(c.outcome_label)}</span></span>
+      </span>
+    </button>`).join('');
+  }
+  function callHeader(d) {
+    const nm = d.custom_name || d.hotel || (d.lead && d.lead.nome) || fmtPhone(d.phone);
+    $('#cHead').hidden = false;
+    $('#cAv').outerHTML = avatarFor(nm, d.key || d.id, 'lg').replace('class="av lg"', 'class="av lg" id="cAv"');
+    $('#cName').textContent = nm;
+    const extra = d.custom_name && d.hotel ? 'hotel: ' + esc(d.hotel) : '';
+    $('#cSub').innerHTML = [`<span class="mono">${esc(fmtPhone(d.phone))}</span>`, d.dir === 'inbound' ? 'chamada recebida' : 'chamada feita pela Sara', d.start ? esc(fullDate(d.start)) : '', extra].filter(Boolean).join(' · ');
+    $('#cToWa').hidden = !d.has_wa;
+  }
+  async function openCall(id) {
+    cCurrent = id;
+    document.body.classList.add('chat-open');
+    document.querySelectorAll('#cRows .row').forEach(r => r.setAttribute('aria-current', String(r.dataset.cid === id)));
+    const li = calls.find(c => c.id === id);
+    if (li) { callDetail = { ...li, lead: null }; callHeader(callDetail); }
+    $('#cBody').innerHTML = '<div class="empty">A carregar a chamada…</div>';
+    try {
+      const d = await hub('call', { call_id: id });
+      if (id !== cCurrent) return;
+      if (!d.ok) throw new Error(d.error || 'erro');
+      callDetail = d;
+      callHeader(d);
+      renderCallDetail(d, li);
+    } catch (e) {
+      if (e.code === 401) return logout('O código deixou de ser válido. Entre outra vez.');
+      $('#cBody').innerHTML = `<div class="empty">Não foi possível abrir a chamada (${esc(e.message)}).</div>`;
+    }
+  }
+  function renderCallDetail(d, li) {
+    const fact = (label, val, cls = '') => `<div class="fact"><span>${label}</span><b class="${cls}">${esc(val ?? '·')}</b></div>`;
+    const ok = d.successful === true ? ['sim', 'good'] : d.successful === false ? ['não', 'bad'] : ['·', ''];
+    const sent = SENT[d.sentiment] || d.sentiment || '·';
+    const parts = [];
+    parts.push(`<div class="cardx"><h4>Gravação</h4>${d.recording
+      ? `<div class="player"><audio id="cAudio" controls preload="none" src="${esc(d.recording)}"></audio><a href="${esc(d.recording)}" target="_blank" rel="noopener">Descarregar</a></div>`
+      : '<p class="summary" style="color:var(--muted);margin:0">Sem gravação: a chamada não chegou a ligar.</p>'}</div>`);
+    parts.push(`<div class="cardx"><h4>Resumo</h4><div class="summary">${esc(d.summary || 'Sem resumo para esta chamada.')}</div></div>`);
+    parts.push(`<div class="cardx"><h4>Análise da chamada</h4><div class="facts">
+      ${fact('Resultado', li ? li.outcome_label : (d.custom && d.custom.resultado) || '·', li && li.outcome === 'meeting' ? 'good' : li && li.outcome === 'missed' ? 'bad' : '')}
+      ${fact('Bem sucedida', ok[0], ok[1])}
+      ${fact('Sentimento', sent, d.sentiment === 'Positive' ? 'good' : d.sentiment === 'Negative' ? 'bad' : '')}
+      ${fact('Como terminou', DISC[d.disc] || d.disc || '·')}
+      ${fact('Duração', d.dur ? dur(d.dur) : '0:00')}
+      ${fact('Custo', d.cost != null ? '$' + d.cost.toFixed(3) : '·')}
+      ${fact('Latência', d.latency_ms ? d.latency_ms + ' ms' : '·')}
+      ${fact('Agente', d.agent || '·')}
+    </div></div>`);
+    if (d.lead) {
+      const L = d.lead;
+      parts.push(`<div class="cardx"><h4>Reunião e lead</h4><div class="kv">
+        <div>Referência</div><div class="mono">${esc(L.ref || '·')}</div>
+        <div>Contacto</div><div>${esc(L.nome || '·')}</div>
+        <div>Reunião</div><div>${esc(L.quando || 'não marcada')}</div>
+        <div>Google Meet</div><div>${L.meet_link ? `<a href="${esc(L.meet_link)}" target="_blank" rel="noopener">${esc(L.meet_link)}</a>` : '·'}</div>
+        <div>Estado</div><div>${esc(L.estado || '·')}</div>
+      </div></div>`);
+    }
+    const kv = Object.entries(d.custom || {}).filter(([, v]) => v !== '' && v != null);
+    if (kv.length) {
+      const label = k => k.replace(/_/g, ' ').replace(/^./, c => c.toUpperCase());
+      const val = v => v === true ? 'sim' : v === false ? 'não' : typeof v === 'object' ? JSON.stringify(v) : String(v);
+      parts.push(`<div class="cardx"><h4>Dados recolhidos pela Sara</h4><div class="kv">${kv.map(([k, v]) => `<div>${esc(label(k))}</div><div>${esc(val(v))}</div>`).join('')}</div></div>`);
+    }
+    const who = callName({ ...d, contact: d.lead && d.lead.nome });
+    const turns = d.turns || [];
+    const tsBtn = t => t == null ? '' : `<button class="tts" type="button" data-t="${t}">${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}</button>`;
+    const tHtml = turns.length ? turns.map(t => {
+      const ai = t.role === 'agent';
+      return `<div class="line ${ai ? 'out' : 'in'}">${ai ? '<div class="av sm brand">IS</div>' : avatarFor(who, d.key || d.id, 'sm')}
+        <div class="bubble"><div class="hd"><span>${ai ? 'Sara · IA' : esc(who)}</span>${tsBtn(t.t)}</div><div class="body">${esc(t.text)}</div></div></div>`;
+    }).join('') : `<p class="summary" style="color:var(--muted);margin:0;white-space:pre-wrap">${esc(d.transcript || 'Sem transcrição: ninguém falou nesta chamada.')}</p>`;
+    parts.push(`<div class="cardx"><h4>Transcrição</h4><div class="tscript">${tHtml}</div></div>`);
+    $('#cBody').innerHTML = parts.join('');
+    $('#cBody').scrollTop = 0;
+  }
+  $('#cBody').addEventListener('click', e => {
+    const b = e.target.closest('.tts'); const a = $('#cAudio');
+    if (b && a) { a.currentTime = Number(b.dataset.t) || 0; a.play().catch(() => {}); }
+  });
+  $('#cRows').addEventListener('click', e => { const r = e.target.closest('.row'); if (r) openCall(r.dataset.cid); });
+  $('#cTabs').addEventListener('click', e => {
+    const b = e.target.closest('.tab'); if (!b) return;
+    cFilter = b.dataset.f;
+    document.querySelectorAll('#cTabs .tab').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    renderCalls();
+  });
+  $('#cq').addEventListener('input', renderCalls);
+  $('#cReload').addEventListener('click', () => loadCalls(true));
+  $('#cCopy').addEventListener('click', async () => { if (callDetail) try { await navigator.clipboard.writeText(fmtPhone(callDetail.phone)); } catch (e) {} });
+  $('#cToWa').addEventListener('click', () => {
+    if (!callDetail) return;
+    const k = key9(callDetail.phone);
+    const c = contacts.find(x => key9(x.wa_id) === k);
+    setView('wa');
+    if (c) openThread(c.wa_id);
+  });
+
+  // ---------- email (info@indicostay.com) ----------
+  let threads = [], mFilter = 'all', mCurrent = null, mLoadedAt = 0, mSig = '', mUnread = 0;
+  const M_FILTERS = { all: () => true, unread: t => t.unread > 0, sent: t => t.last_dir === 'out' };
+  const mailName = t => t.name && t.name !== t.addr ? t.name : t.addr;
+  async function loadMail(force) {
+    if (!force && Date.now() - mLoadedAt < 10000) return;
+    mLoadedAt = Date.now();
+    try {
+      const d = await hub('emails');
+      const prev = new Map(threads.map(t => [t.addr, t.last_at]));
+      threads = d.threads || [];
+      mUnread = Number(d.unread) || 0;
+      $('#rbMail').textContent = mUnread ? mUnread : '';
+      renderMail();
+      const t = threads.find(x => x.addr === mCurrent);
+      if (view === 'mail' && t && prev.get(t.addr) && prev.get(t.addr) !== t.last_at) loadMailThread();
+    } catch (e) {
+      if (e.code === 401) return logout('O código deixou de ser válido. Entre outra vez.');
+      if (!threads.length) $('#mRows').innerHTML = `<div class="empty">Não foi possível carregar os emails (${esc(e.message)}).</div>`;
+    }
+  }
+  function renderMail() {
+    const k = (label, val, cls = '') => `<div class="kpi ${cls}"><b>${val}</b><span>${label}</span></div>`;
+    $('#mKpis').innerHTML = k('Por ler', mUnread, mUnread ? 'hot' : '') + k('Conversas', threads.length);
+    for (const [f, fn] of Object.entries(M_FILTERS)) { const el = document.querySelector(`[data-mn="${f}"]`); if (el) { const n = threads.filter(fn).length; el.textContent = n ? n : ''; } }
+    const q = $('#mq').value.trim().toLowerCase();
+    const list = threads.filter(t => M_FILTERS[mFilter](t) && (!q || `${t.name || ''} ${t.addr} ${t.subject || ''}`.toLowerCase().includes(q)));
+    if (!list.length) { $('#mRows').innerHTML = `<div class="empty">${threads.length ? 'Nenhum email com este filtro.' : 'Ainda não chegaram emails desde que o inbox foi ligado. Os novos emails para info@indicostay.com aparecem aqui.'}</div>`; return; }
+    $('#mRows').innerHTML = list.map(t => `<button class="row${t.unread > 0 ? ' unread' : ''}" data-addr="${esc(t.addr)}" aria-current="${t.addr === mCurrent}">
+      ${avatarFor(mailName(t), t.addr)}
+      <span class="txt">
+        <span class="l1"><span class="name">${esc(mailName(t))}</span><span class="when">${esc(when(t.last_at))}</span></span>
+        <span class="l2"><span class="last">${t.last_dir === 'out' ? 'Nós: ' : ''}<b>${esc(t.subject || '(sem assunto)')}</b> · ${esc(t.snippet || '')}</span>${t.unread > 0 ? `<span class="badge">${t.unread}</span>` : ''}</span>
+      </span>
+    </button>`).join('');
+  }
+  function mailChrome(name, addr) {
+    $('#mHead').hidden = false;
+    $('#mAv').outerHTML = avatarFor(name || addr || 'Novo', addr || 'novo', 'lg').replace('class="av lg"', 'class="av lg" id="mAv"');
+    $('#mName').textContent = name || addr || 'Novo email';
+    $('#mSub').innerHTML = addr ? `<span class="mono">${esc(addr)}</span>` : 'Escreva o endereço e o assunto';
+    $('#mCompose').hidden = false;
+    $('#mErr').textContent = '';
+  }
+  async function openMail(addr) {
+    mCurrent = addr; mSig = '';
+    document.body.classList.add('chat-open');
+    document.querySelectorAll('#mRows .row').forEach(r => r.setAttribute('aria-current', String(r.dataset.addr === addr)));
+    const t = threads.find(x => x.addr === addr) || { addr };
+    mailChrome(mailName(t), addr);
+    $('#mTo').value = addr;
+    $('#mText').value = '';
+    $('#mBody').innerHTML = '<div class="empty">A carregar…</div>';
+    await loadMailThread(true);
+    if (t.unread) { mUnread = Math.max(0, mUnread - t.unread); t.unread = 0; $('#rbMail').textContent = mUnread ? mUnread : ''; renderMail(); }
+  }
+  async function loadMailThread(first) {
+    const addr = mCurrent; if (!addr) return;
+    try {
+      const msgs = await hub('email_thread', { addr });
+      if (addr !== mCurrent) return;
+      const sig = msgs.map(m => m.id).join(',');
+      if (sig === mSig) return;
+      mSig = sig;
+      renderMailThread(msgs);
+      if (first) {
+        const lastIn = [...msgs].reverse().find(m => m.direction === 'in') || msgs[msgs.length - 1];
+        const s = (lastIn && lastIn.subject) || '';
+        $('#mSubj').value = s ? (/^re:/i.test(s) ? s : 'Re: ' + s) : '';
+      }
+    } catch (e) {
+      if (e.code === 401) return logout('O código deixou de ser válido. Entre outra vez.');
+      $('#mBody').innerHTML = `<div class="empty">Não foi possível abrir (${esc(e.message)}).</div>`;
+    }
+  }
+  function renderMailThread(msgs) {
+    const box = $('#mBody');
+    if (!msgs.length) { box.innerHTML = '<div class="welcome"><p>Sem emails guardados com este endereço.</p></div>'; return; }
+    box.innerHTML = msgs.map((m, i) => {
+      const out = m.direction === 'out';
+      const name = out ? `IndicoStay${m.sent_by ? ' · ' + m.sent_by : ''}` : (m.from_name || m.from_addr);
+      const meta = out ? 'para ' + (m.to_addr || '') : (m.from_addr || '') + (m.to_addr ? ' · para ' + m.to_addr : '');
+      const body = !out && m.body_html ? `<iframe data-i="${i}" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin" title="Email de ${esc(name)}"></iframe>` : `<div class="mb">${esc(m.body_text || '')}</div>`;
+      return `<article class="mail${out ? ' out' : ''}">
+        <div class="mh">${out ? '<div class="av sm brand">IS</div>' : avatarFor(name, m.from_addr || name, 'sm')}<div class="who"><b>${esc(name)}</b><span>${esc(meta)}</span></div><time>${esc(fullDate(m.sent_at))}</time></div>
+        <div class="subj">${esc(m.subject || '(sem assunto)')}</div>${body}</article>`;
+    }).join('');
+    box.querySelectorAll('iframe[data-i]').forEach(f => {
+      const m = msgs[Number(f.dataset.i)];
+      f.addEventListener('load', () => { try { f.style.height = (f.contentDocument.documentElement.scrollHeight + 8) + 'px'; } catch (e) { f.style.height = '420px'; } });
+      f.srcdoc = '<!doctype html><meta charset="utf-8"><base target="_blank"><style>body{margin:0 16px 16px;font:14px/1.5 Arial,Helvetica,sans-serif;color:#1B1830;word-break:break-word}img{max-width:100%;height:auto}table{max-width:100%}</style>' + m.body_html;
+    });
+    box.scrollTop = box.scrollHeight;
+  }
+  $('#mRows').addEventListener('click', e => { const r = e.target.closest('.row'); if (r) openMail(r.dataset.addr); });
+  $('#mTabs').addEventListener('click', e => {
+    const b = e.target.closest('.tab'); if (!b) return;
+    mFilter = b.dataset.f;
+    document.querySelectorAll('#mTabs .tab').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    renderMail();
+  });
+  $('#mq').addEventListener('input', renderMail);
+  $('#mNew').addEventListener('click', () => {
+    mCurrent = null; mSig = '';
+    document.body.classList.add('chat-open');
+    document.querySelectorAll('#mRows .row').forEach(r => r.setAttribute('aria-current', 'false'));
+    mailChrome('', '');
+    $('#mTo').value = ''; $('#mSubj').value = ''; $('#mText').value = '';
+    $('#mBody').innerHTML = '<div class="welcome"><h3>Novo email</h3><p>Sai de info@indicostay.com. A resposta da pessoa aparece aqui quando chegar.</p></div>';
+    $('#mTo').focus();
+  });
+  $('#mCompose').addEventListener('submit', async e => {
+    e.preventDefault();
+    const to = $('#mTo').value.trim().toLowerCase(), subject = $('#mSubj').value.trim(), text = $('#mText').value.trim();
+    if (!to || !text) { $('#mErr').textContent = 'Falta o destinatário ou a mensagem.'; return; }
+    $('#mSend').disabled = true; $('#mErr').textContent = ''; $('#mSend').textContent = 'A enviar…';
+    try {
+      await hubPost({ action: 'email_send', to, subject, text });
+      $('#mText').value = '';
+      await loadMail(true);
+      if (mCurrent !== to) { await openMail(to); } else { mSig = ''; await loadMailThread(); }
+    } catch (err) {
+      if (err.code === 401) return logout('O código deixou de ser válido. Entre outra vez.');
+      $('#mErr').textContent = err.message;
+    } finally { $('#mSend').disabled = false; $('#mSend').textContent = 'Enviar email'; }
+  });
+
+  // ---------- ciclo do hub: email sempre (para o contador), chamadas quando a vista esta aberta ----------
+  let hubTimer = null;
+  function hubTick() {
+    loadMail();
+    if (view === 'calls' || !calls.length) loadCalls();
+  }
+  function startHub() { stopHub(); hubTick(); hubTimer = setInterval(() => { if (document.visibilityState === 'visible') hubTick(); }, 10000); }
+  function stopHub() { clearInterval(hubTimer); hubTimer = null; }
 
   if (token) showApp(); else $('#login').hidden = false;
 })();
