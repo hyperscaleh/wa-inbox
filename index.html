@@ -233,6 +233,18 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
 
 .tag.dash { background: #FFF3E0; color: #B26200; }
 
+/* ---------- equipa ---------- */
+.team-form .fl { display: grid; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.team-form .fl input, .team-form .fl select { padding: 11px 13px; border: 1px solid var(--line); border-radius: 12px; background: var(--soft); color: var(--ink); font: 600 14px var(--f-ui); text-transform: none; letter-spacing: 0; }
+.chans { display: grid; gap: 8px; }
+.chan { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; cursor: pointer; }
+.chan:has(input:checked) { border-color: color-mix(in srgb, var(--violet) 45%, var(--line)); background: var(--violet-soft); }
+.chan input { margin-top: 3px; width: 17px; height: 17px; accent-color: var(--violet); }
+.chan b { display: block; font-size: 14px; }
+.chan small { display: block; color: var(--muted); font-size: 12.5px; }
+.codebox .code { font-size: 20px; font-weight: 600; letter-spacing: 0.04em; padding: 12px 14px; border-radius: 12px; background: var(--soft); border: 1px dashed var(--violet); word-break: break-all; }
+.codebox textarea { width: 100%; margin-top: 10px; min-height: 120px; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font: 500 13px/1.5 var(--f-ui); color: var(--ink); background: var(--card); resize: vertical; }
+
 /* ---------- calls ---------- */
 .pane-body { min-height: 0; overflow-y: auto; padding: 22px; display: grid; gap: 16px; align-content: start; }
 .cardx { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 16px 18px; box-shadow: 0 8px 20px -18px rgba(40, 30, 90, 0.35); }
@@ -321,17 +333,21 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
   <div class="frame">
     <nav class="rail" id="rail" aria-label="Canais">
       <div class="av brand logo">IS</div>
-      <button class="rbtn" data-view="wa" aria-pressed="true" type="button" title="Conversas de WhatsApp">
+      <button class="rbtn" data-view="wa" aria-pressed="true" type="button" hidden title="Conversas de WhatsApp">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l1.7-5.1A8.5 8.5 0 1 1 8.1 19.3L3 21z"/><path d="M9 9.5c.3 1.6 1.9 3.7 3.8 4.5l1.2-1.1 2 .8c-.2 1-1 1.7-2 1.7-3.3 0-6.5-3.2-6.5-6.5 0-1 .7-1.8 1.7-2l.8 2L9 9.5z"/></svg>
         WhatsApp<span class="rb" id="rbWa"></span>
       </button>
-      <button class="rbtn" data-view="calls" aria-pressed="false" type="button" title="Chamadas da Sara">
+      <button class="rbtn" data-view="calls" aria-pressed="false" type="button" hidden title="Chamadas da Sara">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>
         Chamadas<span class="rb" id="rbCalls"></span>
       </button>
-      <button class="rbtn" data-view="mail" aria-pressed="false" type="button" title="Email info@indicostay.com">
+      <button class="rbtn" data-view="mail" aria-pressed="false" type="button" hidden title="Email info@indicostay.com">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
         Email<span class="rb" id="rbMail"></span>
+      </button>
+      <button class="rbtn" data-view="team" aria-pressed="false" type="button" title="Equipa e acessos (super admin)" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></svg>
+        Equipa
       </button>
     </nav>
     <aside class="side" data-view="wa">
@@ -449,6 +465,27 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
       </div>
     </section>
 
+    <!-- ===== EQUIPA ===== -->
+    <aside class="side" data-view="team" hidden style="grid-template-rows:auto auto 1fr">
+      <div class="me">
+        <div class="av brand">IS</div>
+        <div class="who"><b>Equipa e acessos</b><span>Quem vê cada canal</span></div>
+        <button class="side-new" id="tNew" type="button">Adicionar pessoa</button>
+      </div>
+      <p style="margin:0;padding:0 20px 12px;font-size:12.5px;color:var(--muted)">Cada pessoa entra com o seu código e só vê os canais que lhe der. As mensagens e emails ficam registados com o nome dela.</p>
+      <div class="rows" id="tRows"><div class="empty">A carregar…</div></div>
+    </aside>
+    <section class="thread" data-view="team" hidden style="grid-template-rows:auto 1fr">
+      <div class="thead" id="tmHead" hidden>
+        <button class="icon-btn back" data-back type="button" aria-label="Voltar à lista"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+        <div class="av lg" id="tmAv"></div>
+        <div class="who"><h2><span class="nm" id="tmName"></span></h2><div class="sub" id="tmSub"></div></div>
+      </div>
+      <div class="pane-body" id="tmBody">
+        <div class="welcome"><div class="av lg brand">IS</div><h3>Equipa e acessos</h3><p>Escolha uma pessoa para mudar os canais dela, ou adicione alguém novo. Ex.: a Daisy só com WhatsApp e Email.</p></div>
+      </div>
+    </section>
+
     <!-- ===== EMAIL ===== -->
     <aside class="side" data-view="mail" hidden>
       <div class="me">
@@ -490,6 +527,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
   </div>
 </div>
 
+<!-- (equipa: ver dentro da frame) -->
 <dialog class="sheet" id="dialDlg">
   <form id="dialForm">
     <h3>Ligar agora</h3>
@@ -875,14 +913,37 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
   document.addEventListener('visibilitychange', () => { if (running && document.visibilityState === 'visible') { clearTimeout(timer); loop(); } });
 
   // ---------- auth ----------
-  function showApp() {
-    $('#login').hidden = true; $('#app').hidden = false; updateNotifyBtn(); startPolling(); startHub();
-    const v = location.hash ? 'wa' : (store.get('hub_view') || 'wa');
+  // Quem entrou e o que pode ver (tabela inbox_users, gerida no ecra Equipa).
+  let ME = null;
+  const can = ch => !!(ME && (ME.channels || []).includes(ch));
+  const isAdmin = () => !!(ME && ME.role === 'superadmin');
+  function applyAccess() {
+    document.querySelectorAll('#rail .rbtn').forEach(b => {
+      const v = b.dataset.view;
+      b.hidden = v === 'team' ? !isAdmin() : !can(v === 'mail' ? 'mail' : v);
+    });
+    $('#waDial').hidden = !can('calls');
+    $('#agentName').textContent = 'ligado como ' + ME.name;
+  }
+  async function showApp() {
+    $('#login').hidden = true; $('#app').hidden = false;
+    try { ME = await hub('me'); }
+    catch (e) {
+      if (e.code === 401) return logout('O código deixou de ser válido. Entre outra vez.');
+      $('#login').hidden = false; $('#app').hidden = true;
+      $('#loginErr').textContent = 'Não foi possível ligar ao servidor. A tentar outra vez…';
+      setTimeout(showApp, 5000);
+      return;
+    }
+    $('#login').hidden = true; $('#app').hidden = false; updateNotifyBtn(); applyAccess();
+    if (can('wa')) startPolling();
+    startHub();
+    const v = location.hash && can('wa') ? 'wa' : (store.get('hub_view') || 'wa');
     setView(v);
-    if (current && v === 'wa') openThread(current, { markRead: false });
+    if (current && view === 'wa') openThread(current, { markRead: false });
   }
   function logout(msg) {
-    stopPolling(); stopHub(); token = ''; store.del('wa_inbox_token'); seen = null;
+    stopPolling(); stopHub(); token = ''; store.del('wa_inbox_token'); seen = null; ME = null; dialer = null;
     $('#app').hidden = true; $('#login').hidden = false; $('#loginErr').textContent = msg || '';
   }
   $('#loginForm').addEventListener('submit', async e => {
@@ -890,8 +951,8 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
     token = $('#tokenInput').value.toLowerCase().replace(/[^0-9a-f]/g, '');
     $('#loginErr').textContent = '';
     if (token.length !== 32) { $('#loginErr').textContent = `O código tem 32 caracteres e este tem ${token.length}. Copie-o outra vez.`; return; }
-    try { await api('stats'); store.set('wa_inbox_token', token); showApp(); }
-    catch (err) { $('#loginErr').textContent = err.code === 401 ? 'Código errado. Confirme com o Dellon.' : 'Não foi possível ligar ao servidor (' + (err.message || 'erro de rede') + '). Tente outra vez.'; }
+    try { await hub('me'); store.set('wa_inbox_token', token); showApp(); }
+    catch (err) { $('#loginErr').textContent = err.code === 401 ? 'Código errado ou desactivado. Confirme com o Dellon.' : 'Não foi possível ligar ao servidor (' + (err.message || 'erro de rede') + '). Tente outra vez.'; }
   });
   $('#logoutBtn').addEventListener('click', () => logout());
   $('#notifyBtn').addEventListener('click', async () => {
@@ -1008,7 +1069,8 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
   // ---------- vistas ----------
   let view = 'wa';
   function setView(v) {
-    if (!['wa', 'calls', 'mail'].includes(v)) v = 'wa';
+    const ok = x => x === 'team' ? isAdmin() : can(x);
+    if (!['wa', 'calls', 'mail', 'team'].includes(v) || !ok(v)) v = ['wa', 'calls', 'mail', 'team'].find(ok) || 'wa';
     view = v;
     document.querySelectorAll('[data-view]').forEach(el => {
       if (el.classList.contains('rbtn')) el.setAttribute('aria-pressed', String(el.dataset.view === v));
@@ -1018,6 +1080,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
     store.set('hub_view', v);
     if (v === 'calls') loadCalls(true);
     if (v === 'mail') loadMail(true);
+    if (v === 'team') loadTeam();
   }
   $('#rail').addEventListener('click', e => { const b = e.target.closest('.rbtn'); if (b) setView(b.dataset.view); });
   document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', () => document.body.classList.remove('chat-open')));
@@ -1121,7 +1184,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
     $('#cName').textContent = nm;
     const extra = d.custom_name && d.hotel ? 'hotel: ' + esc(d.hotel) : '';
     $('#cSub').innerHTML = [`<span class="mono">${esc(fmtPhone(d.phone))}</span>`, d.dir === 'inbound' ? 'chamada recebida' : 'chamada feita pela Sara', d.start ? esc(fullDate(d.start)) : '', extra].filter(Boolean).join(' · ');
-    $('#cToWa').hidden = !d.has_wa;
+    $('#cToWa').hidden = !d.has_wa || !can('wa');
   }
   async function openCall(id) {
     cCurrent = id;
@@ -1458,13 +1521,100 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
     } finally { $('#mSend').disabled = false; $('#mSend').textContent = 'Enviar email'; }
   });
 
+  // ---------- equipa (so super admin) ----------
+  const CH = [
+    { k: 'wa', n: 'WhatsApp', d: 'Ver e responder às conversas do número +258 86 517 8862.' },
+    { k: 'calls', n: 'Chamadas', d: 'Ver chamadas da Sara, gravações, transcrições, e ligar a partir do dashboard.' },
+    { k: 'mail', n: 'Email', d: 'Ler e responder aos emails de info@ e do Gmail da IndicoStay.' }
+  ];
+  let team = [], tSel = null;
+  const rel = ts => { if (!ts) return 'nunca entrou'; const m = Math.round((Date.now() - Date.parse(ts)) / 60000); return m < 2 ? 'ativo agora' : m < 60 ? `há ${m} min` : m < 1440 ? `há ${Math.round(m / 60)} h` : 'em ' + new Intl.DateTimeFormat('pt-PT', { timeZone: TZ, day: '2-digit', month: '2-digit' }).format(new Date(ts)); };
+  async function loadTeam() {
+    try { team = await hub('team'); renderTeam(); }
+    catch (e) { if (e.code === 401) return logout(); $('#tRows').innerHTML = `<div class="empty">Não foi possível carregar a equipa (${esc(e.message)}).</div>`; }
+  }
+  function renderTeam() {
+    $('#tRows').innerHTML = team.map(m => `<button class="row" data-mid="${m.id}" aria-current="${tSel && tSel.id === m.id}">
+      ${avatarFor(m.name, 'u' + m.id)}
+      <span class="txt">
+        <span class="l1"><span class="name">${esc(m.name)}${m.id === ME.id ? ' <span class="dirm">(eu)</span>' : ''}</span><span class="when">${esc(rel(m.last_seen_at))}</span></span>
+        <span class="l2"><span class="last">${m.role === 'superadmin' ? 'Acesso total' : (m.channels || []).map(c => (CH.find(x => x.k === c) || {}).n).filter(Boolean).join(' · ') || 'Sem canais'}</span>${m.role === 'superadmin' ? '<span class="tag answered">super admin</span>' : ''}${m.active ? '' : '<span class="tag missed">desactivado</span>'}</span>
+      </span></button>`).join('') || '<div class="empty">Ainda não há pessoas.</div>';
+  }
+  function memberForm(m) {
+    tSel = m;
+    document.body.classList.add('chat-open');
+    renderTeam();
+    const isNew = !m.id, self = m.id === ME.id, admin = m.role === 'superadmin';
+    $('#tmHead').hidden = false;
+    $('#tmAv').outerHTML = avatarFor(m.name || 'Nova pessoa', 'u' + (m.id || 'novo'), 'lg').replace('class="av lg"', 'class="av lg" id="tmAv"');
+    $('#tmName').textContent = isNew ? 'Nova pessoa' : m.name;
+    $('#tmSub').textContent = isNew ? 'Escolha os canais e crie o código de acesso' : (m.created_by && m.created_by !== 'setup' ? 'adicionado por ' + m.created_by + ' · ' : '') + rel(m.last_seen_at);
+    $('#tmBody').innerHTML = `<form class="cardx team-form" id="tmForm">
+        <h4>Dados</h4>
+        <label class="fl">Nome<input id="tmN" type="text" maxlength="60" value="${esc(m.name || '')}" placeholder="Ex.: Daisy" required></label>
+        <label class="fl">Papel<select id="tmRole" ${self ? 'disabled' : ''}>
+          <option value="member"${!admin ? ' selected' : ''}>Membro: só os canais escolhidos</option>
+          <option value="superadmin"${admin ? ' selected' : ''}>Super admin: tudo, e gere a equipa</option></select></label>
+        <h4 style="margin-top:14px">Canais</h4>
+        <div class="chans" id="tmCh">${CH.map(c => `<label class="chan"><input type="checkbox" value="${c.k}" ${(m.channels || []).includes(c.k) || admin ? 'checked' : ''} ${admin ? 'disabled' : ''}><span><b>${c.n}</b><small>${c.d}</small></span></label>`).join('')}</div>
+        ${isNew || self ? '' : `<label class="chan" style="margin-top:12px"><input type="checkbox" id="tmActive" ${m.active ? 'checked' : ''}><span><b>Acesso ativo</b><small>Desmarque para cortar o acesso logo. O código deixa de funcionar.</small></span></label>`}
+        <div class="err" id="tmErr"></div>
+        <div class="acts" style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap">
+          ${isNew ? '' : '<button class="ghost-btn" id="tmCode" type="button">Gerar código novo</button>'}
+          <button class="btn" id="tmSave" type="submit">${isNew ? 'Criar e gerar código' : 'Guardar alterações'}</button>
+        </div>
+      </form>
+      <div id="tmCodeBox"></div>`;
+    $('#tmRole').addEventListener('change', () => {
+      const a = $('#tmRole').value === 'superadmin';
+      $('#tmCh').querySelectorAll('input').forEach(i => { i.disabled = a; if (a) i.checked = true; });
+    });
+    $('#tmForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const member = { id: m.id || 0, name: $('#tmN').value.trim(), role: $('#tmRole').value, channels: [...$('#tmCh').querySelectorAll('input:checked')].map(i => i.value), active: $('#tmActive') ? $('#tmActive').checked : true };
+      if (member.role === 'member' && !member.channels.length) { $('#tmErr').textContent = 'Escolha pelo menos um canal.'; return; }
+      $('#tmSave').disabled = true; $('#tmErr').textContent = '';
+      try {
+        const r = await hubPost({ action: 'team_save', member });
+        await loadTeam();
+        const saved = team.find(x => x.id === r.id) || { ...member, id: r.id };
+        memberForm(saved);
+        if (r.code) showCode(saved.name, r.code, true);
+        else $('#tmCodeBox').innerHTML = '<div class="dial-ok">Alterações guardadas. Valem já no próximo pedido da pessoa.</div>';
+      } catch (err) { $('#tmErr').textContent = err.message; $('#tmSave').disabled = false; }
+    });
+    const cb = $('#tmCode');
+    if (cb) cb.addEventListener('click', async () => {
+      if (!confirm(`Gerar um código novo para ${m.name}? O código antigo deixa de funcionar.`)) return;
+      cb.disabled = true;
+      try { const r = await hubPost({ action: 'team_code', member_id: m.id }); showCode(m.name, r.code, false); }
+      catch (err) { $('#tmErr').textContent = err.message; }
+      finally { cb.disabled = false; }
+    });
+  }
+  function showCode(name, code, isNew) {
+    const url = location.origin + location.pathname;
+    const msg = `Olá ${name.split(' ')[0]}! Este é o teu acesso ao painel da IndicoStay.\n\nLink: ${url}\nCódigo: ${code}\n\nGuarda o código só para ti, não o partilhes.`;
+    $('#tmCodeBox').innerHTML = `<div class="cardx codebox">
+      <h4>${isNew ? 'Código de acesso criado' : 'Código novo'}</h4>
+      <p class="summary" style="margin:0 0 10px">Só aparece agora. Copie e envie à pessoa (o código antigo, se havia, já não funciona).</p>
+      <div class="code mono">${esc(code)}</div>
+      <textarea id="tmMsg" readonly>${esc(msg)}</textarea>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px"><button class="ghost-btn" id="tmCopyCode" type="button">Copiar código</button><button class="btn" id="tmCopyMsg" type="button">Copiar mensagem</button></div></div>`;
+    $('#tmCopyCode').addEventListener('click', async () => { try { await navigator.clipboard.writeText(code); $('#tmCopyCode').textContent = 'Copiado ✓'; } catch (e) {} });
+    $('#tmCopyMsg').addEventListener('click', async () => { try { await navigator.clipboard.writeText(msg); $('#tmCopyMsg').textContent = 'Copiada ✓'; } catch (e) { $('#tmMsg').select(); } });
+  }
+  $('#tRows').addEventListener('click', e => { const r = e.target.closest('.row'); if (!r) return; const m = team.find(x => x.id === Number(r.dataset.mid)); if (m) memberForm(m); });
+  $('#tNew').addEventListener('click', () => memberForm({ id: 0, name: '', role: 'member', channels: [], active: true }));
+
   // ---------- ciclo do hub: email sempre (para o contador), chamadas quando a vista esta aberta ----------
   let hubTimer = null;
   function hubTick() {
-    loadMail();
-    if (view === 'calls' || !calls.length) loadCalls();
+    if (can('mail')) loadMail();
+    if (can('calls') && (view === 'calls' || !calls.length)) loadCalls();
   }
-  function startHub() { stopHub(); hubTick(); loadDialer().catch(() => { dialer = null; }); hubTimer = setInterval(() => { if (document.visibilityState === 'visible') hubTick(); }, 10000); }
+  function startHub() { stopHub(); hubTick(); if (can('calls')) loadDialer().catch(() => { dialer = null; }); hubTimer = setInterval(() => { if (document.visibilityState === 'visible') hubTick(); }, 10000); }
   function stopHub() { clearInterval(hubTimer); hubTimer = null; }
 
   if (token) showApp(); else $('#login').hidden = false;
