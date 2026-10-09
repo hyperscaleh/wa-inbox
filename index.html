@@ -213,6 +213,26 @@ dialog.sheet .acts { display: flex; gap: 8px; justify-content: flex-end; margin-
 .ghost-btn:hover { border-color: var(--violet); color: var(--violet); }
 .ghost-btn.danger { color: var(--bad); }
 
+/* ---------- ligar agora ---------- */
+.dial-grid { display: grid; gap: 6px; }
+.dial-grid label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
+.dial-grid .opt { text-transform: none; letter-spacing: 0; font-weight: 500; }
+dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--soft); color: var(--ink); font: 600 14px var(--f-ui); }
+.sugg { display: grid; gap: 2px; max-height: 214px; overflow-y: auto; border: 1px solid var(--line); border-radius: 14px; padding: 4px; background: var(--card); }
+.sugg button { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; background: none; text-align: left; padding: 7px 8px; border-radius: 10px; cursor: pointer; }
+.sugg button:hover, .sugg button.on { background: var(--violet-soft); }
+.sugg .sn { flex: 1; min-width: 0; font-weight: 700; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sugg .sp { font: 500 12px var(--f-mono); color: var(--muted); }
+.sugg .sh { font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 6px 8px 2px; }
+.redial { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: var(--violet); background: var(--violet-soft); opacity: 0; transition: opacity .15s; }
+.row:hover .redial, .row[aria-current="true"] .redial { opacity: 1; }
+.redial:hover { background: var(--grad); color: #fff; }
+.redial svg { width: 14px; height: 14px; }
+@media (hover: none) { .redial { opacity: 1; } }
+.dial-ok { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: #E6F6EF; color: #17805A; font-weight: 700; font-size: 13px; }
+
+.tag.dash { background: #FFF3E0; color: #B26200; }
+
 /* ---------- calls ---------- */
 .pane-body { min-height: 0; overflow-y: auto; padding: 22px; display: grid; gap: 16px; align-content: start; }
 .cardx { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 16px 18px; box-shadow: 0 8px 20px -18px rgba(40, 30, 90, 0.35); }
@@ -254,6 +274,9 @@ dialog.sheet .acts { display: flex; gap: 8px; justify-content: flex-end; margin-
 .mail iframe { width: 100%; border: 0; display: block; min-height: 80px; background: #fff; }
 .mail-compose { padding: 12px 22px 18px; display: grid; gap: 8px; border-top: 1px solid var(--line); background: var(--card); }
 .mail-compose .fld { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); font-weight: 700; }
+.mail-compose .fld select { border: 1px solid var(--line); border-radius: 12px; padding: 7px 10px; background: var(--soft); color: var(--ink); font: 600 13px var(--f-ui); }
+.tag.mb-gmail { background: #FDECEC; color: #C5221F; }
+.tag.mb-info { background: var(--violet-soft); color: var(--violet); }
 .mail-compose .fld input { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; background: var(--soft); color: var(--ink); font: 500 13.5px var(--f-ui); }
 .mail-compose textarea { width: 100%; border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; resize: vertical; min-height: 96px; max-height: 300px; font: 500 14px/1.5 var(--f-ui); color: var(--ink); background: var(--card); }
 .mail-compose .row2 { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
@@ -352,6 +375,7 @@ dialog.sheet .acts { display: flex; gap: 8px; justify-content: flex-end; margin-
         <div class="av lg" id="tAv"></div>
         <div class="who"><h2><span class="nm" id="tName"></span><button class="name-edit" id="tRename" type="button" title="Mudar o nome que a equipa vê" aria-label="Mudar nome"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button></h2><div class="sub" id="tSub"></div></div>
         <div class="tools">
+          <button class="take" id="waDial" type="button" title="A IA liga para este número">Ligar</button>
           <button class="take" id="takeBtn" type="button">Assumir conversa</button>
           <button class="icon-btn" id="copyBtn" type="button" title="Copiar número" aria-label="Copiar número">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg>
@@ -397,6 +421,8 @@ dialog.sheet .acts { display: flex; gap: 8px; justify-content: flex-end; margin-
       <div class="search">
         <label for="cq"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
           <input id="cq" type="search" placeholder="Procurar hotel, nome ou número"></label>
+        <button class="side-new" id="cDial" type="button">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>Ligar agora</button>
       </div>
       <div class="tabs" id="cTabs" role="toolbar" aria-label="Filtros de chamadas">
         <button class="tab" data-f="all" aria-pressed="true">Todas<span class="n" data-cn="all"></span></button>
@@ -413,6 +439,7 @@ dialog.sheet .acts { display: flex; gap: 8px; justify-content: flex-end; margin-
         <div class="av lg" id="cAv"></div>
         <div class="who"><h2><span class="nm" id="cName"></span><button class="name-edit" id="cRename" type="button" title="Mudar o nome que a equipa vê" aria-label="Mudar nome"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></button></h2><div class="sub" id="cSub"></div></div>
         <div class="tools">
+          <button class="take back-to-ai" id="cRedial" type="button">Ligar</button>
           <button class="take" id="cToWa" type="button" hidden>Abrir no WhatsApp</button>
           <button class="icon-btn" id="cCopy" type="button" title="Copiar número" aria-label="Copiar número"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></svg></button>
         </div>
@@ -426,7 +453,7 @@ dialog.sheet .acts { display: flex; gap: 8px; justify-content: flex-end; margin-
     <aside class="side" data-view="mail" hidden>
       <div class="me">
         <div class="av brand">IS</div>
-        <div class="who"><b>Email</b><span class="mono">info@indicostay.com</span></div>
+        <div class="who"><b>Email</b><span>info@ · Gmail da IndicoStay</span></div>
         <button class="side-new" id="mNew" type="button">Novo email</button>
       </div>
       <div class="kpis" id="mKpis" style="grid-template-columns:repeat(2,1fr)"></div>
@@ -437,6 +464,8 @@ dialog.sheet .acts { display: flex; gap: 8px; justify-content: flex-end; margin-
       <div class="tabs" id="mTabs" role="toolbar" aria-label="Filtros de email">
         <button class="tab" data-f="all" aria-pressed="true">Todos<span class="n" data-mn="all"></span></button>
         <button class="tab" data-f="unread" aria-pressed="false">Por ler<span class="n" data-mn="unread"></span></button>
+        <button class="tab" data-f="gmail" aria-pressed="false">Gmail<span class="n" data-mn="gmail"></span></button>
+        <button class="tab" data-f="info" aria-pressed="false">info@<span class="n" data-mn="info"></span></button>
         <button class="tab" data-f="sent" aria-pressed="false">Respondidos<span class="n" data-mn="sent"></span></button>
       </div>
       <div class="rows" id="mRows"><div class="empty">A carregar emails…</div></div>
@@ -451,14 +480,39 @@ dialog.sheet .acts { display: flex; gap: 8px; justify-content: flex-end; margin-
         <div class="welcome"><div class="av lg brand">IS</div><h3>Escolha um email</h3><p>Os emails que chegam a info@indicostay.com aparecem aqui. Pode responder daqui, sai do mesmo endereço.</p></div>
       </div>
       <form class="mail-compose" id="mCompose" hidden>
+        <div class="fld">De <select id="mFrom"><option value="info">info@indicostay.com</option><option value="gmail">indicostay@gmail.com</option></select></div>
         <div class="fld">Para <input id="mTo" type="email" autocomplete="off" required></div>
         <div class="fld">Assunto <input id="mSubj" type="text" autocomplete="off"></div>
         <textarea id="mText" placeholder="Escreva a resposta…" aria-label="Mensagem"></textarea>
-        <div class="row2"><span>Sai de <b class="mono">info@indicostay.com</b> · <span class="err" id="mErr"></span></span><button class="btn" id="mSend" type="submit">Enviar email</button></div>
+        <div class="row2"><span id="mVia"></span><span class="err" id="mErr"></span><button class="btn" id="mSend" type="submit">Enviar email</button></div>
       </form>
     </section>
   </div>
 </div>
+
+<dialog class="sheet" id="dialDlg">
+  <form id="dialForm">
+    <h3>Ligar agora</h3>
+    <p>O agente escolhido liga já para este número. A chamada aparece em Chamadas, com gravação e transcrição.</p>
+    <div class="dial-grid">
+      <label for="dTo">Número</label>
+      <input id="dTo" type="text" inputmode="search" autocomplete="off" placeholder="Número, ou procure nome / hotel já registado" required>
+      <div class="sugg" id="dSugg" hidden></div>
+      <label for="dLabel">Nome ou hotel <span class="opt">(opcional)</span></label>
+      <input id="dLabel" type="text" maxlength="80" autocomplete="off" placeholder="Ex.: Hotel Cardoso">
+      <label for="dAgent">Agente</label>
+      <select id="dAgent"><option value="">A carregar agentes…</option></select>
+      <label for="dFrom">Liga a partir de</label>
+      <select id="dFrom"></select>
+    </div>
+    <div class="err" id="dErr"></div>
+    <div class="dial-ok" id="dOk" hidden></div>
+    <div class="acts">
+      <button class="ghost-btn" id="dCancel" type="button">Cancelar</button>
+      <button class="btn" id="dGo" type="submit">Ligar agora</button>
+    </div>
+  </form>
+</dialog>
 
 <dialog class="sheet" id="renameDlg">
   <form method="dialog" id="renameForm">
@@ -1055,8 +1109,9 @@ dialog.sheet .acts { display: flex; gap: 8px; justify-content: flex-end; margin-
       ${avatarFor(callName(c), c.key || c.id)}
       <span class="txt">
         <span class="l1"><span class="name">${esc(callName(c))}</span><span class="when">${esc(c.start ? when(c.start) : '')}</span></span>
-        <span class="l2"><span class="last"><span class="dirm">${c.dir === 'inbound' ? '↙ recebida' : '↗ feita'}</span> · ${esc(c.summary || fmtPhone(c.phone))}</span><span class="dur">${c.dur ? dur(c.dur) : ''}</span><span class="tag ${esc(c.outcome)}">${esc(c.outcome_label)}</span></span>
+        <span class="l2"><span class="last"><span class="dirm">${c.dir === 'inbound' ? '↙ recebida' : '↗ feita'}</span> · ${esc(c.summary || fmtPhone(c.phone))}</span><span class="dur">${c.dur ? dur(c.dur) : ''}</span>${c.from_dashboard ? `<span class="tag dash" title="Pedida no dashboard${c.by ? ' por ' + esc(c.by) : ''}">manual</span>` : ''}<span class="tag ${esc(c.outcome)}">${esc(c.outcome_label)}</span></span>
       </span>
+      ${c.phone ? `<span class="redial" role="button" tabindex="0" data-redial="${esc(c.id)}" title="Ligar outra vez para ${esc(fmtPhone(c.phone))}" aria-label="Ligar outra vez"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg></span>` : ''}
     </button>`).join('');
   }
   function callHeader(d) {
@@ -1138,7 +1193,12 @@ dialog.sheet .acts { display: flex; gap: 8px; justify-content: flex-end; margin-
     const b = e.target.closest('.tts'); const a = $('#cAudio');
     if (b && a) { a.currentTime = Number(b.dataset.t) || 0; a.play().catch(() => {}); }
   });
-  $('#cRows').addEventListener('click', e => { const r = e.target.closest('.row'); if (r) openCall(r.dataset.cid); });
+  $('#cRows').addEventListener('click', e => {
+    const rd = e.target.closest('[data-redial]');
+    if (rd) { e.stopPropagation(); const c = calls.find(x => x.id === rd.dataset.redial); if (c) openDial({ phone: c.phone, name: c.custom_name || c.hotel || c.contact || '' }); return; }
+    const r = e.target.closest('.row'); if (r) openCall(r.dataset.cid);
+  });
+  $('#cRows').addEventListener('keydown', e => { const rd = e.target.closest('[data-redial]'); if (rd && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); rd.click(); } });
   $('#cTabs').addEventListener('click', e => {
     const b = e.target.closest('.tab'); if (!b) return;
     cFilter = b.dataset.f;
@@ -1156,22 +1216,124 @@ dialog.sheet .acts { display: flex; gap: 8px; justify-content: flex-end; margin-
     if (c) openThread(c.wa_id);
   });
 
-  // ---------- email (info@indicostay.com) ----------
-  let threads = [], mFilter = 'all', mCurrent = null, mLoadedAt = 0, mSig = '', mUnread = 0;
-  const M_FILTERS = { all: () => true, unread: t => t.unread > 0, sent: t => t.last_dir === 'out' };
+  // ---------- ligar agora (Retell create-phone-call) ----------
+  let dialer = null;
+  async function loadDialer() {
+    if (dialer) return dialer;
+    const d = await hub('dialer');
+    dialer = d;
+    const last = store.get('dial_agent') || d.default_agent;
+    const ind = d.agents.filter(a => a.indicostay), other = d.agents.filter(a => !a.indicostay);
+    const opt = a => `<option value="${esc(a.id)}"${a.id === last ? ' selected' : ''}>${esc(a.name)}</option>`;
+    $('#dAgent').innerHTML = (ind.length ? `<optgroup label="IndicoStay">${ind.map(opt).join('')}</optgroup>` : '') + (other.length ? `<optgroup label="Outros agentes">${other.map(opt).join('')}</optgroup>` : '');
+    $('#dFrom').innerHTML = (d.numbers.length ? d.numbers : [{ number: d.default_number, nickname: '' }]).map(n => `<option value="${esc(n.number)}"${n.number === d.default_number ? ' selected' : ''}>${esc(n.number)}${n.nickname ? ' · ' + esc(n.nickname) : ''}</option>`).join('');
+    return d;
+  }
+  // Agenda: todos os numeros ja registados (chamadas e WhatsApp), o mais recente primeiro.
+  function directory() {
+    const m = new Map();
+    const add = (phoneRaw, name, ts, src) => {
+      const d = String(phoneRaw || '').replace(/\D/g, ''); if (d.length < 8) return;
+      const k = d.slice(-9), t = ts ? +new Date(ts) || 0 : 0, prev = m.get(k);
+      if (!prev) m.set(k, { k, phone: '+' + d, name: name || '', ts: t, src: new Set([src]) });
+      else { prev.src.add(src); if (!prev.name && name) prev.name = name; if (t > prev.ts) prev.ts = t; }
+    };
+    calls.forEach(c => add(c.phone, c.custom_name || c.hotel || c.contact || '', c.start, 'chamada'));
+    contacts.forEach(c => add(c.wa_id, c.custom_name || c.hotel || c.name || '', c.last_at, 'whatsapp'));
+    return [...m.values()].sort((a, b) => b.ts - a.ts);
+  }
+  let suggList = [], suggOn = -1;
+  function renderSugg() {
+    const q = $('#dTo').value.trim().toLowerCase(), qd = q.replace(/\D/g, '');
+    const all = directory();
+    const hits = !q ? all.slice(0, 8) : all.filter(x => x.name.toLowerCase().includes(q) || (qd.length >= 3 && x.phone.replace(/\D/g, '').includes(qd))).slice(0, 8);
+    suggList = hits; suggOn = -1;
+    const box = $('#dSugg');
+    if (!hits.length || (qd.length >= 9 && hits.length === 1 && hits[0].phone.replace(/\D/g, '').endsWith(qd.slice(-9)) && !q.match(/[a-z]/))) { box.hidden = true; return; }
+    box.innerHTML = `<div class="sh">${q ? 'Registados' : 'Recentes'}</div>` + hits.map((x, i) => `<button type="button" data-i="${i}">${avatarFor(x.name || x.phone, x.k, 'sm')}<span class="sn">${esc(x.name || fmtPhone(x.phone))}</span><span class="sp">${esc(fmtPhone(x.phone))}</span><span class="tag">${[...x.src].map(s => s === 'whatsapp' ? 'wa' : 'voz').join(' · ')}</span></button>`).join('');
+    box.hidden = false;
+  }
+  function pickSugg(i) {
+    const x = suggList[i]; if (!x) return;
+    $('#dTo').value = fmtPhone(x.phone);
+    if (x.name && !$('#dLabel').value.trim()) $('#dLabel').value = x.name;
+    $('#dSugg').hidden = true;
+    $('#dGo').focus();
+  }
+  $('#dTo').addEventListener('input', renderSugg);
+  $('#dTo').addEventListener('focus', renderSugg);
+  $('#dTo').addEventListener('keydown', e => {
+    const box = $('#dSugg'); if (box.hidden) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      suggOn = Math.max(0, Math.min(suggList.length - 1, suggOn + (e.key === 'ArrowDown' ? 1 : -1)));
+      box.querySelectorAll('button').forEach((b, i) => b.classList.toggle('on', i === suggOn));
+    } else if (e.key === 'Enter' && suggOn >= 0) { e.preventDefault(); pickSugg(suggOn); }
+    else if (e.key === 'Escape') { e.preventDefault(); box.hidden = true; }
+  });
+  $('#dSugg').addEventListener('mousedown', e => { const b = e.target.closest('button[data-i]'); if (b) { e.preventDefault(); pickSugg(Number(b.dataset.i)); } });
+
+  async function openDial(pre = {}) {
+    $('#dTo').value = pre.phone ? fmtPhone(pre.phone) : '';
+    $('#dLabel').value = pre.name || '';
+    $('#dErr').textContent = ''; $('#dOk').hidden = true; $('#dGo').disabled = false; $('#dGo').textContent = 'Ligar agora';
+    $('#dSugg').hidden = true;
+    $('#dialDlg').showModal();
+    setTimeout(() => (pre.phone ? $('#dGo') : $('#dTo')).focus(), 30);
+    try { await loadDialer(); } catch (e) { $('#dErr').textContent = 'Não foi possível carregar os agentes (' + e.message + ').'; }
+  }
+  $('#cDial').addEventListener('click', () => openDial());
+  $('#dCancel').addEventListener('click', () => $('#dialDlg').close());
+  $('#cRedial').addEventListener('click', () => { if (callDetail) openDial({ phone: callDetail.phone, name: callDetail.custom_name || callDetail.hotel || '' }); });
+  $('#waDial').addEventListener('click', () => { const c = contacts.find(x => x.wa_id === current); if (c) openDial({ phone: c.wa_id, name: c.custom_name || c.hotel || '' }); });
+  $('#dialForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const agentSel = $('#dAgent');
+    if (!agentSel.value) { $('#dErr').textContent = 'Escolha o agente.'; return; }
+    $('#dGo').disabled = true; $('#dGo').textContent = 'A ligar…'; $('#dErr').textContent = '';
+    try {
+      const r = await hubPost({ action: 'call_now', to_number: $('#dTo').value, label: $('#dLabel').value.trim(), agent_id: agentSel.value, from_number: $('#dFrom').value });
+      store.set('dial_agent', agentSel.value);
+      const agentName = agentSel.options[agentSel.selectedIndex].textContent.split(' - ')[0];
+      $('#dOk').hidden = false;
+      $('#dOk').textContent = `${agentName} está a ligar agora. A abrir a chamada…`;
+      setTimeout(async () => {
+        $('#dialDlg').close();
+        if (view !== 'calls') setView('calls');
+        await loadCalls(true);
+        if (r.call_id) openCall(r.call_id);
+      }, 1500);
+    } catch (err) {
+      if (err.code === 401) return logout('O código deixou de ser válido. Entre outra vez.');
+      $('#dErr').textContent = err.message;
+      $('#dGo').disabled = false; $('#dGo').textContent = 'Ligar agora';
+    }
+  });
+
+  // ---------- email (info@indicostay.com + indicostay@gmail.com) ----------
+  // Cada conversa = caixa + endereco da outra pessoa.
+  let threads = [], mFilter = 'all', mCurrent = null, mLoadedAt = 0, mSig = '', mUnread = 0, mReplyExt = '';
+  const MB_KEY = mb => mb === 'indicostay@gmail.com' ? 'gmail' : 'info';
+  const MB_LABEL = { gmail: 'gmail', info: 'info@' };
+  const tKey = t => MB_KEY(t.mailbox) + '|' + t.addr;
+  const M_FILTERS = { all: () => true, unread: t => t.unread > 0, gmail: t => MB_KEY(t.mailbox) === 'gmail', info: t => MB_KEY(t.mailbox) === 'info', sent: t => t.last_dir === 'out' };
   const mailName = t => t.name && t.name !== t.addr ? t.name : t.addr;
+  function viaText() {
+    const g = $('#mFrom').value === 'gmail';
+    $('#mVia').innerHTML = `Sai de <b class="mono">${g ? 'indicostay@gmail.com' : 'info@indicostay.com'}</b>${g && mReplyExt && mCurrent && mCurrent.startsWith('gmail|') && $('#mTo').value.trim().toLowerCase() === mCurrent.split('|')[1] ? ' · na mesma conversa do Gmail' : ''}`;
+  }
   async function loadMail(force) {
     if (!force && Date.now() - mLoadedAt < 10000) return;
     mLoadedAt = Date.now();
     try {
       const d = await hub('emails');
-      const prev = new Map(threads.map(t => [t.addr, t.last_at]));
+      const prev = new Map(threads.map(t => [tKey(t), t.last_at]));
       threads = d.threads || [];
       mUnread = Number(d.unread) || 0;
       $('#rbMail').textContent = mUnread ? mUnread : '';
       renderMail();
-      const t = threads.find(x => x.addr === mCurrent);
-      if (view === 'mail' && t && prev.get(t.addr) && prev.get(t.addr) !== t.last_at) loadMailThread();
+      const t = threads.find(x => tKey(x) === mCurrent);
+      if (view === 'mail' && t && prev.get(mCurrent) && prev.get(mCurrent) !== t.last_at) loadMailThread();
     } catch (e) {
       if (e.code === 401) return logout('O código deixou de ser válido. Entre outra vez.');
       if (!threads.length) $('#mRows').innerHTML = `<div class="empty">Não foi possível carregar os emails (${esc(e.message)}).</div>`;
@@ -1183,47 +1345,54 @@ dialog.sheet .acts { display: flex; gap: 8px; justify-content: flex-end; margin-
     for (const [f, fn] of Object.entries(M_FILTERS)) { const el = document.querySelector(`[data-mn="${f}"]`); if (el) { const n = threads.filter(fn).length; el.textContent = n ? n : ''; } }
     const q = $('#mq').value.trim().toLowerCase();
     const list = threads.filter(t => M_FILTERS[mFilter](t) && (!q || `${t.name || ''} ${t.addr} ${t.subject || ''}`.toLowerCase().includes(q)));
-    if (!list.length) { $('#mRows').innerHTML = `<div class="empty">${threads.length ? 'Nenhum email com este filtro.' : 'Ainda não chegaram emails desde que o inbox foi ligado. Os novos emails para info@indicostay.com aparecem aqui.'}</div>`; return; }
-    $('#mRows').innerHTML = list.map(t => `<button class="row${t.unread > 0 ? ' unread' : ''}" data-addr="${esc(t.addr)}" aria-current="${t.addr === mCurrent}">
+    if (!list.length) { $('#mRows').innerHTML = `<div class="empty">${threads.length ? 'Nenhum email com este filtro.' : 'Ainda não há emails. Os novos emails para info@indicostay.com e indicostay@gmail.com aparecem aqui.'}</div>`; return; }
+    $('#mRows').innerHTML = list.map(t => { const mk = MB_KEY(t.mailbox); return `<button class="row${t.unread > 0 ? ' unread' : ''}" data-k="${esc(tKey(t))}" aria-current="${tKey(t) === mCurrent}">
       ${avatarFor(mailName(t), t.addr)}
       <span class="txt">
         <span class="l1"><span class="name">${esc(mailName(t))}</span><span class="when">${esc(when(t.last_at))}</span></span>
-        <span class="l2"><span class="last">${t.last_dir === 'out' ? 'Nós: ' : ''}<b>${esc(t.subject || '(sem assunto)')}</b> · ${esc(t.snippet || '')}</span>${t.unread > 0 ? `<span class="badge">${t.unread}</span>` : ''}</span>
+        <span class="l2"><span class="last">${t.last_dir === 'out' ? 'Nós: ' : ''}<b>${esc(t.subject || '(sem assunto)')}</b> · ${esc(t.snippet || '')}</span><span class="tag mb-${mk}">${MB_LABEL[mk]}</span>${t.unread > 0 ? `<span class="badge">${t.unread}</span>` : ''}</span>
       </span>
-    </button>`).join('');
+    </button>`; }).join('');
   }
-  function mailChrome(name, addr) {
+  function mailChrome(name, addr, mk) {
     $('#mHead').hidden = false;
     $('#mAv').outerHTML = avatarFor(name || addr || 'Novo', addr || 'novo', 'lg').replace('class="av lg"', 'class="av lg" id="mAv"');
     $('#mName').textContent = name || addr || 'Novo email';
-    $('#mSub').innerHTML = addr ? `<span class="mono">${esc(addr)}</span>` : 'Escreva o endereço e o assunto';
+    $('#mSub').innerHTML = addr ? `<span class="mono">${esc(addr)}</span> · <span class="tag mb-${mk}">${mk === 'gmail' ? 'indicostay@gmail.com' : 'info@indicostay.com'}</span>` : 'Escreva o endereço e o assunto';
     $('#mCompose').hidden = false;
     $('#mErr').textContent = '';
   }
-  async function openMail(addr) {
-    mCurrent = addr; mSig = '';
+  async function openMail(key) {
+    mCurrent = key; mSig = ''; mReplyExt = '';
+    const [mk, addr] = key.split('|');
     document.body.classList.add('chat-open');
-    document.querySelectorAll('#mRows .row').forEach(r => r.setAttribute('aria-current', String(r.dataset.addr === addr)));
-    const t = threads.find(x => x.addr === addr) || { addr };
-    mailChrome(mailName(t), addr);
+    document.querySelectorAll('#mRows .row').forEach(r => r.setAttribute('aria-current', String(r.dataset.k === key)));
+    const t = threads.find(x => tKey(x) === key) || { addr };
+    mailChrome(mailName(t), addr, mk);
+    $('#mFrom').value = mk;
     $('#mTo').value = addr;
     $('#mText').value = '';
+    viaText();
     $('#mBody').innerHTML = '<div class="empty">A carregar…</div>';
     await loadMailThread(true);
     if (t.unread) { mUnread = Math.max(0, mUnread - t.unread); t.unread = 0; $('#rbMail').textContent = mUnread ? mUnread : ''; renderMail(); }
   }
   async function loadMailThread(first) {
-    const addr = mCurrent; if (!addr) return;
+    const key = mCurrent; if (!key) return;
+    const [mk, addr] = key.split('|');
     try {
-      const msgs = await hub('email_thread', { addr });
-      if (addr !== mCurrent) return;
+      const msgs = await hub('email_thread', { addr, mb: mk });
+      if (key !== mCurrent) return;
+      const lastIn = [...msgs].reverse().find(m => m.direction === 'in');
+      mReplyExt = lastIn && lastIn.ext_id ? lastIn.ext_id : '';
+      viaText();
       const sig = msgs.map(m => m.id).join(',');
       if (sig === mSig) return;
       mSig = sig;
       renderMailThread(msgs);
       if (first) {
-        const lastIn = [...msgs].reverse().find(m => m.direction === 'in') || msgs[msgs.length - 1];
-        const s = (lastIn && lastIn.subject) || '';
+        const ref = lastIn || msgs[msgs.length - 1];
+        const s = (ref && ref.subject) || '';
         $('#mSubj').value = s ? (/^re:/i.test(s) ? s : 'Re: ' + s) : '';
       }
     } catch (e) {
@@ -1237,7 +1406,7 @@ dialog.sheet .acts { display: flex; gap: 8px; justify-content: flex-end; margin-
     box.innerHTML = msgs.map((m, i) => {
       const out = m.direction === 'out';
       const name = out ? `IndicoStay${m.sent_by ? ' · ' + m.sent_by : ''}` : (m.from_name || m.from_addr);
-      const meta = out ? 'para ' + (m.to_addr || '') : (m.from_addr || '') + (m.to_addr ? ' · para ' + m.to_addr : '');
+      const meta = out ? 'de ' + (m.mailbox || m.from_addr || '') + ' para ' + (m.to_addr || '') : (m.from_addr || '') + ' · para ' + (m.mailbox || m.to_addr || '');
       const body = !out && m.body_html ? `<iframe data-i="${i}" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin" title="Email de ${esc(name)}"></iframe>` : `<div class="mb">${esc(m.body_text || '')}</div>`;
       return `<article class="mail${out ? ' out' : ''}">
         <div class="mh">${out ? '<div class="av sm brand">IS</div>' : avatarFor(name, m.from_addr || name, 'sm')}<div class="who"><b>${esc(name)}</b><span>${esc(meta)}</span></div><time>${esc(fullDate(m.sent_at))}</time></div>
@@ -1250,7 +1419,7 @@ dialog.sheet .acts { display: flex; gap: 8px; justify-content: flex-end; margin-
     });
     box.scrollTop = box.scrollHeight;
   }
-  $('#mRows').addEventListener('click', e => { const r = e.target.closest('.row'); if (r) openMail(r.dataset.addr); });
+  $('#mRows').addEventListener('click', e => { const r = e.target.closest('.row'); if (r) openMail(r.dataset.k); });
   $('#mTabs').addEventListener('click', e => {
     const b = e.target.closest('.tab'); if (!b) return;
     mFilter = b.dataset.f;
@@ -1258,25 +1427,31 @@ dialog.sheet .acts { display: flex; gap: 8px; justify-content: flex-end; margin-
     renderMail();
   });
   $('#mq').addEventListener('input', renderMail);
+  $('#mFrom').addEventListener('change', viaText);
+  $('#mTo').addEventListener('input', viaText);
   $('#mNew').addEventListener('click', () => {
-    mCurrent = null; mSig = '';
+    mCurrent = null; mSig = ''; mReplyExt = '';
     document.body.classList.add('chat-open');
     document.querySelectorAll('#mRows .row').forEach(r => r.setAttribute('aria-current', 'false'));
-    mailChrome('', '');
+    mailChrome('', '', 'info');
     $('#mTo').value = ''; $('#mSubj').value = ''; $('#mText').value = '';
-    $('#mBody').innerHTML = '<div class="welcome"><h3>Novo email</h3><p>Sai de info@indicostay.com. A resposta da pessoa aparece aqui quando chegar.</p></div>';
+    viaText();
+    $('#mBody').innerHTML = '<div class="welcome"><h3>Novo email</h3><p>Escolha de que caixa sai (info@ ou Gmail). A resposta da pessoa aparece aqui quando chegar.</p></div>';
     $('#mTo').focus();
   });
   $('#mCompose').addEventListener('submit', async e => {
     e.preventDefault();
-    const to = $('#mTo').value.trim().toLowerCase(), subject = $('#mSubj').value.trim(), text = $('#mText').value.trim();
+    const to = $('#mTo').value.trim().toLowerCase(), subject = $('#mSubj').value.trim(), text = $('#mText').value.trim(), mb = $('#mFrom').value;
     if (!to || !text) { $('#mErr').textContent = 'Falta o destinatário ou a mensagem.'; return; }
+    // No Gmail, responder ao mesmo endereco mantem a conversa (thread) do Gmail.
+    const sameThread = mb === 'gmail' && mCurrent === 'gmail|' + to && mReplyExt;
     $('#mSend').disabled = true; $('#mErr').textContent = ''; $('#mSend').textContent = 'A enviar…';
     try {
-      await hubPost({ action: 'email_send', to, subject, text });
+      await hubPost({ action: 'email_send', mb, to, subject, text, reply_ext: sameThread ? mReplyExt : '' });
       $('#mText').value = '';
       await loadMail(true);
-      if (mCurrent !== to) { await openMail(to); } else { mSig = ''; await loadMailThread(); }
+      const key = mb + '|' + to;
+      if (mCurrent !== key) { await openMail(key); } else { mSig = ''; await loadMailThread(); }
     } catch (err) {
       if (err.code === 401) return logout('O código deixou de ser válido. Entre outra vez.');
       $('#mErr').textContent = err.message;
@@ -1289,7 +1464,7 @@ dialog.sheet .acts { display: flex; gap: 8px; justify-content: flex-end; margin-
     loadMail();
     if (view === 'calls' || !calls.length) loadCalls();
   }
-  function startHub() { stopHub(); hubTick(); hubTimer = setInterval(() => { if (document.visibilityState === 'visible') hubTick(); }, 10000); }
+  function startHub() { stopHub(); hubTick(); loadDialer().catch(() => { dialer = null; }); hubTimer = setInterval(() => { if (document.visibilityState === 'visible') hubTick(); }, 10000); }
   function stopHub() { clearInterval(hubTimer); hubTimer = null; }
 
   if (token) showApp(); else $('#login').hidden = false;
