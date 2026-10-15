@@ -150,6 +150,11 @@ section.thread { min-height: 0; display: grid; grid-template-rows: auto 1fr auto
 .line.out .bubble .hd { color: var(--muted); opacity: 1; }
 .bubble .body { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13.5px; font-weight: 500; }
 .bubble .body.ghost { font-style: italic; opacity: 0.7; font-weight: 400; }
+.bubble .media { font-size: 12px; opacity: 0.85; }
+.bubble .media img, .bubble .media video { display: block; max-width: 100%; max-height: 320px; border-radius: 12px; }
+.bubble .media audio { max-width: 100%; }
+.bubble .media a { color: inherit; font-weight: 700; }
+.bubble .media.gone { font-style: italic; opacity: 0.7; }
 .bubble .ft { display: flex; justify-content: flex-end; font-size: 11px; font-weight: 600; }
 .st { display: inline-flex; gap: 4px; align-items: center; color: var(--muted); }
 .st.read { color: var(--violet); }
@@ -246,7 +251,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
 .codebox textarea { width: 100%; margin-top: 10px; min-height: 120px; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; font: 500 13px/1.5 var(--f-ui); color: var(--ink); background: var(--card); resize: vertical; }
 
 /* ---------- calls ---------- */
-.pane-body { min-height: 0; overflow-y: auto; padding: 22px; display: grid; gap: 16px; align-content: start; }
+.pane-body { min-height: 0; overflow-y: auto; padding: 22px; display: grid; gap: 16px; align-content: start; grid-auto-rows: max-content; }
 .cardx { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 16px 18px; box-shadow: 0 8px 20px -18px rgba(40, 30, 90, 0.35); }
 .cardx h4 { margin: 0 0 10px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 .cardx .summary { font-size: 14px; line-height: 1.6; }
@@ -284,6 +289,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
 .mail .subj { padding: 0 16px 8px; font-weight: 800; font-size: 14.5px; }
 .mail .mb { padding: 0 16px 16px; font-size: 13.5px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .mail iframe { width: 100%; border: 0; display: block; min-height: 80px; background: #fff; }
+.mail .older { border: 1px dashed var(--line); background: var(--soft); border-radius: 14px; padding: 10px 14px; font-weight: 700; font-size: 12.5px; color: var(--violet); cursor: pointer; justify-self: center; }
 .mail-compose { padding: 12px 22px 18px; display: grid; gap: 8px; border-top: 1px solid var(--line); background: var(--card); }
 .mail-compose .fld { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); font-weight: 700; }
 .mail-compose .fld select { border: 1px solid var(--line); border-radius: 12px; padding: 7px 10px; background: var(--soft); color: var(--ink); font: 600 13px var(--f-ui); }
@@ -819,6 +825,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
         ${out ? (human ? `<div class="av sm" style="background:linear-gradient(135deg,#F08A24,#F2558C)">${esc(String(m.sent_by).slice(0, 2).toUpperCase())}</div>` : usAv) : themAv}
         <div class="bubble">
           <div class="hd"><span>${esc(who)}</span><span>${esc(t)}</span></div>
+          ${m.has_media ? `<div class="media" data-mid="${esc(m.id)}" data-type="${esc(m.msg_type || '')}">A carregar ${m.msg_type === 'audio' ? 'áudio' : m.msg_type === 'video' ? 'vídeo' : m.msg_type === 'document' ? 'documento' : 'imagem'}…</div>` : ''}
           <div class="body${ghost ? ' ghost' : ''}">${esc(body)}</div>
           ${m.error ? `<div class="errtxt">${esc(m.error)}</div>` : ''}
           ${out ? `<div class="ft">${statusMark(m.status)}</div>` : ''}
@@ -827,7 +834,34 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
     }).join('');
     if (lastIn && !c.human_mode) html +=`<div class="typing"><div class="av sm brand">IS</div><span class="dots"><i></i><i></i><i></i></span>Sara está a responder…</div>`;
     box.innerHTML = html;
+    hydrateMedia(box);
     if (scroll || nearBottom) box.scrollTop = box.scrollHeight;
+  }
+
+  // Photos, voice notes, videos and documents sent by clients: fetched with the token, cached per message.
+  const mediaCache = new Map();
+  function mediaEl(type, url) {
+    if (type === 'audio') return `<audio controls preload="metadata" src="${url}"></audio>`;
+    if (type === 'video') return `<video controls preload="metadata" src="${url}"></video>`;
+    if (type === 'document') return `<a href="${url}" target="_blank" rel="noopener">Abrir documento</a>`;
+    return `<a href="${url}" target="_blank" rel="noopener"><img src="${url}" alt="Imagem enviada pelo cliente"></a>`;
+  }
+  function hydrateMedia(box) {
+    box.querySelectorAll('.media[data-mid]').forEach(el => {
+      const id = el.dataset.mid, type = el.dataset.type;
+      const fill = (url) => { if (url) el.innerHTML = mediaEl(type, url); else { el.textContent = 'Já não está disponível no WhatsApp.'; el.classList.add('gone'); } };
+      if (mediaCache.has(id)) return void Promise.resolve(mediaCache.get(id)).then(fill);
+      const p = (async () => {
+        try {
+          const u = new URL(API); u.searchParams.set('action', 'media'); u.searchParams.set('id', id);
+          const r = await fetch(u, { headers: { 'x-inbox-token': token } });
+          if (!r.ok) return '';
+          return URL.createObjectURL(await r.blob());
+        } catch (e) { return ''; }
+      })();
+      mediaCache.set(id, p);
+      p.then(url => { mediaCache.set(id, url); document.querySelectorAll(`.media[data-mid="${CSS.escape(id)}"]`).forEach(x => { if (url) x.innerHTML = mediaEl(x.dataset.type, url); else { x.textContent = 'Já não está disponível no WhatsApp.'; x.classList.add('gone'); } }); });
+    });
   }
 
   // ---------- alerts ----------
@@ -1437,6 +1471,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
     $('#mText').value = '';
     viaText();
     $('#mBody').innerHTML = '<div class="empty">A carregar…</div>';
+    mShowAll = false;
     await loadMailThread(true);
     if (t.unread) { mUnread = Math.max(0, mUnread - t.unread); t.unread = 0; $('#rbMail').textContent = mUnread ? mUnread : ''; renderMail(); }
   }
@@ -1463,10 +1498,26 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
       $('#mBody').innerHTML = `<div class="empty">Não foi possível abrir (${esc(e.message)}).</div>`;
     }
   }
-  function renderMailThread(msgs) {
+  let mShowAll = false;
+  function fitFrame(f) {
+    try {
+      const d = f.contentDocument; if (!d || !d.documentElement) return;
+      f.style.height = '0px';
+      f.style.height = (Math.max(d.documentElement.scrollHeight, d.body ? d.body.scrollHeight : 0) + 6) + 'px';
+    } catch (e) { f.style.height = '420px'; }
+  }
+  const mFrames = new Set();
+  window.addEventListener('resize', () => mFrames.forEach(fitFrame));
+  function renderMailThread(allMsgs, keepScroll) {
     const box = $('#mBody');
-    if (!msgs.length) { box.innerHTML = '<div class="welcome"><p>Sem emails guardados com este endereço.</p></div>'; return; }
-    box.innerHTML = msgs.map((m, i) => {
+    mFrames.clear();
+    if (!allMsgs.length) { box.innerHTML = '<div class="welcome"><p>Sem emails guardados com este endereço.</p></div>'; return; }
+    const LIMIT = 8;
+    const hidden = (!mShowAll && allMsgs.length > LIMIT) ? allMsgs.length - LIMIT : 0;
+    const msgs = hidden ? allMsgs.slice(-LIMIT) : allMsgs;
+    const prevTop = box.scrollTop, wasBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 140;
+    const olderBtn = hidden ? `<button class="older" id="mOlder" type="button">Mostrar ${hidden} email${hidden > 1 ? 's' : ''} mais antigo${hidden > 1 ? 's' : ''}</button>` : '';
+    box.innerHTML = olderBtn + msgs.map((m, i) => {
       const out = m.direction === 'out';
       const name = out ? `IndicoStay${m.sent_by ? ' · ' + m.sent_by : ''}` : (m.from_name || m.from_addr);
       const meta = out ? 'de ' + (m.mailbox || m.from_addr || '') + ' para ' + (m.to_addr || '') : (m.from_addr || '') + ' · para ' + (m.mailbox || m.to_addr || '');
@@ -1475,12 +1526,26 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
         <div class="mh">${out ? '<div class="av sm brand">IS</div>' : avatarFor(name, m.from_addr || name, 'sm')}<div class="who"><b>${esc(name)}</b><span>${esc(meta)}</span></div><time>${esc(fullDate(m.sent_at))}</time></div>
         <div class="subj">${esc(m.subject || '(sem assunto)')}</div>${body}</article>`;
     }).join('');
+    const older = $('#mOlder'); if (older) older.onclick = () => { mShowAll = true; mSig = ''; renderMailThread(allMsgs, true); };
     box.querySelectorAll('iframe[data-i]').forEach(f => {
       const m = msgs[Number(f.dataset.i)];
-      f.addEventListener('load', () => { try { f.style.height = (f.contentDocument.documentElement.scrollHeight + 8) + 'px'; } catch (e) { f.style.height = '420px'; } });
-      f.srcdoc = '<!doctype html><meta charset="utf-8"><base target="_blank"><style>body{margin:0 16px 16px;font:14px/1.5 Arial,Helvetica,sans-serif;color:#1B1830;word-break:break-word}img{max-width:100%;height:auto}table{max-width:100%}</style>' + m.body_html;
+      mFrames.add(f);
+      f.addEventListener('load', () => {
+        fitFrame(f);
+        try {
+          const d = f.contentDocument;
+          // Email sem texto visivel (so imagens bloqueadas ou estilos): mostra o texto simples em vez de um quadro em branco.
+          if (!(d.body.innerText || '').trim() && !d.querySelector('img') && (m.body_text || '').trim()) {
+            const div = document.createElement('div'); div.className = 'mb'; div.textContent = m.body_text; f.replaceWith(div); mFrames.delete(f); return;
+          }
+          if (window.ResizeObserver) new ResizeObserver(() => fitFrame(f)).observe(d.documentElement);
+          d.querySelectorAll('img').forEach(img => img.addEventListener('load', () => fitFrame(f)));
+        } catch (e) {}
+        if (wasBottom && !keepScroll) box.scrollTop = box.scrollHeight;
+      });
+      f.srcdoc = '<!doctype html><meta charset="utf-8"><base target="_blank"><style>html,body{margin:0}body{padding:0 16px 16px;font:14px/1.5 Arial,Helvetica,sans-serif;color:#1B1830;word-break:break-word;overflow-x:hidden}img{max-width:100%;height:auto}table{max-width:100%}</style>' + m.body_html;
     });
-    box.scrollTop = box.scrollHeight;
+    box.scrollTop = keepScroll ? prevTop : box.scrollHeight;
   }
   $('#mRows').addEventListener('click', e => { const r = e.target.closest('.row'); if (r) openMail(r.dataset.k); });
   $('#mTabs').addEventListener('click', e => {
