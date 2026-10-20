@@ -257,6 +257,8 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
 .ag-actions .btn.warn { background: #E79A1B; box-shadow: none; }
 .ag-err { color: var(--bad); font-size: 13px; min-height: 18px; margin-top: 8px; }
 .tag.confirm { background: #FFF3E0; color: #B26200; }
+#agTabs { gap: 8px; padding: 0 12px; justify-content: space-between; }
+#agTabs .tab { font-size: 10.5px; letter-spacing: 0.02em; }
 .mail-prev { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--soft); margin-bottom: 12px; }
 .mp-subj { padding: 10px 14px; background: var(--card); border-bottom: 1px solid var(--line); display: grid; gap: 2px; }
 .mp-subj span { font-size: 10.5px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
@@ -533,9 +535,10 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
       </div>
       <div class="kpis" id="agKpis"></div>
       <div class="tabs" id="agTabs" role="toolbar" aria-label="Filtros da agenda">
-        <button class="tab" data-f="confirm" aria-pressed="false">Por confirmar<span class="n" data-agn="confirm"></span></button>
+        <button class="tab" data-f="confirm" aria-pressed="false" title="Acabaram e falta dizer se a pessoa compareceu">Confirmar<span class="n" data-agn="confirm"></span></button>
         <button class="tab" data-f="next" aria-pressed="false">Próximas<span class="n" data-agn="next"></span></button>
-        <button class="tab" data-f="past" aria-pressed="false">Passadas<span class="n" data-agn="past"></span></button>
+        <button class="tab" data-f="resched" aria-pressed="false">Remarcadas<span class="n" data-agn="resched"></span></button>
+        <button class="tab" data-f="cancel" aria-pressed="false">Canceladas<span class="n" data-agn="cancel"></span></button>
       </div>
       <div class="rows" id="agRows"><div class="empty">A carregar agenda…</div></div>
     </aside>
@@ -1030,7 +1033,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
   function applyAccess() {
     document.querySelectorAll('#rail .rbtn').forEach(b => {
       const v = b.dataset.view;
-      b.hidden = v === 'team' ? !isAdmin() : v === 'agenda' ? !(can('wa') || isAdmin()) : !can(v === 'mail' ? 'mail' : v);
+      b.hidden = v === 'team' ? !isAdmin() : v === 'agenda' ? !(can('agenda') || isAdmin()) : !can(v === 'mail' ? 'mail' : v);
     });
     $('#waDial').hidden = !can('calls');
     $('#agentName').textContent = 'ligado como ' + ME.name;
@@ -1179,7 +1182,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
   // ---------- vistas ----------
   let view = 'wa';
   function setView(v) {
-    const ok = x => x === 'team' ? isAdmin() : x === 'agenda' ? (can('wa') || isAdmin()) : can(x);
+    const ok = x => x === 'team' ? isAdmin() : x === 'agenda' ? (can('agenda') || isAdmin()) : can(x);
     if (!['wa', 'calls', 'mail', 'agenda', 'team'].includes(v) || !ok(v)) v = ['wa', 'calls', 'mail', 'agenda', 'team'].find(ok) || 'wa';
     view = v;
     document.querySelectorAll('[data-view]').forEach(el => {
@@ -1667,7 +1670,8 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
   const CH = [
     { k: 'wa', n: 'WhatsApp', d: 'Ver e responder às conversas do número +258 86 517 8862.' },
     { k: 'calls', n: 'Chamadas', d: 'Ver chamadas da Sara, gravações, transcrições, e ligar a partir do dashboard.' },
-    { k: 'mail', n: 'Email', d: 'Ler e responder aos emails de info@ e do Gmail da IndicoStay.' }
+    { k: 'mail', n: 'Email', d: 'Ler e responder aos emails de info@ e do Gmail da IndicoStay.' },
+    { k: 'agenda', n: 'Agenda', d: 'Ver horários livres, marcar reuniões, confirmar presença, reagendar e cancelar.' }
   ];
   let team = [], tSel = null;
   const rel = ts => { if (!ts) return 'nunca entrou'; const m = Math.round((Date.now() - Date.parse(ts)) / 60000); return m < 2 ? 'ativo agora' : m < 60 ? `há ${m} min` : m < 1440 ? `há ${Math.round(m / 60)} h` : 'em ' + new Intl.DateTimeFormat('pt-PT', { timeZone: TZ, day: '2-digit', month: '2-digit' }).format(new Date(ts)); };
@@ -1773,7 +1777,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
     if (!r.ok || d.ok === false) throw new Error(d.error || ('HTTP ' + r.status));
     return d;
   }
-  const AGT = { anfitriao: 'Anfitrião', coanfitriao: 'Co-anfitrião', influencer: 'Influencer', bloqueio: 'Bloqueio' };
+  const AGT = { anfitriao: 'Anfitrião', coanfitriao: 'Co-anfitrião', influencer: 'Influencer', bloqueio: 'Bloqueio', outro: 'Outro' };
   let agDetTpl = null, agDetSig = '', agDayInit = false;
   let agItems = [], agDias = [], agTab = null, agMode = 'form', agSelId = null, agTipo = 'anfitriao', agDay = 0, agSel = null, agBusy = false;
   let agForm = { instancia: '', contacto: '', tratamento: '', email: '', telefone: '', nota: '' };
@@ -1781,13 +1785,23 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
   const agTrats = () => agTipo === 'influencer' ? ['', 'Influenciador', 'Influenciadora'] : ['', 'Dr.', 'Dra.'];
   const agStarted = m => Date.parse(m.inicio) <= Date.now();
   const agEnded = m => Date.parse(m.fim) <= Date.now();
-  const agCat = m => m.tipo === 'bloqueio' ? (agEnded(m) ? 'past' : 'next') : m.estado === 'marcada' ? (agEnded(m) ? 'confirm' : 'next') : 'past';
+  // Abas: Por confirmar (acabou e falta dizer se compareceu, ou nao compareceu sem email), Proximas, Remarcadas, Canceladas.
+  const agCat = m => {
+    if (m.estado === 'cancelada') return 'cancel';
+    if (m.tipo === 'bloqueio') return agEnded(m) ? 'none' : 'next';
+    if (m.estado === 'nao_compareceu') return m.reagendado_em ? 'resched' : 'confirm';
+    if (m.estado === 'marcada') return agEnded(m) ? 'confirm' : 'next';
+    return 'none';
+  };
   const agTag = m => {
+    if (m.estado === 'cancelada') return '<span class="tag missed">cancelada</span>';
     if (m.tipo === 'bloqueio') return '<span class="tag block">bloqueado</span>';
     if (m.estado === 'realizada') return '<span class="tag done">realizada</span>';
-    if (m.estado === 'nao_compareceu') return m.reagendado_em ? '<span class="tag answered">reagendamento enviado</span>' : '<span class="tag missed">não compareceu</span>';
+    if (m.estado === 'nao_compareceu') return m.reagendado_em ? '<span class="tag answered">remarcada</span>' : '<span class="tag missed">não compareceu</span>';
     return agEnded(m) ? '<span class="tag confirm">por confirmar</span>' : '<span class="tag meeting">marcada</span>';
   };
+  const agDia = iso => new Intl.DateTimeFormat('pt-PT', { timeZone: TZ, weekday: 'short', day: '2-digit', month: 'short' }).format(new Date(iso)).replace(/\./g, '');
+  const agHora = iso => new Intl.DateTimeFormat('pt-PT', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(iso));
   const agDayKey = ms => new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date(ms));
 
   async function loadAgenda() {
@@ -1807,11 +1821,10 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
   }
   function renderAgList() {
     const today = agDayKey(Date.now());
-    const cnt = { confirm: 0, next: 0, past: 0 };
+    const cnt = { confirm: 0, next: 0, resched: 0, cancel: 0, none: 0 };
     agItems.forEach(m => cnt[agCat(m)]++);
     const hoje = agItems.filter(m => m.tipo !== 'bloqueio' && m.estado === 'marcada' && agDayKey(Date.parse(m.inicio)) === today).length;
-    const resched = agItems.filter(m => m.estado === 'nao_compareceu' && !m.reagendado_em).length;
-    $('#agKpis').innerHTML = `<div class="kpi hot"><b>${hoje}</b><span>Hoje</span></div><div class="kpi ${cnt.confirm ? 'bad' : ''}"><b>${cnt.confirm}</b><span>Confirmar</span></div><div class="kpi ${resched ? 'bad' : ''}"><b>${resched}</b><span>Reagendar</span></div><div class="kpi"><b>${cnt.next}</b><span>Próximas</span></div>`;
+    $('#agKpis').innerHTML = `<div class="kpi hot"><b>${hoje}</b><span>Hoje</span></div><div class="kpi ${cnt.confirm ? 'bad' : ''}"><b>${cnt.confirm}</b><span>Confirmar</span></div><div class="kpi"><b>${cnt.next}</b><span>Próximas</span></div><div class="kpi"><b>${cnt.resched}</b><span>Remarcadas</span></div>`;
     document.querySelectorAll('[data-agn]').forEach(n => { n.textContent = cnt[n.dataset.agn] || ''; });
     document.querySelectorAll('#agTabs .tab').forEach(t => t.setAttribute('aria-pressed', String(t.dataset.f === agTab)));
     const rb = $('#rbAg'); if (rb) rb.textContent = cnt.confirm ? String(cnt.confirm) : '';
@@ -1820,9 +1833,9 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
     $('#agRows').innerHTML = rows.map(m => `<button class="row" data-agid="${m.id}" aria-current="${agMode === 'detail' && agSelId === m.id}">
       ${avatarFor(m.instancia || '?', 'ag' + m.id)}
       <span class="txt">
-        <span class="l1"><span class="name">${esc(m.instancia || '')}</span><span class="when">${esc(fullDate(Date.parse(m.inicio)))}</span></span>
-        <span class="l2"><span class="last"><span class="ag-tipo">${esc(AGT[m.tipo] || m.tipo)}</span>${m.contacto ? ' · ' + esc(m.contacto) : ''}</span>${agTag(m)}</span>
-      </span></button>`).join('') || `<div class="empty">${agTab === 'confirm' ? 'Nada por confirmar. Tudo em dia.' : agTab === 'next' ? 'Sem reuniões marcadas.' : 'Ainda sem reuniões passadas.'}</div>`;
+        <span class="l1"><span class="name">${esc(m.instancia || '')}</span><span class="when">${esc(agDia(m.inicio))}</span></span>
+        <span class="l2"><span class="last"><b class="mono" style="color:var(--ink);font-weight:600">${esc(agHora(m.inicio))}–${esc(agHora(m.fim))}</b> · <span class="ag-tipo">${esc(AGT[m.tipo] || m.tipo)}</span>${m.contacto ? ' · ' + esc(m.contacto) : ''}</span>${agTag(m)}</span>
+      </span></button>`).join('') || `<div class="empty">${{ confirm: 'Nada por confirmar. Tudo em dia.', next: 'Sem reuniões marcadas nos próximos 15 dias.', resched: 'Sem reuniões remarcadas.', cancel: 'Sem reuniões canceladas nos últimos 30 dias.' }[agTab] || ''}</div>`;
   }
 
   function renderAgForm() {
@@ -1945,13 +1958,15 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
       acts = agStarted(m)
         ? '<button class="btn" data-act="ok" type="button">Compareceu</button><button class="btn alt" data-act="noshow" type="button">Não compareceu (sem email)</button>'
         : '<p class="summary" style="margin:0 0 4px;color:var(--muted)">A reunião ainda não começou. Os botões de presença aparecem à hora marcada.</p>';
+    } else if (m.estado === 'cancelada') {
+      acts = '<p class="summary" style="margin:0 0 4px;color:var(--muted)">Reunião cancelada.</p>';
     } else if (m.estado === 'nao_compareceu') {
       acts = (m.reagendado_em ? `<p class="summary" style="margin:0 0 4px">Email de reagendamento enviado a ${esc(m.email)} em ${esc(fullDate(Date.parse(m.reagendado_em)))}.</p>` : '') + '<button class="btn alt" data-act="ok" type="button">Afinal compareceu</button>';
     }
     if (m.tipo !== 'bloqueio') acts += '<button class="btn alt" data-act="rebook" type="button">Marcar novo horário</button>';
     // Templates de email disponiveis para esta reuniao
     const tpls = [];
-    if (m.tipo !== 'bloqueio' && m.email) {
+    if (m.tipo !== 'bloqueio' && m.email && m.estado !== 'cancelada') {
       if (agStarted(m)) tpls.push('reagendar');
       if (m.estado === 'marcada' && !agEnded(m)) tpls.push('cancelar');
     }
@@ -1968,7 +1983,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
           ? `<button class="btn warn" data-act="resched" type="button">${m.reagendado_em ? 'Reenviar email de reagendamento' : 'Enviar email de reagendamento'}</button>`
           : '<button class="btn warn" data-act="cancel" type="button">Cancelar reunião e enviar email</button><button class="btn alt" data-act="cancel_silent" type="button">Cancelar sem email</button>'}</div>
         <div class="ag-err"></div><div class="ag-okbox"></div></div>` : '';
-    $('#agBody').innerHTML = `<div class="cardx"><h4>Reunião</h4><div class="facts">${fact('Quando', esc(fullDate(Date.parse(m.inicio))))}${fact('Tipo', esc(AGT[m.tipo] || m.tipo))}${fact('Contacto', esc((m.tratamento ? m.tratamento + ' ' : '') + (m.contacto || '')))}${fact('Telefone', esc(m.telefone || 'sem telefone (sem SMS)'))}${fact('Email', esc(m.email || ''))}${fact('Marcada por', esc(m.booked_by || ''))}${m.meet_link ? fact('Meet', `<a href="${esc(m.meet_link)}" target="_blank" rel="noopener">${esc(m.meet_link.replace('https://', ''))}</a>`) : ''}${m.tipo !== 'bloqueio' ? fact('Email de confirmação', m.email_enviado ? 'enviado' : 'não confirmado') : ''}</div></div>
+    $('#agBody').innerHTML = `<div class="cardx"><h4>Reunião</h4><div class="facts">${fact('Quando', esc(fullDate(Date.parse(m.inicio))))}${fact('Tipo', esc(AGT[m.tipo] || m.tipo))}${fact('Contacto', esc((m.tratamento ? m.tratamento + ' ' : '') + (m.contacto || '')))}${fact('Telefone', esc(m.telefone || 'sem telefone (sem SMS)'))}${fact('Email', esc(m.email || ''))}${fact('Marcada por', esc(m.origem === 'calendario' ? 'Calendário (Calendly, Sara ou manual)' : (m.booked_by || '')))}${m.meet_link ? fact('Meet', `<a href="${esc(m.meet_link)}" target="_blank" rel="noopener">${esc(m.meet_link.replace('https://', ''))}</a>`) : ''}${m.tipo !== 'bloqueio' ? fact('Email de confirmação', m.email_enviado ? 'enviado' : 'não confirmado') : ''}</div></div>
       <div class="cardx"><h4>${m.tipo === 'bloqueio' ? 'Bloqueio' : 'Estado da reunião'}</h4><div class="ag-actions" id="agActs">${acts}</div><div class="ag-err"></div><div class="ag-okbox"></div></div>${mailCard}`;
     if (agDetTpl) agPreview('#agDPrev', { kind: agDetTpl, tipo: m.tipo, instancia: m.instancia, contacto: m.contacto, tratamento: m.tratamento, iso: m.inicio, meet: m.meet_link, to: m.email });
   }
