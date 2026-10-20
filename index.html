@@ -257,6 +257,28 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
 .ag-actions .btn.warn { background: #E79A1B; box-shadow: none; }
 .ag-err { color: var(--bad); font-size: 13px; min-height: 18px; margin-top: 8px; }
 .tag.confirm { background: #FFF3E0; color: #B26200; }
+.mail-prev { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--soft); margin-bottom: 12px; }
+.mp-subj { padding: 10px 14px; background: var(--card); border-bottom: 1px solid var(--line); display: grid; gap: 2px; }
+.mp-subj span { font-size: 10.5px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.mp-meta { padding: 6px 14px; font-size: 12px; color: var(--muted); border-bottom: 1px solid var(--line); background: var(--card); }
+.mp-frame { display: block; width: 100%; height: 420px; border: 0; background: #fff; }
+.tl-wrap { border: 1px solid var(--line); border-radius: 14px; background: var(--card); max-height: 540px; overflow-y: auto; margin-bottom: 8px; }
+.tl { position: relative; }
+.tl-row { position: absolute; left: 0; right: 0; border-top: 1px solid var(--line); }
+.tl-row.half { border-top-style: dashed; }
+.tl-lbl { position: absolute; left: 8px; top: -8px; font: 600 11px var(--f-mono); color: var(--muted); background: var(--card); padding: 0 4px; }
+.tl-free { position: absolute; left: 64px; right: 8px; border: 1px dashed color-mix(in srgb, var(--good) 55%, var(--line)); background: color-mix(in srgb, var(--good) 7%, var(--card)); color: #17805A; border-radius: 8px; font: 700 12px var(--f-ui); text-align: left; padding: 0 10px; cursor: pointer; }
+.tl-free:hover { background: color-mix(in srgb, var(--good) 16%, var(--card)); }
+.tl-free[aria-pressed="true"] { background: var(--grad); color: #fff; border-color: transparent; }
+.tl-ev { position: absolute; box-sizing: border-box; border-radius: 8px; background: #E7ECF7; border-left: 4px solid #1E5AA8; color: #1B2433; font-size: 12px; line-height: 1.35; padding: 3px 8px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.tl-ev b { font-family: var(--f-mono); font-weight: 600; margin-right: 6px; }
+.tl-ev.blk { background: repeating-linear-gradient(45deg, var(--soft), var(--soft) 6px, var(--card) 6px, var(--card) 12px); border-left-color: var(--muted); color: var(--muted); }
+.tl-now { position: absolute; left: 56px; right: 0; height: 2px; background: var(--bad); }
+.tl-now::before { content: ""; position: absolute; left: -4px; top: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--bad); }
+.tl-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin: 2px 0 6px; }
+.tl-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 5px; }
+.chip small { display: block; font-size: 10.5px; font-weight: 600; opacity: 0.8; }
+.tpl-chip { text-transform: none; letter-spacing: 0; margin-left: 6px; padding: 2px 8px; border-radius: 999px; background: var(--violet-soft); color: var(--violet); font-weight: 700; }
 .tag.done { background: #E6F6EF; color: #17805A; }
 .tag.block { background: var(--soft); color: var(--muted); }
 .ag-tipo { font-size: 10px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--violet); }
@@ -1673,6 +1695,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
     $('#tmBody').innerHTML = `<form class="cardx team-form" id="tmForm">
         <h4>Dados</h4>
         <label class="fl">Nome<input id="tmN" type="text" maxlength="60" value="${esc(m.name || '')}" placeholder="Ex.: Daisy" required></label>
+        <label class="fl">Email (recebe o link e o código automaticamente)<input id="tmE" type="email" maxlength="120" value="${esc(m.email || '')}" placeholder="Ex.: daisy@gmail.com"></label>
         <label class="fl">Papel<select id="tmRole" ${self ? 'disabled' : ''}>
           <option value="member"${!admin ? ' selected' : ''}>Membro: só os canais escolhidos</option>
           <option value="superadmin"${admin ? ' selected' : ''}>Super admin: tudo, e gere a equipa</option></select></label>
@@ -1692,7 +1715,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
     });
     $('#tmForm').addEventListener('submit', async e => {
       e.preventDefault();
-      const member = { id: m.id || 0, name: $('#tmN').value.trim(), role: $('#tmRole').value, channels: [...$('#tmCh').querySelectorAll('input:checked')].map(i => i.value), active: $('#tmActive') ? $('#tmActive').checked : true };
+      const member = { id: m.id || 0, name: $('#tmN').value.trim(), role: $('#tmRole').value, channels: [...$('#tmCh').querySelectorAll('input:checked')].map(i => i.value), active: $('#tmActive') ? $('#tmActive').checked : true, email: $('#tmE').value.trim() };
       if (member.role === 'member' && !member.channels.length) { $('#tmErr').textContent = 'Escolha pelo menos um canal.'; return; }
       $('#tmSave').disabled = true; $('#tmErr').textContent = '';
       try {
@@ -1700,18 +1723,25 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
         await loadTeam();
         const saved = team.find(x => x.id === r.id) || { ...member, id: r.id };
         memberForm(saved);
-        if (r.code) showCode(saved.name, r.code, true);
+        if (r.code) { showCode(saved.name, r.code, true); inviteNote(r); }
         else $('#tmCodeBox').innerHTML = '<div class="dial-ok">Alterações guardadas. Valem já no próximo pedido da pessoa.</div>';
       } catch (err) { $('#tmErr').textContent = err.message; $('#tmSave').disabled = false; }
     });
     const cb = $('#tmCode');
     if (cb) cb.addEventListener('click', async () => {
-      if (!confirm(`Gerar um código novo para ${m.name}? O código antigo deixa de funcionar.`)) return;
+      if (!confirm(`Gerar um código novo para ${m.name}? O código antigo deixa de funcionar.${m.email ? ' O novo segue por email para ' + m.email + '.' : ''}`)) return;
       cb.disabled = true;
-      try { const r = await hubPost({ action: 'team_code', member_id: m.id }); showCode(m.name, r.code, false); }
+      try { const r = await hubPost({ action: 'team_code', member_id: m.id }); showCode(m.name, r.code, false); inviteNote(r); }
       catch (err) { $('#tmErr').textContent = err.message; }
       finally { cb.disabled = false; }
     });
+  }
+  // Mostra se o codigo seguiu por email (o servidor envia sozinho quando a pessoa tem email).
+  function inviteNote(r) {
+    if (!r || !r.convite_email) return;
+    $('#tmCodeBox').insertAdjacentHTML('afterbegin', r.convite === 'enviado'
+      ? `<div class="dial-ok" style="margin-bottom:10px">Link e código enviados por email para ${esc(r.convite_email)}. Não precisa de copiar nada.</div>`
+      : `<div class="err" style="margin-bottom:10px">O email para ${esc(r.convite_email)} falhou. Envie o código abaixo à mão.</div>`);
   }
   function showCode(name, code, isNew) {
     const url = location.origin + location.pathname;
@@ -1744,8 +1774,11 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
     return d;
   }
   const AGT = { anfitriao: 'Anfitrião', coanfitriao: 'Co-anfitrião', influencer: 'Influencer', bloqueio: 'Bloqueio' };
+  let agDetTpl = null, agDetSig = '', agDayInit = false;
   let agItems = [], agDias = [], agTab = null, agMode = 'form', agSelId = null, agTipo = 'anfitriao', agDay = 0, agSel = null, agBusy = false;
   let agForm = { instancia: '', contacto: '', tratamento: '', email: '', telefone: '', nota: '' };
+  // Influencer: Influenciador/Influenciadora. Anfitriao e co-anfitriao: Dr./Dra.
+  const agTrats = () => agTipo === 'influencer' ? ['', 'Influenciador', 'Influenciadora'] : ['', 'Dr.', 'Dra.'];
   const agStarted = m => Date.parse(m.inicio) <= Date.now();
   const agEnded = m => Date.parse(m.fim) <= Date.now();
   const agCat = m => m.tipo === 'bloqueio' ? (agEnded(m) ? 'past' : 'next') : m.estado === 'marcada' ? (agEnded(m) ? 'confirm' : 'next') : 'past';
@@ -1761,8 +1794,8 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
     try {
       const [l, s] = await Promise.all([ag('list'), ag('slots')]);
       agItems = l.items || [];
-      agDias = (s.dias || []).filter(d => d.horas.length);
-      if (agDay >= agDias.length) agDay = 0;
+      agDias = s.dias || [];
+      if (!agDayInit || agDay >= agDias.length) { agDay = Math.max(0, agDias.findIndex(d => d.horas.length)); agDayInit = true; }
       if (agSel && !agDias.some(d => d.horas.some(h => h.iso === agSel))) agSel = null;
       if (agTab === null) agTab = agItems.some(m => agCat(m) === 'confirm') ? 'confirm' : 'next';
       renderAgList();
@@ -1804,16 +1837,19 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
         <label class="fl">Nome da instância (alojamento ou perfil)<input id="agInst" type="text" maxlength="120" required value="${esc(agForm.instancia)}" placeholder="Ex.: Junabi Guest House"></label>
         <div class="two">
           <label class="fl">Pessoa de contacto (opcional)<input id="agCont" type="text" maxlength="100" value="${esc(agForm.contacto)}" placeholder="Ex.: Shelcia Phenga"></label>
-          <label class="fl">Tratar por<select id="agTrat"><option value=""${agForm.tratamento === '' ? ' selected' : ''}>Sem tratamento</option><option value="Dr."${agForm.tratamento === 'Dr.' ? ' selected' : ''}>Dr.</option><option value="Dra."${agForm.tratamento === 'Dra.' ? ' selected' : ''}>Dra.</option></select></label>
+          <label class="fl">Tratar por<select id="agTrat">${agTrats().map(t => `<option value="${t}"${agForm.tratamento === t ? ' selected' : ''}>${t || 'Sem tratamento'}</option>`).join('')}</select></label>
         </div>
         <div class="two" style="grid-template-columns:1fr 1fr">
           <label class="fl">Email<input id="agEmail" type="email" required value="${esc(agForm.email)}" placeholder="nome@gmail.com"></label>
-          <label class="fl">Telefone<input id="agTel" type="tel" required value="${esc(agForm.telefone)}" placeholder="84 123 4567"></label>
+          <label class="fl">Telefone (opcional, para o SMS)<input id="agTel" type="tel" value="${esc(agForm.telefone)}" placeholder="84 123 4567"></label>
         </div>
         <label class="fl" style="margin-bottom:0">Nota interna (opcional)<textarea id="agNota" maxlength="500" placeholder="Ex.: prefere de manhã, dono do alojamento">${esc(agForm.nota)}</textarea></label>
       </div>
       <div class="cardx"><h4>Horário livre <span style="text-transform:none;letter-spacing:0;font-weight:600">(hora de Maputo, 30 min)</span></h4>
         <div id="agSlots"></div>
+      </div>
+      <div class="cardx"><h4>Email que vai ser enviado <span class="tpl-chip">Nova reunião</span></h4>
+        <div class="mail-prev" id="agPrev"><div class="empty" style="padding:14px">A preparar a pré-visualização…</div></div>
         <div class="ag-sum" id="agSum"></div>
         <div class="ag-actions"><button class="btn" id="agGo" type="submit">Marcar e enviar email</button></div>
         <div class="ag-err" id="agErr"></div>
@@ -1827,19 +1863,73 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
       </div>` : ''}
     </form>`;
     renderSlots();
+    agFormPreview();
   }
+  // Pre-visualizacao: o servidor monta o email com o mesmo template que usa para enviar.
+  let agPrevT = null, agPrevSeq = 0;
+  function agPreview(target, data) {
+    clearTimeout(agPrevT);
+    agPrevT = setTimeout(async () => {
+      if (!$(target)) return;
+      const seq = ++agPrevSeq;
+      $(target).style.opacity = '0.45'; // a atualizar
+      try {
+        const r = await ag('preview', data);
+        const el = $(target);
+        if (seq !== agPrevSeq || !el) return;
+        el.style.opacity = '';
+        el.innerHTML = `<div class="mp-subj"><span>Assunto</span><b>${esc(r.subject)}</b></div><div class="mp-meta">De: IndicoStay &lt;indicostay@gmail.com&gt; · Para: ${esc(data.to || '(email do lead)')} · Cópia oculta: Dellon e Keano</div><iframe class="mp-frame" sandbox="" title="Pré-visualização do email"></iframe>`;
+        el.querySelector('iframe').srcdoc = '<!doctype html><meta charset="utf-8"><body style="margin:14px;background:#fff">' + r.html + '</body>';
+      } catch (e) {
+        if (e.code === 401) return logout();
+        if ($(target)) $(target).style.opacity = '';
+        if ($(target)) $(target).innerHTML = `<div class="ag-err" style="padding:10px 14px">Não foi possível pré-visualizar (${esc(e.message)}).</div>`;
+      }
+    }, 450);
+  }
+  const agFormPreview = () => agPreview('#agPrev', { kind: 'nova', tipo: agTipo, instancia: agForm.instancia, contacto: agForm.contacto, tratamento: agForm.tratamento, iso: agSel || '', to: agForm.email });
+  // Calendario do dia (08h00 a 19h30): reunioes e bloqueios a cores, horarios livres clicaveis.
+  const TL_ROW = 34, TL_START = 8 * 60, TL_END = 19 * 60 + 30;
+  const tlMin = t => Number(String(t).slice(0, 2)) * 60 + Number(String(t).slice(3, 5));
   function renderSlots() {
     const box = $('#agSlots'); if (!box) return;
-    if (!agDias.length) { box.innerHTML = '<div class="empty" style="padding:14px">Sem horários livres nos próximos dias.</div>'; updateAgSum(); return; }
+    if (!agDias.length) { box.innerHTML = '<div class="empty" style="padding:14px">Sem dias úteis nos próximos dias.</div>'; updateAgSum(); return; }
     const day = agDias[agDay] || agDias[0];
-    box.innerHTML = `<div class="chips" id="agDays">${agDias.map((d, i) => `<button type="button" class="chip" data-day="${i}" aria-pressed="${i === agDay}">${d.hoje ? 'Hoje' : esc(d.diaSemana.slice(0, 3))}<b>${esc(d.data)}</b></button>`).join('')}</div>
-      <div class="chips slots" id="agHours">${day.horas.map(h => `<button type="button" class="chip" data-iso="${h.iso}" aria-pressed="${agSel === h.iso}">${h.h}</button>`).join('')}</div>`;
+    const chips = `<div class="chips" id="agDays">${agDias.map((d, i) => `<button type="button" class="chip" data-day="${i}" aria-pressed="${i === agDay}">${d.hoje ? 'Hoje' : esc(d.diaSemana.slice(0, 3))}<b>${esc(d.data)}</b><small>${d.horas.length ? d.horas.length + ' livres' : 'cheio'}</small></button>`).join('')}</div>`;
+    // reunioes lado a lado quando se sobrepoem
+    const evs = (day.ocupados || []).map(o => ({ ...o, a: tlMin(o.ini), b: Math.max(tlMin(o.fim), tlMin(o.ini) + 15) }));
+    let laneEnd = [], cluster = [], clusterEnd = -1;
+    const flush = () => { const n = Math.max(1, ...cluster.map(e => e.lane + 1)); cluster.forEach(e => { e.n = n; }); cluster = []; };
+    evs.forEach(e => {
+      if (e.a >= clusterEnd) { flush(); laneEnd = []; }
+      let l = laneEnd.findIndex(t => t <= e.a); if (l < 0) l = laneEnd.length;
+      laneEnd[l] = e.b; e.lane = l; cluster.push(e); clusterEnd = Math.max(clusterEnd, e.b);
+    });
+    flush();
+    const free = {}; day.horas.forEach(h => { free[h.h] = h.iso; });
+    const pad2 = n => String(n).padStart(2, '0');
+    let rows = '';
+    for (let x = TL_START; x < TL_END; x += 30) {
+      const top = (x - TL_START) / 30 * TL_ROW, lbl = pad2(Math.floor(x / 60)) + 'h' + pad2(x % 60);
+      rows += `<div class="tl-row${x % 60 ? ' half' : ''}" style="top:${top}px">${x % 60 ? '' : `<span class="tl-lbl">${pad2(x / 60)}:00</span>`}</div>`;
+      if (free[lbl]) rows += `<button type="button" class="tl-free" data-iso="${free[lbl]}" aria-pressed="${agSel === free[lbl]}" style="top:${top + 2}px;height:${TL_ROW - 4}px">${agSel === free[lbl] ? 'Escolhido' : 'Livre'} · ${lbl}</button>`;
+    }
+    const evHtml = evs.map(e => `<div class="tl-ev${e.bloqueio ? ' blk' : ''}" title="${esc(e.ini + '–' + e.fim + ' ' + e.titulo)}" style="top:${(e.a - TL_START) / 30 * TL_ROW + 1}px;height:${(e.b - e.a) / 30 * TL_ROW - 3}px;left:calc(64px + (100% - 72px) * ${e.lane} / ${e.n});width:calc((100% - 72px) / ${e.n} - 4px)"><b>${esc(e.ini)}</b>${esc(e.titulo)}</div>`).join('');
+    let nowLine = '';
+    if (day.hoje) { const nm = tlMin(new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date())); if (nm >= TL_START && nm <= TL_END) nowLine = `<div class="tl-now" style="top:${(nm - TL_START) / 30 * TL_ROW}px" title="Agora"></div>`; }
+    const legend = `<div class="tl-legend"><span><i style="background:color-mix(in srgb, var(--good) 20%, #fff);border:1px dashed var(--good)"></i>Livre (clique para escolher)</span><span><i style="background:#E7ECF7;border-left:3px solid #1E5AA8"></i>Reunião marcada</span><span><i style="background:var(--soft);border-left:3px solid var(--muted)"></i>Bloqueado</span></div>`;
+    const scrollTop = $('#agTl') ? $('#agTl').scrollTop : null;
+    box.innerHTML = chips + legend + `<div class="tl-wrap" id="agTl"><div class="tl" style="height:${(TL_END - TL_START) / 30 * TL_ROW + 8}px">${rows}${evHtml}${nowLine}</div></div>` + (day.horas.length ? '' : '<p class="summary" style="margin:0;font-size:13px;color:var(--muted)">Este dia já não tem horários livres. Escolha outro dia acima.</p>');
+    const tl = $('#agTl');
+    if (scrollTop !== null) tl.scrollTop = scrollTop;
+    else { const first = tl.querySelector('.tl-free[aria-pressed="true"]') || tl.querySelector('.tl-free'); if (first) tl.scrollTop = Math.max(0, first.offsetTop - 60); }
+    const bk = $('#bkDia'); if (bk && !bk.value) bk.value = day.dia || '';
     updateAgSum();
   }
   function updateAgSum() {
     const el = $('#agSum'); if (!el) return;
     const t = { anfitriao: 'anfitrião', coanfitriao: 'co-anfitrião', influencer: 'influencer' }[agTipo];
-    el.innerHTML = agSel ? `Reunião de <b>${esc(t)}</b> em <b>${esc(fullDate(Date.parse(agSel)))}</b>. O convite do Google Meet e o email de confirmação seguem para ${esc(agForm.email || 'o email indicado')}, com cópia para si e para o Keano.` : 'Escolha um horário acima.';
+    el.innerHTML = agSel ? `Reunião de <b>${esc(t)}</b> em <b>${esc(fullDate(Date.parse(agSel)))}</b>. O convite do Google Meet e o email acima seguem para ${esc(agForm.email || 'o email indicado')}, com cópia para si e para o Keano. SMS 30 min antes: ${agForm.telefone ? 'sim, para ' + esc(agForm.telefone) : 'não (sem telefone)'}.` : 'Escolha um horário acima.';
   }
 
   function renderAgDetail() {
@@ -1853,15 +1943,34 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
     if (m.tipo === 'bloqueio') acts = '<button class="btn alt" data-act="cancel" type="button">Remover bloqueio</button>';
     else if (m.estado === 'marcada') {
       acts = agStarted(m)
-        ? '<button class="btn" data-act="ok" type="button">Compareceu</button><button class="btn warn" data-act="resched" type="button">Não compareceu · reagendar</button><button class="btn alt" data-act="noshow" type="button">Só marcar não compareceu</button>'
+        ? '<button class="btn" data-act="ok" type="button">Compareceu</button><button class="btn alt" data-act="noshow" type="button">Não compareceu (sem email)</button>'
         : '<p class="summary" style="margin:0 0 4px;color:var(--muted)">A reunião ainda não começou. Os botões de presença aparecem à hora marcada.</p>';
-      acts += '<button class="btn alt" data-act="cancel" type="button">Cancelar reunião</button>';
     } else if (m.estado === 'nao_compareceu') {
-      acts = (m.reagendado_em ? `<p class="summary" style="margin:0 0 4px">Email de reagendamento enviado a ${esc(m.email)} em ${esc(fullDate(Date.parse(m.reagendado_em)))}.</p>` : '') + `<button class="btn warn" data-act="resched" type="button">${m.reagendado_em ? 'Reenviar email de reagendamento' : 'Enviar email de reagendamento'}</button><button class="btn alt" data-act="ok" type="button">Afinal compareceu</button>`;
-    } else acts = '<button class="btn warn" data-act="resched" type="button">Afinal não compareceu · reagendar</button>';
+      acts = (m.reagendado_em ? `<p class="summary" style="margin:0 0 4px">Email de reagendamento enviado a ${esc(m.email)} em ${esc(fullDate(Date.parse(m.reagendado_em)))}.</p>` : '') + '<button class="btn alt" data-act="ok" type="button">Afinal compareceu</button>';
+    }
     if (m.tipo !== 'bloqueio') acts += '<button class="btn alt" data-act="rebook" type="button">Marcar novo horário</button>';
-    $('#agBody').innerHTML = `<div class="cardx"><h4>Reunião</h4><div class="facts">${fact('Quando', esc(fullDate(Date.parse(m.inicio))))}${fact('Tipo', esc(AGT[m.tipo] || m.tipo))}${fact('Contacto', esc(m.contacto || ''))}${fact('Telefone', esc(m.telefone || ''))}${fact('Email', esc(m.email || ''))}${fact('Marcada por', esc(m.booked_by || ''))}${m.meet_link ? fact('Meet', `<a href="${esc(m.meet_link)}" target="_blank" rel="noopener">${esc(m.meet_link.replace('https://', ''))}</a>`) : ''}${m.tipo !== 'bloqueio' ? fact('Email de confirmação', m.email_enviado ? 'enviado' : 'não confirmado') : ''}</div></div>
-      <div class="cardx"><h4>${m.tipo === 'bloqueio' ? 'Bloqueio' : 'Estado da reunião'}</h4><div class="ag-actions" id="agActs">${acts}</div><div class="ag-err" id="agDErr"></div><div id="agDOk"></div></div>`;
+    // Templates de email disponiveis para esta reuniao
+    const tpls = [];
+    if (m.tipo !== 'bloqueio' && m.email) {
+      if (agStarted(m)) tpls.push('reagendar');
+      if (m.estado === 'marcada' && !agEnded(m)) tpls.push('cancelar');
+    }
+    if (!tpls.includes(agDetTpl)) agDetTpl = tpls[0] || null;
+    const sig = JSON.stringify([m, agDetTpl]);
+    if (sig === agDetSig && $('#agActs')) return;
+    agDetSig = sig;
+    const T = { reagendar: 'Reagendamento', cancelar: 'Cancelamento' };
+    const mailCard = agDetTpl ? `<div class="cardx" id="agMail"><h4>Email ao lead</h4>
+        <div class="chips" id="agTpls">${tpls.map(k => `<button type="button" class="chip" data-tpl="${k}" aria-pressed="${k === agDetTpl}">${T[k]}</button>`).join('')}</div>
+        <p class="summary" style="margin:0 0 10px;font-size:13px;color:var(--muted)">${agDetTpl === 'reagendar' ? 'Marca a reunião como não compareceu e envia este email com o link para escolher um novo horário.' : 'Cancela a reunião no calendário (o convite é retirado) e envia este email.'}</p>
+        <div class="mail-prev" id="agDPrev"><div class="empty" style="padding:14px">A preparar a pré-visualização…</div></div>
+        <div class="ag-actions">${agDetTpl === 'reagendar'
+          ? `<button class="btn warn" data-act="resched" type="button">${m.reagendado_em ? 'Reenviar email de reagendamento' : 'Enviar email de reagendamento'}</button>`
+          : '<button class="btn warn" data-act="cancel" type="button">Cancelar reunião e enviar email</button><button class="btn alt" data-act="cancel_silent" type="button">Cancelar sem email</button>'}</div>
+        <div class="ag-err"></div><div class="ag-okbox"></div></div>` : '';
+    $('#agBody').innerHTML = `<div class="cardx"><h4>Reunião</h4><div class="facts">${fact('Quando', esc(fullDate(Date.parse(m.inicio))))}${fact('Tipo', esc(AGT[m.tipo] || m.tipo))}${fact('Contacto', esc((m.tratamento ? m.tratamento + ' ' : '') + (m.contacto || '')))}${fact('Telefone', esc(m.telefone || 'sem telefone (sem SMS)'))}${fact('Email', esc(m.email || ''))}${fact('Marcada por', esc(m.booked_by || ''))}${m.meet_link ? fact('Meet', `<a href="${esc(m.meet_link)}" target="_blank" rel="noopener">${esc(m.meet_link.replace('https://', ''))}</a>`) : ''}${m.tipo !== 'bloqueio' ? fact('Email de confirmação', m.email_enviado ? 'enviado' : 'não confirmado') : ''}</div></div>
+      <div class="cardx"><h4>${m.tipo === 'bloqueio' ? 'Bloqueio' : 'Estado da reunião'}</h4><div class="ag-actions" id="agActs">${acts}</div><div class="ag-err"></div><div class="ag-okbox"></div></div>${mailCard}`;
+    if (agDetTpl) agPreview('#agDPrev', { kind: agDetTpl, tipo: m.tipo, instancia: m.instancia, contacto: m.contacto, tratamento: m.tratamento, iso: m.inicio, meet: m.meet_link, to: m.email });
   }
 
   // eventos
@@ -1870,19 +1979,27 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
   $('#agTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) { agTab = t.dataset.f; renderAgList(); } });
   $('#agRows').addEventListener('click', e => {
     const r = e.target.closest('.row'); if (!r) return;
-    agSelId = Number(r.dataset.agid); agMode = 'detail'; renderAgDetail(); renderAgList(); document.body.classList.add('chat-open');
+    agSelId = Number(r.dataset.agid); agMode = 'detail'; agDetTpl = null; agDetSig = ''; renderAgDetail(); renderAgList(); document.body.classList.add('chat-open');
   });
   $('#agBody').addEventListener('input', e => {
     const map = { agInst: 'instancia', agCont: 'contacto', agTrat: 'tratamento', agEmail: 'email', agTel: 'telefone', agNota: 'nota' };
-    if (map[e.target.id]) { agForm[map[e.target.id]] = e.target.value; if (e.target.id === 'agEmail') updateAgSum(); }
+    if (map[e.target.id]) { agForm[map[e.target.id]] = e.target.value; updateAgSum(); if (e.target.id !== 'agTel' && e.target.id !== 'agNota') agFormPreview(); }
   });
   $('#agBody').addEventListener('click', async e => {
     const tipo = e.target.closest('[data-tipo]');
-    if (tipo) { agTipo = tipo.dataset.tipo; document.querySelectorAll('#agTipos .chip').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.tipo === agTipo))); updateAgSum(); return; }
+    if (tipo) {
+      agTipo = tipo.dataset.tipo;
+      document.querySelectorAll('#agTipos .chip').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.tipo === agTipo)));
+      if (!agTrats().includes(agForm.tratamento)) agForm.tratamento = '';
+      $('#agTrat').innerHTML = agTrats().map(t => `<option value="${t}"${agForm.tratamento === t ? ' selected' : ''}>${t || 'Sem tratamento'}</option>`).join('');
+      updateAgSum(); agFormPreview(); return;
+    }
     const day = e.target.closest('[data-day]');
-    if (day) { agDay = Number(day.dataset.day); renderSlots(); return; }
+    if (day) { agDay = Number(day.dataset.day); if ($('#agTl')) $('#agTl').remove(); renderSlots(); return; }
     const hr = e.target.closest('[data-iso]');
-    if (hr) { agSel = hr.dataset.iso; renderSlots(); return; }
+    if (hr) { agSel = hr.dataset.iso; renderSlots(); agFormPreview(); return; }
+    const tp = e.target.closest('[data-tpl]');
+    if (tp) { agDetTpl = tp.dataset.tpl; agDetSig = ''; renderAgDetail(); return; }
     if (e.target.id === 'bkGo') return blockSlot();
     const act = e.target.closest('[data-act]');
     if (act && !agBusy) return detailAction(act.dataset.act, act);
@@ -1919,25 +2036,31 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
   async function detailAction(act, btn) {
     const m = agItems.find(x => x.id === agSelId); if (!m) return;
     if (act === 'rebook') {
-      agForm = { instancia: m.instancia || '', contacto: m.contacto || '', tratamento: '', email: m.email || '', telefone: m.telefone || '', nota: '' };
+      agForm = { instancia: m.instancia || '', contacto: m.contacto || '', tratamento: m.tratamento || '', email: m.email || '', telefone: m.telefone || '', nota: '' };
       agTipo = m.tipo; agSel = null; renderAgForm(); renderAgList(); return;
     }
-    if (act === 'cancel' && !confirm(m.tipo === 'bloqueio' ? 'Remover este bloqueio?' : `Cancelar a reunião com ${m.instancia}? O convite é cancelado no calendário do parceiro.`)) return;
+    if (act === 'cancel' && !confirm(m.tipo === 'bloqueio' ? 'Remover este bloqueio?' : `Cancelar a reunião com ${m.instancia} e enviar o email de cancelamento para ${m.email}?`)) return;
+    if (act === 'cancel_silent' && !confirm(`Cancelar a reunião com ${m.instancia} SEM enviar email? (O Google retira o convite do calendário dele.)`)) return;
     if (act === 'resched' && !confirm(`Marcar "${m.instancia}" como não compareceu e enviar já o email de reagendamento para ${m.email}?`)) return;
-    agBusy = true; document.querySelectorAll('#agActs button').forEach(b => { b.disabled = true; }); $('#agDErr').textContent = '';
+    const card = btn.closest('.cardx'), errEl = card && card.querySelector('.ag-err');
+    agBusy = true; document.querySelectorAll('#agBody [data-act]').forEach(b => { b.disabled = true; }); if (errEl) errEl.textContent = '';
     try {
       let msg = '';
       if (act === 'ok') await ag('status', { id: m.id, estado: 'realizada' });
       else if (act === 'noshow') await ag('status', { id: m.id, estado: 'nao_compareceu' });
-      else if (act === 'cancel') await ag('cancel', { id: m.id });
-      else if (act === 'resched') { const r = await ag('reagendar', { id: m.id }); msg = r.email === 'enviado' ? `Email de reagendamento enviado a ${esc(m.email)}.` : 'O email falhou: envie o reagendamento à mão.'; }
-      if (act === 'cancel') { agSelId = null; agMode = 'form'; }
+      else if (act === 'cancel' || act === 'cancel_silent') {
+        const r = await ag('cancel', { id: m.id, enviar_email: act === 'cancel' });
+        msg = m.tipo === 'bloqueio' ? 'Bloqueio removido.' : r.email === 'enviado' ? `Reunião cancelada. Email de cancelamento enviado a ${esc(m.email)}.` : r.email === 'FALHOU' ? 'Reunião cancelada, mas o email falhou: avise o lead à mão.' : 'Reunião cancelada, sem email.';
+      } else if (act === 'resched') { const r = await ag('reagendar', { id: m.id }); msg = r.email === 'enviado' ? `Email de reagendamento enviado a ${esc(m.email)}.` : 'O email falhou: envie o reagendamento à mão.'; }
+      if (act === 'cancel' || act === 'cancel_silent') { agSelId = null; agMode = 'form'; }
+      agDetSig = '';
       await loadAgenda();
-      if (act === 'cancel') renderAgForm();
-      if (msg && $('#agDOk')) $('#agDOk').innerHTML = `<div class="dial-ok">${msg}</div>`;
+      if (act === 'cancel' || act === 'cancel_silent') { renderAgForm(); if ($('#agOk')) $('#agOk').innerHTML = `<div class="dial-ok">${msg}</div>`; }
+      else if (msg) { const box = document.querySelector('#agMail .ag-okbox') || document.querySelector('#agBody .ag-okbox'); if (box) box.innerHTML = `<div class="dial-ok">${msg}</div>`; }
     } catch (err) {
       if (err.code === 401) return logout();
-      $('#agDErr').textContent = err.message; document.querySelectorAll('#agActs button').forEach(b => { b.disabled = false; });
+      if (errEl && document.body.contains(errEl)) errEl.textContent = err.message;
+      document.querySelectorAll('#agBody [data-act]').forEach(b => { b.disabled = false; });
     } finally { agBusy = false; }
   }
   setInterval(() => { if (view === 'agenda' && ME && document.visibilityState === 'visible' && !agBusy) loadAgenda(); }, 30000);
