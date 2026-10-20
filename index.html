@@ -1778,7 +1778,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
     return d;
   }
   const AGT = { anfitriao: 'Anfitrião', coanfitriao: 'Co-anfitrião', influencer: 'Influencer', bloqueio: 'Bloqueio', outro: 'Outro' };
-  let agDetTpl = null, agDetSig = '', agDayInit = false;
+  let agDetTpl = null, agDetSig = '', agDayInit = false, agNotify = true;
   let agItems = [], agDias = [], agTab = null, agMode = 'form', agSelId = null, agTipo = 'anfitriao', agDay = 0, agSel = null, agBusy = false;
   let agForm = { instancia: '', contacto: '', tratamento: '', email: '', telefone: '', nota: '' };
   // Influencer: Influenciador/Influenciadora. Anfitriao e co-anfitriao: Dr./Dra.
@@ -1965,27 +1965,32 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
     }
     if (m.tipo !== 'bloqueio') acts += '<button class="btn alt" data-act="rebook" type="button">Marcar novo horário</button>';
     // Templates de email disponiveis para esta reuniao
+    // Reagendar (depois da hora, se houver email) e Cancelar (sempre, se ainda nao foi cancelada).
     const tpls = [];
-    if (m.tipo !== 'bloqueio' && m.email && m.estado !== 'cancelada') {
-      if (agStarted(m)) tpls.push('reagendar');
-      if (m.estado === 'marcada' && !agEnded(m)) tpls.push('cancelar');
+    if (m.tipo !== 'bloqueio' && m.estado !== 'cancelada') {
+      if (agStarted(m) && m.email) tpls.push('reagendar');
+      tpls.push('cancelar');
     }
     if (!tpls.includes(agDetTpl)) agDetTpl = tpls[0] || null;
-    const sig = JSON.stringify([m, agDetTpl]);
+    const notify = agDetTpl === 'cancelar' ? (agNotify && !!m.email) : true;
+    const sig = JSON.stringify([m, agDetTpl, notify]);
     if (sig === agDetSig && $('#agActs')) return;
     agDetSig = sig;
-    const T = { reagendar: 'Reagendamento', cancelar: 'Cancelamento' };
-    const mailCard = agDetTpl ? `<div class="cardx" id="agMail"><h4>Email ao lead</h4>
+    const T = { reagendar: 'Reagendar', cancelar: 'Cancelar reunião' };
+    const notifyBox = agDetTpl === 'cancelar' ? `<label class="chan" style="margin-bottom:12px"><input type="checkbox" id="agNotify" ${notify ? 'checked' : ''} ${m.email ? '' : 'disabled'}><span><b>Avisar a pessoa por email</b><small>${m.email ? (notify ? 'Envia o email abaixo para ' + esc(m.email) + ' (cópia oculta para Dellon e Keano).' : 'Desligado: a reunião é cancelada sem email. O Google só retira o convite do calendário dela.') : 'Esta reunião não tem email do lead: só o convite é retirado do calendário.'}</small></span></label>` : '';
+    const showPrev = agDetTpl === 'reagendar' || notify;
+    const mailCard = agDetTpl ? `<div class="cardx" id="agMail"><h4>Reagendar ou cancelar</h4>
         <div class="chips" id="agTpls">${tpls.map(k => `<button type="button" class="chip" data-tpl="${k}" aria-pressed="${k === agDetTpl}">${T[k]}</button>`).join('')}</div>
-        <p class="summary" style="margin:0 0 10px;font-size:13px;color:var(--muted)">${agDetTpl === 'reagendar' ? 'Marca a reunião como não compareceu e envia este email com o link para escolher um novo horário.' : 'Cancela a reunião no calendário (o convite é retirado) e envia este email.'}</p>
-        <div class="mail-prev" id="agDPrev"><div class="empty" style="padding:14px">A preparar a pré-visualização…</div></div>
+        <p class="summary" style="margin:0 0 10px;font-size:13px;color:var(--muted)">${agDetTpl === 'reagendar' ? 'Marca a reunião como não compareceu e envia este email com o link para escolher um novo horário.' : 'Cancela a reunião e retira o convite do calendário. Escolha se a pessoa é avisada por email.'}</p>
+        ${notifyBox}
+        ${showPrev ? '<div class="mail-prev" id="agDPrev"><div class="empty" style="padding:14px">A preparar a pré-visualização…</div></div>' : ''}
         <div class="ag-actions">${agDetTpl === 'reagendar'
           ? `<button class="btn warn" data-act="resched" type="button">${m.reagendado_em ? 'Reenviar email de reagendamento' : 'Enviar email de reagendamento'}</button>`
-          : '<button class="btn warn" data-act="cancel" type="button">Cancelar reunião e enviar email</button><button class="btn alt" data-act="cancel_silent" type="button">Cancelar sem email</button>'}</div>
+          : `<button class="btn warn" data-act="cancel" type="button">${notify ? 'Cancelar reunião e avisar por email' : 'Cancelar reunião sem avisar'}</button>`}</div>
         <div class="ag-err"></div><div class="ag-okbox"></div></div>` : '';
     $('#agBody').innerHTML = `<div class="cardx"><h4>Reunião</h4><div class="facts">${fact('Quando', esc(fullDate(Date.parse(m.inicio))))}${fact('Tipo', esc(AGT[m.tipo] || m.tipo))}${fact('Contacto', esc((m.tratamento ? m.tratamento + ' ' : '') + (m.contacto || '')))}${fact('Telefone', esc(m.telefone || 'sem telefone (sem SMS)'))}${fact('Email', esc(m.email || ''))}${fact('Marcada por', esc(m.origem === 'calendario' ? 'Calendário (Calendly, Sara ou manual)' : (m.booked_by || '')))}${m.meet_link ? fact('Meet', `<a href="${esc(m.meet_link)}" target="_blank" rel="noopener">${esc(m.meet_link.replace('https://', ''))}</a>`) : ''}${m.tipo !== 'bloqueio' ? fact('Email de confirmação', m.email_enviado ? 'enviado' : 'não confirmado') : ''}</div></div>
       <div class="cardx"><h4>${m.tipo === 'bloqueio' ? 'Bloqueio' : 'Estado da reunião'}</h4><div class="ag-actions" id="agActs">${acts}</div><div class="ag-err"></div><div class="ag-okbox"></div></div>${mailCard}`;
-    if (agDetTpl) agPreview('#agDPrev', { kind: agDetTpl, tipo: m.tipo, instancia: m.instancia, contacto: m.contacto, tratamento: m.tratamento, iso: m.inicio, meet: m.meet_link, to: m.email });
+    if (agDetTpl && $('#agDPrev')) agPreview('#agDPrev', { kind: agDetTpl, tipo: m.tipo, instancia: m.instancia, contacto: m.contacto, tratamento: m.tratamento, iso: m.inicio, meet: m.meet_link, to: m.email });
   }
 
   // eventos
@@ -1994,7 +1999,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
   $('#agTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) { agTab = t.dataset.f; renderAgList(); } });
   $('#agRows').addEventListener('click', e => {
     const r = e.target.closest('.row'); if (!r) return;
-    agSelId = Number(r.dataset.agid); agMode = 'detail'; agDetTpl = null; agDetSig = ''; renderAgDetail(); renderAgList(); document.body.classList.add('chat-open');
+    agSelId = Number(r.dataset.agid); agMode = 'detail'; agDetTpl = null; agDetSig = ''; agNotify = true; renderAgDetail(); renderAgList(); document.body.classList.add('chat-open');
   });
   $('#agBody').addEventListener('input', e => {
     const map = { agInst: 'instancia', agCont: 'contacto', agTrat: 'tratamento', agEmail: 'email', agTel: 'telefone', agNota: 'nota' };
@@ -2018,6 +2023,9 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
     if (e.target.id === 'bkGo') return blockSlot();
     const act = e.target.closest('[data-act]');
     if (act && !agBusy) return detailAction(act.dataset.act, act);
+  });
+  $('#agBody').addEventListener('change', e => {
+    if (e.target.id === 'agNotify') { agNotify = e.target.checked; agDetSig = ''; renderAgDetail(); }
   });
   $('#agBody').addEventListener('submit', async e => {
     if (e.target.id !== 'agForm') return;
@@ -2054,7 +2062,8 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
       agForm = { instancia: m.instancia || '', contacto: m.contacto || '', tratamento: m.tratamento || '', email: m.email || '', telefone: m.telefone || '', nota: '' };
       agTipo = m.tipo; agSel = null; renderAgForm(); renderAgList(); return;
     }
-    if (act === 'cancel' && !confirm(m.tipo === 'bloqueio' ? 'Remover este bloqueio?' : `Cancelar a reunião com ${m.instancia} e enviar o email de cancelamento para ${m.email}?`)) return;
+    const avisar = agNotify && !!m.email && m.tipo !== 'bloqueio';
+    if (act === 'cancel' && !confirm(m.tipo === 'bloqueio' ? 'Remover este bloqueio?' : avisar ? `Cancelar a reunião com ${m.instancia} e avisar por email ${m.email}?` : `Cancelar a reunião com ${m.instancia} SEM avisar a pessoa?`)) return;
     if (act === 'cancel_silent' && !confirm(`Cancelar a reunião com ${m.instancia} SEM enviar email? (O Google retira o convite do calendário dele.)`)) return;
     if (act === 'resched' && !confirm(`Marcar "${m.instancia}" como não compareceu e enviar já o email de reagendamento para ${m.email}?`)) return;
     const card = btn.closest('.cardx'), errEl = card && card.querySelector('.ag-err');
@@ -2064,7 +2073,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
       if (act === 'ok') await ag('status', { id: m.id, estado: 'realizada' });
       else if (act === 'noshow') await ag('status', { id: m.id, estado: 'nao_compareceu' });
       else if (act === 'cancel' || act === 'cancel_silent') {
-        const r = await ag('cancel', { id: m.id, enviar_email: act === 'cancel' });
+        const r = await ag('cancel', { id: m.id, enviar_email: act === 'cancel' && avisar });
         msg = m.tipo === 'bloqueio' ? 'Bloqueio removido.' : r.email === 'enviado' ? `Reunião cancelada. Email de cancelamento enviado a ${esc(m.email)}.` : r.email === 'FALHOU' ? 'Reunião cancelada, mas o email falhou: avise o lead à mão.' : 'Reunião cancelada, sem email.';
       } else if (act === 'resched') { const r = await ag('reagendar', { id: m.id }); msg = r.email === 'enviado' ? `Email de reagendamento enviado a ${esc(m.email)}.` : 'O email falhou: envie o reagendamento à mão.'; }
       if (act === 'cancel' || act === 'cancel_silent') { agSelId = null; agMode = 'form'; }
