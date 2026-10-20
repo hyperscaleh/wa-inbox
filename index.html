@@ -238,6 +238,30 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
 
 .tag.dash { background: #FFF3E0; color: #B26200; }
 
+/* ---------- agenda ---------- */
+.ag-form .fl { display: grid; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.ag-form .fl input, .ag-form .fl select, .ag-form .fl textarea { padding: 11px 13px; border: 1px solid var(--line); border-radius: 12px; background: var(--soft); color: var(--ink); font: 600 14px var(--f-ui); text-transform: none; letter-spacing: 0; width: 100%; }
+.ag-form .fl textarea { resize: vertical; min-height: 56px; }
+.ag-form .two { display: grid; grid-template-columns: 1fr 140px; gap: 10px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.chip { border: 1px solid var(--line); background: var(--card); border-radius: 12px; padding: 9px 14px; font: 600 13px var(--f-ui); cursor: pointer; color: var(--ink); }
+.chip b { font-family: var(--f-mono); font-weight: 600; margin-left: 4px; }
+.chip:hover { border-color: var(--violet); color: var(--violet); }
+.chip[aria-pressed="true"] { background: var(--grad); color: #fff; border-color: transparent; }
+.chips.types .chip { flex: 1; min-width: 110px; padding: 12px 14px; text-align: center; font-weight: 700; }
+.chips.slots .chip { min-width: 74px; text-align: center; font-family: var(--f-mono); }
+.ag-sum { font-size: 13.5px; color: var(--muted); margin: 4px 0 12px; }
+.ag-sum b { color: var(--ink); }
+.ag-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.ag-actions .btn.alt { background: var(--card); color: var(--ink); border: 1px solid var(--line); box-shadow: none; }
+.ag-actions .btn.warn { background: #E79A1B; box-shadow: none; }
+.ag-err { color: var(--bad); font-size: 13px; min-height: 18px; margin-top: 8px; }
+.tag.confirm { background: #FFF3E0; color: #B26200; }
+.tag.done { background: #E6F6EF; color: #17805A; }
+.tag.block { background: var(--soft); color: var(--muted); }
+.ag-tipo { font-size: 10px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--violet); }
+@media (max-width: 760px) { .ag-form .two { grid-template-columns: 1fr; } }
+
 /* ---------- equipa ---------- */
 .team-form .fl { display: grid; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
 .team-form .fl input, .team-form .fl select { padding: 11px 13px; border: 1px solid var(--line); border-radius: 12px; background: var(--soft); color: var(--ink); font: 600 14px var(--f-ui); text-transform: none; letter-spacing: 0; }
@@ -350,6 +374,10 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
       <button class="rbtn" data-view="mail" aria-pressed="false" type="button" hidden title="Email info@indicostay.com">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
         Email<span class="rb" id="rbMail"></span>
+      </button>
+      <button class="rbtn" data-view="agenda" aria-pressed="false" type="button" hidden title="Agenda de reuniões">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        Agenda<span class="rb" id="rbAg"></span>
       </button>
       <button class="rbtn" data-view="team" aria-pressed="false" type="button" title="Equipa e acessos (super admin)" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></svg>
@@ -469,6 +497,32 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
       <div class="pane-body" id="cBody">
         <div class="welcome"><div class="av lg brand">IS</div><h3>Escolha uma chamada</h3><p>Gravação, resumo, dados recolhidos pela Sara e a transcrição completa de cada chamada.</p></div>
       </div>
+    </section>
+
+    <!-- ===== AGENDA ===== -->
+    <aside class="side" data-view="agenda" hidden style="grid-template-rows:auto auto auto 1fr">
+      <div class="me">
+        <div class="av brand">IS</div>
+        <div class="who"><b>Agenda</b><span>Reuniões com parceiros</span></div>
+        <button class="icon-btn" id="agReload" type="button" title="Atualizar agora" aria-label="Atualizar agenda">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>
+        </button>
+        <button class="side-new" id="agNew" type="button">Nova reunião</button>
+      </div>
+      <div class="kpis" id="agKpis"></div>
+      <div class="tabs" id="agTabs" role="toolbar" aria-label="Filtros da agenda">
+        <button class="tab" data-f="confirm" aria-pressed="false">Por confirmar<span class="n" data-agn="confirm"></span></button>
+        <button class="tab" data-f="next" aria-pressed="false">Próximas<span class="n" data-agn="next"></span></button>
+        <button class="tab" data-f="past" aria-pressed="false">Passadas<span class="n" data-agn="past"></span></button>
+      </div>
+      <div class="rows" id="agRows"><div class="empty">A carregar agenda…</div></div>
+    </aside>
+    <section class="thread" data-view="agenda" hidden style="grid-template-rows:auto 1fr">
+      <div class="thead" id="agHead">
+        <button class="icon-btn back" data-back type="button" aria-label="Voltar à lista"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+        <div class="who"><h2><span class="nm" id="agTitle">Nova reunião</span></h2><div class="sub" id="agSub"></div></div>
+      </div>
+      <div class="pane-body" id="agBody"></div>
     </section>
 
     <!-- ===== EQUIPA ===== -->
@@ -954,7 +1008,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
   function applyAccess() {
     document.querySelectorAll('#rail .rbtn').forEach(b => {
       const v = b.dataset.view;
-      b.hidden = v === 'team' ? !isAdmin() : !can(v === 'mail' ? 'mail' : v);
+      b.hidden = v === 'team' ? !isAdmin() : v === 'agenda' ? !(can('wa') || isAdmin()) : !can(v === 'mail' ? 'mail' : v);
     });
     $('#waDial').hidden = !can('calls');
     $('#agentName').textContent = 'ligado como ' + ME.name;
@@ -1103,8 +1157,8 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
   // ---------- vistas ----------
   let view = 'wa';
   function setView(v) {
-    const ok = x => x === 'team' ? isAdmin() : can(x);
-    if (!['wa', 'calls', 'mail', 'team'].includes(v) || !ok(v)) v = ['wa', 'calls', 'mail', 'team'].find(ok) || 'wa';
+    const ok = x => x === 'team' ? isAdmin() : x === 'agenda' ? (can('wa') || isAdmin()) : can(x);
+    if (!['wa', 'calls', 'mail', 'agenda', 'team'].includes(v) || !ok(v)) v = ['wa', 'calls', 'mail', 'agenda', 'team'].find(ok) || 'wa';
     view = v;
     document.querySelectorAll('[data-view]').forEach(el => {
       if (el.classList.contains('rbtn')) el.setAttribute('aria-pressed', String(el.dataset.view === v));
@@ -1115,6 +1169,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
     if (v === 'calls') loadCalls(true);
     if (v === 'mail') loadMail(true);
     if (v === 'team') loadTeam();
+    if (v === 'agenda') { agMode = 'form'; agSelId = null; renderAgForm(); loadAgenda(); }
   }
   $('#rail').addEventListener('click', e => { const b = e.target.closest('.rbtn'); if (b) setView(b.dataset.view); });
   document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', () => document.body.classList.remove('chat-open')));
@@ -1672,6 +1727,220 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
   }
   $('#tRows').addEventListener('click', e => { const r = e.target.closest('.row'); if (!r) return; const m = team.find(x => x.id === Number(r.dataset.mid)); if (m) memberForm(m); });
   $('#tNew').addEventListener('click', () => memberForm({ id: 0, name: '', role: 'member', channels: [], active: true }));
+
+
+  // =====================================================================
+  // AGENDA: horarios livres, marcar reuniao (email automatico por tipo), estado e reagendamento
+  // =====================================================================
+  const AG = 'https://backend.automationbig8agency.com/webhook/indicostay-agenda-api';
+  async function ag(action, body) {
+    let r;
+    if (body) r = await fetch(AG, { method: 'POST', headers: { 'content-type': 'application/json', 'x-inbox-token': token }, body: JSON.stringify({ action, ...body }) });
+    else { const u = new URL(AG); u.searchParams.set('action', action); r = await fetch(u, { headers: { 'x-inbox-token': token }, cache: 'no-store' }); }
+    let d = {};
+    try { d = await r.json(); } catch (e) {}
+    if (r.status === 401) { const e = new Error('unauthorized'); e.code = 401; throw e; }
+    if (!r.ok || d.ok === false) throw new Error(d.error || ('HTTP ' + r.status));
+    return d;
+  }
+  const AGT = { anfitriao: 'Anfitrião', coanfitriao: 'Co-anfitrião', influencer: 'Influencer', bloqueio: 'Bloqueio' };
+  let agItems = [], agDias = [], agTab = null, agMode = 'form', agSelId = null, agTipo = 'anfitriao', agDay = 0, agSel = null, agBusy = false;
+  let agForm = { instancia: '', contacto: '', tratamento: '', email: '', telefone: '', nota: '' };
+  const agStarted = m => Date.parse(m.inicio) <= Date.now();
+  const agEnded = m => Date.parse(m.fim) <= Date.now();
+  const agCat = m => m.tipo === 'bloqueio' ? (agEnded(m) ? 'past' : 'next') : m.estado === 'marcada' ? (agEnded(m) ? 'confirm' : 'next') : 'past';
+  const agTag = m => {
+    if (m.tipo === 'bloqueio') return '<span class="tag block">bloqueado</span>';
+    if (m.estado === 'realizada') return '<span class="tag done">realizada</span>';
+    if (m.estado === 'nao_compareceu') return m.reagendado_em ? '<span class="tag answered">reagendamento enviado</span>' : '<span class="tag missed">não compareceu</span>';
+    return agEnded(m) ? '<span class="tag confirm">por confirmar</span>' : '<span class="tag meeting">marcada</span>';
+  };
+  const agDayKey = ms => new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date(ms));
+
+  async function loadAgenda() {
+    try {
+      const [l, s] = await Promise.all([ag('list'), ag('slots')]);
+      agItems = l.items || [];
+      agDias = (s.dias || []).filter(d => d.horas.length);
+      if (agDay >= agDias.length) agDay = 0;
+      if (agSel && !agDias.some(d => d.horas.some(h => h.iso === agSel))) agSel = null;
+      if (agTab === null) agTab = agItems.some(m => agCat(m) === 'confirm') ? 'confirm' : 'next';
+      renderAgList();
+      if (agMode === 'form') { if (!$('#agForm')) renderAgForm(); else renderSlots(); } else renderAgDetail();
+    } catch (e) {
+      if (e.code === 401) return logout();
+      $('#agRows').innerHTML = `<div class="empty">Não foi possível carregar a agenda (${esc(e.message)}).</div>`;
+    }
+  }
+  function renderAgList() {
+    const today = agDayKey(Date.now());
+    const cnt = { confirm: 0, next: 0, past: 0 };
+    agItems.forEach(m => cnt[agCat(m)]++);
+    const hoje = agItems.filter(m => m.tipo !== 'bloqueio' && m.estado === 'marcada' && agDayKey(Date.parse(m.inicio)) === today).length;
+    const resched = agItems.filter(m => m.estado === 'nao_compareceu' && !m.reagendado_em).length;
+    $('#agKpis').innerHTML = `<div class="kpi hot"><b>${hoje}</b><span>Hoje</span></div><div class="kpi ${cnt.confirm ? 'bad' : ''}"><b>${cnt.confirm}</b><span>Confirmar</span></div><div class="kpi ${resched ? 'bad' : ''}"><b>${resched}</b><span>Reagendar</span></div><div class="kpi"><b>${cnt.next}</b><span>Próximas</span></div>`;
+    document.querySelectorAll('[data-agn]').forEach(n => { n.textContent = cnt[n.dataset.agn] || ''; });
+    document.querySelectorAll('#agTabs .tab').forEach(t => t.setAttribute('aria-pressed', String(t.dataset.f === agTab)));
+    const rb = $('#rbAg'); if (rb) rb.textContent = cnt.confirm ? String(cnt.confirm) : '';
+    let rows = agItems.filter(m => agCat(m) === agTab);
+    rows = agTab === 'next' ? rows.sort((a, b) => Date.parse(a.inicio) - Date.parse(b.inicio)) : rows.sort((a, b) => Date.parse(b.inicio) - Date.parse(a.inicio));
+    $('#agRows').innerHTML = rows.map(m => `<button class="row" data-agid="${m.id}" aria-current="${agMode === 'detail' && agSelId === m.id}">
+      ${avatarFor(m.instancia || '?', 'ag' + m.id)}
+      <span class="txt">
+        <span class="l1"><span class="name">${esc(m.instancia || '')}</span><span class="when">${esc(fullDate(Date.parse(m.inicio)))}</span></span>
+        <span class="l2"><span class="last"><span class="ag-tipo">${esc(AGT[m.tipo] || m.tipo)}</span>${m.contacto ? ' · ' + esc(m.contacto) : ''}</span>${agTag(m)}</span>
+      </span></button>`).join('') || `<div class="empty">${agTab === 'confirm' ? 'Nada por confirmar. Tudo em dia.' : agTab === 'next' ? 'Sem reuniões marcadas.' : 'Ainda sem reuniões passadas.'}</div>`;
+  }
+
+  function renderAgForm() {
+    agMode = 'form'; agSelId = null;
+    $('#agTitle').textContent = 'Nova reunião';
+    $('#agSub').textContent = 'Escolha o tipo, preencha os dados e um horário livre. O convite e o email seguem logo.';
+    $('#agBody').innerHTML = `<form class="ag-form" id="agForm" autocomplete="off">
+      <div class="cardx"><h4>Tipo de parceiro</h4>
+        <div class="chips types" id="agTipos">${['anfitriao', 'coanfitriao', 'influencer'].map(k => `<button type="button" class="chip" data-tipo="${k}" aria-pressed="${agTipo === k}">${AGT[k]}</button>`).join('')}</div>
+      </div>
+      <div class="cardx"><h4>Dados</h4>
+        <label class="fl">Nome da instância (alojamento ou perfil)<input id="agInst" type="text" maxlength="120" required value="${esc(agForm.instancia)}" placeholder="Ex.: Junabi Guest House"></label>
+        <div class="two">
+          <label class="fl">Pessoa de contacto (opcional)<input id="agCont" type="text" maxlength="100" value="${esc(agForm.contacto)}" placeholder="Ex.: Shelcia Phenga"></label>
+          <label class="fl">Tratar por<select id="agTrat"><option value=""${agForm.tratamento === '' ? ' selected' : ''}>Sem tratamento</option><option value="Dr."${agForm.tratamento === 'Dr.' ? ' selected' : ''}>Dr.</option><option value="Dra."${agForm.tratamento === 'Dra.' ? ' selected' : ''}>Dra.</option></select></label>
+        </div>
+        <div class="two" style="grid-template-columns:1fr 1fr">
+          <label class="fl">Email<input id="agEmail" type="email" required value="${esc(agForm.email)}" placeholder="nome@gmail.com"></label>
+          <label class="fl">Telefone<input id="agTel" type="tel" required value="${esc(agForm.telefone)}" placeholder="84 123 4567"></label>
+        </div>
+        <label class="fl" style="margin-bottom:0">Nota interna (opcional)<textarea id="agNota" maxlength="500" placeholder="Ex.: prefere de manhã, dono do alojamento">${esc(agForm.nota)}</textarea></label>
+      </div>
+      <div class="cardx"><h4>Horário livre <span style="text-transform:none;letter-spacing:0;font-weight:600">(hora de Maputo, 30 min)</span></h4>
+        <div id="agSlots"></div>
+        <div class="ag-sum" id="agSum"></div>
+        <div class="ag-actions"><button class="btn" id="agGo" type="submit">Marcar e enviar email</button></div>
+        <div class="ag-err" id="agErr"></div>
+        <div id="agOk"></div>
+      </div>
+      ${isAdmin() ? `<div class="cardx"><h4>Bloquear horário (só super admin)</h4>
+        <p class="summary" style="margin:0 0 10px;font-size:13px;color:var(--muted)">Para reuniões que já tem fora desta agenda. O intervalo deixa de aparecer como livre para a equipa.</p>
+        <div class="two" style="grid-template-columns:1fr 1fr 1fr"><label class="fl">Dia<input id="bkDia" type="date"></label><label class="fl">Das<input id="bkDe" type="time" value="09:00"></label><label class="fl">Às<input id="bkAte" type="time" value="10:00"></label></div>
+        <label class="fl">Motivo<input id="bkMot" type="text" maxlength="100" placeholder="Ex.: Reunião Dellon"></label>
+        <div class="ag-actions"><button class="btn alt" id="bkGo" type="button">Bloquear</button></div><div class="ag-err" id="bkErr"></div>
+      </div>` : ''}
+    </form>`;
+    renderSlots();
+  }
+  function renderSlots() {
+    const box = $('#agSlots'); if (!box) return;
+    if (!agDias.length) { box.innerHTML = '<div class="empty" style="padding:14px">Sem horários livres nos próximos dias.</div>'; updateAgSum(); return; }
+    const day = agDias[agDay] || agDias[0];
+    box.innerHTML = `<div class="chips" id="agDays">${agDias.map((d, i) => `<button type="button" class="chip" data-day="${i}" aria-pressed="${i === agDay}">${d.hoje ? 'Hoje' : esc(d.diaSemana.slice(0, 3))}<b>${esc(d.data)}</b></button>`).join('')}</div>
+      <div class="chips slots" id="agHours">${day.horas.map(h => `<button type="button" class="chip" data-iso="${h.iso}" aria-pressed="${agSel === h.iso}">${h.h}</button>`).join('')}</div>`;
+    updateAgSum();
+  }
+  function updateAgSum() {
+    const el = $('#agSum'); if (!el) return;
+    const t = { anfitriao: 'anfitrião', coanfitriao: 'co-anfitrião', influencer: 'influencer' }[agTipo];
+    el.innerHTML = agSel ? `Reunião de <b>${esc(t)}</b> em <b>${esc(fullDate(Date.parse(agSel)))}</b>. O convite do Google Meet e o email de confirmação seguem para ${esc(agForm.email || 'o email indicado')}, com cópia para si e para o Keano.` : 'Escolha um horário acima.';
+  }
+
+  function renderAgDetail() {
+    const m = agItems.find(x => x.id === agSelId);
+    if (!m) { renderAgForm(); return; }
+    agMode = 'detail';
+    $('#agTitle').textContent = m.instancia || '';
+    $('#agSub').innerHTML = `${esc(AGT[m.tipo] || m.tipo)} · ${esc(fullDate(Date.parse(m.inicio)))} ${agTag(m)}`;
+    const fact = (k, v) => v ? `<div class="fact"><span>${esc(k)}</span><b style="word-break:break-word">${v}</b></div>` : '';
+    let acts = '';
+    if (m.tipo === 'bloqueio') acts = '<button class="btn alt" data-act="cancel" type="button">Remover bloqueio</button>';
+    else if (m.estado === 'marcada') {
+      acts = agStarted(m)
+        ? '<button class="btn" data-act="ok" type="button">Compareceu</button><button class="btn warn" data-act="resched" type="button">Não compareceu · reagendar</button><button class="btn alt" data-act="noshow" type="button">Só marcar não compareceu</button>'
+        : '<p class="summary" style="margin:0 0 4px;color:var(--muted)">A reunião ainda não começou. Os botões de presença aparecem à hora marcada.</p>';
+      acts += '<button class="btn alt" data-act="cancel" type="button">Cancelar reunião</button>';
+    } else if (m.estado === 'nao_compareceu') {
+      acts = (m.reagendado_em ? `<p class="summary" style="margin:0 0 4px">Email de reagendamento enviado a ${esc(m.email)} em ${esc(fullDate(Date.parse(m.reagendado_em)))}.</p>` : '') + `<button class="btn warn" data-act="resched" type="button">${m.reagendado_em ? 'Reenviar email de reagendamento' : 'Enviar email de reagendamento'}</button><button class="btn alt" data-act="ok" type="button">Afinal compareceu</button>`;
+    } else acts = '<button class="btn warn" data-act="resched" type="button">Afinal não compareceu · reagendar</button>';
+    if (m.tipo !== 'bloqueio') acts += '<button class="btn alt" data-act="rebook" type="button">Marcar novo horário</button>';
+    $('#agBody').innerHTML = `<div class="cardx"><h4>Reunião</h4><div class="facts">${fact('Quando', esc(fullDate(Date.parse(m.inicio))))}${fact('Tipo', esc(AGT[m.tipo] || m.tipo))}${fact('Contacto', esc(m.contacto || ''))}${fact('Telefone', esc(m.telefone || ''))}${fact('Email', esc(m.email || ''))}${fact('Marcada por', esc(m.booked_by || ''))}${m.meet_link ? fact('Meet', `<a href="${esc(m.meet_link)}" target="_blank" rel="noopener">${esc(m.meet_link.replace('https://', ''))}</a>`) : ''}${m.tipo !== 'bloqueio' ? fact('Email de confirmação', m.email_enviado ? 'enviado' : 'não confirmado') : ''}</div></div>
+      <div class="cardx"><h4>${m.tipo === 'bloqueio' ? 'Bloqueio' : 'Estado da reunião'}</h4><div class="ag-actions" id="agActs">${acts}</div><div class="ag-err" id="agDErr"></div><div id="agDOk"></div></div>`;
+  }
+
+  // eventos
+  $('#agNew').addEventListener('click', () => { renderAgForm(); renderAgList(); document.body.classList.add('chat-open'); });
+  $('#agReload').addEventListener('click', () => loadAgenda());
+  $('#agTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) { agTab = t.dataset.f; renderAgList(); } });
+  $('#agRows').addEventListener('click', e => {
+    const r = e.target.closest('.row'); if (!r) return;
+    agSelId = Number(r.dataset.agid); agMode = 'detail'; renderAgDetail(); renderAgList(); document.body.classList.add('chat-open');
+  });
+  $('#agBody').addEventListener('input', e => {
+    const map = { agInst: 'instancia', agCont: 'contacto', agTrat: 'tratamento', agEmail: 'email', agTel: 'telefone', agNota: 'nota' };
+    if (map[e.target.id]) { agForm[map[e.target.id]] = e.target.value; if (e.target.id === 'agEmail') updateAgSum(); }
+  });
+  $('#agBody').addEventListener('click', async e => {
+    const tipo = e.target.closest('[data-tipo]');
+    if (tipo) { agTipo = tipo.dataset.tipo; document.querySelectorAll('#agTipos .chip').forEach(c => c.setAttribute('aria-pressed', String(c.dataset.tipo === agTipo))); updateAgSum(); return; }
+    const day = e.target.closest('[data-day]');
+    if (day) { agDay = Number(day.dataset.day); renderSlots(); return; }
+    const hr = e.target.closest('[data-iso]');
+    if (hr) { agSel = hr.dataset.iso; renderSlots(); return; }
+    if (e.target.id === 'bkGo') return blockSlot();
+    const act = e.target.closest('[data-act]');
+    if (act && !agBusy) return detailAction(act.dataset.act, act);
+  });
+  $('#agBody').addEventListener('submit', async e => {
+    if (e.target.id !== 'agForm') return;
+    e.preventDefault();
+    if (agBusy) return;
+    if (!agSel) { $('#agErr').textContent = 'Escolha um horário livre.'; return; }
+    agBusy = true; $('#agGo').disabled = true; $('#agGo').textContent = 'A marcar…'; $('#agErr').textContent = ''; $('#agOk').innerHTML = '';
+    try {
+      const r = await ag('book', { tipo: agTipo, instancia: agForm.instancia, contacto: agForm.contacto, tratamento: agForm.tratamento, email: agForm.email, telefone: agForm.telefone, nota: agForm.nota, iso: agSel });
+      const okMsg = `Reunião marcada para ${esc(r.quando)}. ${r.email === 'enviado' ? 'Convite e email de confirmação enviados.' : '<b>O convite seguiu, mas o email falhou: envie a confirmação à mão.</b>'}${r.meet ? ' <a href="' + esc(r.meet) + '" target="_blank" rel="noopener">Abrir Meet</a>' : ''}`;
+      agForm = { instancia: '', contacto: '', tratamento: '', email: '', telefone: '', nota: '' }; agSel = null;
+      renderAgForm(); $('#agOk').innerHTML = `<div class="dial-ok">${okMsg}</div>`;
+      loadAgenda();
+    } catch (err) {
+      if (err.code === 401) return logout();
+      $('#agErr').textContent = err.message; $('#agGo').disabled = false; $('#agGo').textContent = 'Marcar e enviar email';
+      if (/ocupado/.test(err.message)) { agSel = null; loadAgenda(); }
+    } finally { agBusy = false; }
+  });
+  async function blockSlot() {
+    const d = $('#bkDia').value, a = $('#bkDe').value, b = $('#bkAte').value;
+    if (!d || !a || !b) { $('#bkErr').textContent = 'Escolha o dia e as horas.'; return; }
+    $('#bkErr').textContent = ''; $('#bkGo').disabled = true;
+    try {
+      await ag('block', { inicio: new Date(`${d}T${a}:00+02:00`).toISOString(), fim: new Date(`${d}T${b}:00+02:00`).toISOString(), motivo: $('#bkMot').value });
+      $('#bkMot').value = ''; $('#bkErr').textContent = ''; await loadAgenda();
+      $('#bkErr').style.color = 'var(--good)'; $('#bkErr').textContent = 'Horário bloqueado.';
+    } catch (err) { $('#bkErr').style.color = ''; $('#bkErr').textContent = err.message; }
+    finally { $('#bkGo').disabled = false; }
+  }
+  async function detailAction(act, btn) {
+    const m = agItems.find(x => x.id === agSelId); if (!m) return;
+    if (act === 'rebook') {
+      agForm = { instancia: m.instancia || '', contacto: m.contacto || '', tratamento: '', email: m.email || '', telefone: m.telefone || '', nota: '' };
+      agTipo = m.tipo; agSel = null; renderAgForm(); renderAgList(); return;
+    }
+    if (act === 'cancel' && !confirm(m.tipo === 'bloqueio' ? 'Remover este bloqueio?' : `Cancelar a reunião com ${m.instancia}? O convite é cancelado no calendário do parceiro.`)) return;
+    if (act === 'resched' && !confirm(`Marcar "${m.instancia}" como não compareceu e enviar já o email de reagendamento para ${m.email}?`)) return;
+    agBusy = true; document.querySelectorAll('#agActs button').forEach(b => { b.disabled = true; }); $('#agDErr').textContent = '';
+    try {
+      let msg = '';
+      if (act === 'ok') await ag('status', { id: m.id, estado: 'realizada' });
+      else if (act === 'noshow') await ag('status', { id: m.id, estado: 'nao_compareceu' });
+      else if (act === 'cancel') await ag('cancel', { id: m.id });
+      else if (act === 'resched') { const r = await ag('reagendar', { id: m.id }); msg = r.email === 'enviado' ? `Email de reagendamento enviado a ${esc(m.email)}.` : 'O email falhou: envie o reagendamento à mão.'; }
+      if (act === 'cancel') { agSelId = null; agMode = 'form'; }
+      await loadAgenda();
+      if (act === 'cancel') renderAgForm();
+      if (msg && $('#agDOk')) $('#agDOk').innerHTML = `<div class="dial-ok">${msg}</div>`;
+    } catch (err) {
+      if (err.code === 401) return logout();
+      $('#agDErr').textContent = err.message; document.querySelectorAll('#agActs button').forEach(b => { b.disabled = false; });
+    } finally { agBusy = false; }
+  }
+  setInterval(() => { if (view === 'agenda' && ME && document.visibilityState === 'visible' && !agBusy) loadAgenda(); }, 30000);
 
   // ---------- ciclo do hub: email sempre (para o contador), chamadas quando a vista esta aberta ----------
   let hubTimer = null;
