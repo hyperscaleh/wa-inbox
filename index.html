@@ -2289,6 +2289,7 @@ a.chip { text-decoration: none; }
     const phones = [l.telefone_geral && l.telefone_geral !== l.telefone ? 'Geral: ' + l.telefone_geral : '', l.outros_telefones ? 'Outros: ' + l.outros_telefones : ''].filter(Boolean).join(' · ');
     $('#prBody').innerHTML = `<div class="cardx"><h4>Contactar</h4>
         <div class="pr-phone">${l.telefone ? esc(l.telefone) : 'sem telefone'}</div>
+        ${/^27\d{8,9}$/.test(String(dTel).replace(/\D/g, '')) ? '<div class="dial-ok" style="margin:10px 0 0"><b>Número sul-africano:</b> use o WhatsApp, não ligue.</div>' : ''}
         <div class="ag-actions">
           ${dTel ? `<a class="btn" href="tel:${esc(dTel)}">Ligar</a>` : ''}
           ${l.telefone ? '<button class="btn alt" type="button" data-pract="copy">Copiar número</button>' : ''}
