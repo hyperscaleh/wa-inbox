@@ -545,7 +545,7 @@ a.chip { text-decoration: none; }
     <aside class="side" data-view="prosp" hidden style="grid-template-rows:auto auto auto 1fr">
       <div class="me">
         <div class="av brand">IS</div>
-        <div class="who"><b>Prospecção</b><span>Alojamentos do Notion</span></div>
+        <div class="who"><b>Prospecção</b><span id="prWho">Alojamentos do Notion</span></div>
         <button class="icon-btn" id="prReload" type="button" title="Atualizar agora" aria-label="Atualizar leads">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>
         </button>
@@ -1084,7 +1084,7 @@ a.chip { text-decoration: none; }
   function applyAccess() {
     document.querySelectorAll('#rail .rbtn').forEach(b => {
       const v = b.dataset.view;
-      b.hidden = v === 'team' ? !isAdmin() : (v === 'agenda' || v === 'prosp') ? !(can('agenda') || isAdmin()) : !can(v === 'mail' ? 'mail' : v);
+      b.hidden = v === 'team' ? !isAdmin() : v === 'agenda' ? !(can('agenda') || isAdmin()) : v === 'prosp' ? !(isAdmin() || (can('agenda') && (ME.zonas || []).length > 0)) : !can(v === 'mail' ? 'mail' : v);
     });
     $('#waDial').hidden = !can('calls');
     $('#agentName').textContent = 'ligado como ' + ME.name;
@@ -1233,7 +1233,7 @@ a.chip { text-decoration: none; }
   // ---------- vistas ----------
   let view = 'wa';
   function setView(v) {
-    const ok = x => x === 'team' ? isAdmin() : (x === 'agenda' || x === 'prosp') ? (can('agenda') || isAdmin()) : can(x);
+    const ok = x => x === 'team' ? isAdmin() : x === 'agenda' ? (can('agenda') || isAdmin()) : x === 'prosp' ? (isAdmin() || (can('agenda') && !!(ME && (ME.zonas || []).length))) : can(x);
     if (!['wa', 'calls', 'mail', 'prosp', 'agenda', 'team'].includes(v) || !ok(v)) v = ['wa', 'calls', 'mail', 'prosp', 'agenda', 'team'].find(ok) || 'wa';
     view = v;
     document.querySelectorAll('[data-view]').forEach(el => {
@@ -1725,6 +1725,7 @@ a.chip { text-decoration: none; }
     { k: 'mail', n: 'Email', d: 'Ler e responder aos emails de info@ e do Gmail da IndicoStay.' },
     { k: 'agenda', n: 'Agenda', d: 'Ver horários livres, marcar reuniões, confirmar presença, reagendar e cancelar.' }
   ];
+  const ZN = ['Maputo', 'Ponta do Ouro', 'Tofo', 'Bilene', 'Vilankulos', 'Inhambane', 'Macaneta'];
   let team = [], tSel = null;
   const rel = ts => { if (!ts) return 'nunca entrou'; const m = Math.round((Date.now() - Date.parse(ts)) / 60000); return m < 2 ? 'ativo agora' : m < 60 ? `há ${m} min` : m < 1440 ? `há ${Math.round(m / 60)} h` : 'em ' + new Intl.DateTimeFormat('pt-PT', { timeZone: TZ, day: '2-digit', month: '2-digit' }).format(new Date(ts)); };
   async function loadTeam() {
@@ -1736,7 +1737,7 @@ a.chip { text-decoration: none; }
       ${avatarFor(m.name, 'u' + m.id)}
       <span class="txt">
         <span class="l1"><span class="name">${esc(m.name)}${m.id === ME.id ? ' <span class="dirm">(eu)</span>' : ''}</span><span class="when">${esc(rel(m.last_seen_at))}</span></span>
-        <span class="l2"><span class="last">${m.role === 'superadmin' ? 'Acesso total' : (m.channels || []).map(c => (CH.find(x => x.k === c) || {}).n).filter(Boolean).join(' · ') || 'Sem canais'}</span>${m.role === 'superadmin' ? '<span class="tag answered">super admin</span>' : ''}${m.active ? '' : '<span class="tag missed">desactivado</span>'}</span>
+        <span class="l2"><span class="last">${m.role === 'superadmin' ? 'Acesso total' : (m.channels || []).map(c => (CH.find(x => x.k === c) || {}).n).filter(Boolean).join(' · ') || 'Sem canais'}${m.role !== 'superadmin' && (m.zonas || []).length ? ' · ' + m.zonas.join(', ') : ''}</span>${m.role === 'superadmin' ? '<span class="tag answered">super admin</span>' : ''}${m.active ? '' : '<span class="tag missed">desactivado</span>'}</span>
       </span></button>`).join('') || '<div class="empty">Ainda não há pessoas.</div>';
   }
   function memberForm(m) {
@@ -1757,6 +1758,9 @@ a.chip { text-decoration: none; }
           <option value="superadmin"${admin ? ' selected' : ''}>Super admin: tudo, e gere a equipa</option></select></label>
         <h4 style="margin-top:14px">Canais</h4>
         <div class="chans" id="tmCh">${CH.map(c => `<label class="chan"><input type="checkbox" value="${c.k}" ${(m.channels || []).includes(c.k) || admin ? 'checked' : ''} ${admin ? 'disabled' : ''}><span><b>${c.n}</b><small>${c.d}</small></span></label>`).join('')}</div>
+        <h4 style="margin-top:14px">Zonas de prospecção</h4>
+        <p style="margin:0 0 8px;font-size:12.5px;color:var(--muted)">Na Prospecção a pessoa só vê, e só pode alterar, os leads destas zonas. Quando terminar uma zona, troque aqui. Sem zonas, o separador Prospecção não aparece.</p>
+        <div class="chans" id="tmZ" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">${ZN.map(z => `<label class="chan"><input type="checkbox" value="${z}" ${(m.zonas || []).includes(z) || admin ? 'checked' : ''} ${admin ? 'disabled' : ''}><span><b>${z}</b></span></label>`).join('')}</div>
         ${isNew || self ? '' : `<label class="chan" style="margin-top:12px"><input type="checkbox" id="tmActive" ${m.active ? 'checked' : ''}><span><b>Acesso ativo</b><small>Desmarque para cortar o acesso logo. O código deixa de funcionar.</small></span></label>`}
         <div class="err" id="tmErr"></div>
         <div class="acts" style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap">
@@ -1768,10 +1772,11 @@ a.chip { text-decoration: none; }
     $('#tmRole').addEventListener('change', () => {
       const a = $('#tmRole').value === 'superadmin';
       $('#tmCh').querySelectorAll('input').forEach(i => { i.disabled = a; if (a) i.checked = true; });
+      $('#tmZ').querySelectorAll('input').forEach(i => { i.disabled = a; if (a) i.checked = true; });
     });
     $('#tmForm').addEventListener('submit', async e => {
       e.preventDefault();
-      const member = { id: m.id || 0, name: $('#tmN').value.trim(), role: $('#tmRole').value, channels: [...$('#tmCh').querySelectorAll('input:checked')].map(i => i.value), active: $('#tmActive') ? $('#tmActive').checked : true, email: $('#tmE').value.trim() };
+      const member = { id: m.id || 0, name: $('#tmN').value.trim(), role: $('#tmRole').value, channels: [...$('#tmCh').querySelectorAll('input:checked')].map(i => i.value), active: $('#tmActive') ? $('#tmActive').checked : true, email: $('#tmE').value.trim(), zonas: [...$('#tmZ').querySelectorAll('input:checked')].map(i => i.value) };
       if (member.role === 'member' && !member.channels.length) { $('#tmErr').textContent = 'Escolha pelo menos um canal.'; return; }
       $('#tmSave').disabled = true; $('#tmErr').textContent = '';
       try {
@@ -2167,6 +2172,19 @@ a.chip { text-decoration: none; }
   const prDM = iso => { const x = String(iso || '').slice(0, 10).split('-'); return x.length === 3 ? x[2] + '/' + x[1] : ''; };
   const prDigits = v => String(v || '').replace(/\D/g, '');
 
+  // So as zonas atribuidas a esta pessoa (o servidor tambem so devolve essas).
+  function prZonas(zs) {
+    const sel = $('#prZona'), one = zs.length === 1;
+    const sig = zs.join('|');
+    if (sel.dataset.sig !== sig) {
+      sel.innerHTML = (one ? '' : `<option value="">${zs.length >= 7 ? 'Todas as zonas' : 'Todas as minhas zonas'}</option>`) + zs.map(z => `<option value="${esc(z)}">${esc(z)}</option>`).join('');
+      sel.dataset.sig = sig;
+    }
+    if (one) prZona = zs[0];
+    else if (!zs.includes(prZona)) prZona = '';
+    sel.value = prZona; sel.disabled = one;
+    const w = $('#prWho'); if (w) w.textContent = 'Alojamentos do Notion' + (zs.length < 7 ? ' · ' + zs.join(', ') : '');
+  }
   async function prLoad() {
     const seq = ++prSeq;
     $('#prRows').innerHTML = '<div class="empty">A carregar leads do Notion…</div>';
@@ -2174,10 +2192,11 @@ a.chip { text-decoration: none; }
       const d = await pr('leads', { tab: prTab, zona: prZona, q: prQ, so_tel: prTel ? '1' : '0' });
       if (seq !== prSeq) return;
       prItems = d.items || []; prTrunc = !!d.truncado; prLoaded = true;
+      if (d.zonas) prZonas(d.zonas);
       renderPrRows();
     } catch (e) {
       if (e.code === 401) return logout();
-      if (seq === prSeq) $('#prRows').innerHTML = `<div class="empty">Não foi possível ler o Notion (${esc(e.message)}). Tente atualizar.</div>`;
+      if (seq === prSeq) $('#prRows').innerHTML = /zonas/i.test(e.message) ? `<div class="empty">${esc(e.message)}</div>` : `<div class="empty">Não foi possível ler o Notion (${esc(e.message)}). Tente atualizar.</div>`;
     }
   }
   function renderPrRows() {
@@ -2213,8 +2232,8 @@ a.chip { text-decoration: none; }
           ${wa ? `<a class="btn alt" href="https://wa.me/${esc(wa)}" target="_blank" rel="noopener">WhatsApp</a><button class="btn alt" type="button" data-pract="chat">Conversa no painel</button>` : ''}
         </div>
         ${phones ? `<p class="pr-note" style="margin-top:10px">${esc(phones)}</p>` : ''}
-        <div class="chips" style="margin:12px 0 0">${l.email ? `<a class="chip" href="mailto:${esc(l.email)}">${esc(l.email)}${l.email_invalido ? ' (email inválido)' : ''}</a>` : ''}${link(l.maps, 'Google Maps')}${link(l.website, 'Website')}${link(l.instagram, 'Instagram')}${link(l.facebook, 'Facebook')}<a class="chip" href="https://www.notion.so/${esc(String(l.id).replace(/-/g, ''))}" target="_blank" rel="noopener">Abrir no Notion</a></div>
-        <div class="facts" style="margin-top:12px">${fact('Tipo', esc(l.tipo))}${fact('Google', l.rating ? '★ ' + esc(l.rating) + (l.reviews ? ' · ' + esc(l.reviews) + ' avaliações' : '') : (l.reviews ? esc(l.reviews) + ' avaliações' : ''))}${fact('Último contacto', l.ultimo_contacto ? esc(fullDate(Date.parse(l.ultimo_contacto))) : '')}${fact('Trabalhado por', esc(l.trabalhado_por))}</div>
+        <div class="chips" style="margin:12px 0 0">${l.email ? `<a class="chip" href="mailto:${esc(l.email)}">${esc(l.email)}${l.email_invalido ? ' (email inválido)' : ''}</a>` : ''}${link(l.website, 'Website')}<a class="chip" href="https://www.notion.so/${esc(String(l.id).replace(/-/g, ''))}" target="_blank" rel="noopener">Abrir no Notion</a></div>
+        <div class="facts" style="margin-top:12px">${fact('Tipo', esc(l.tipo))}${fact('Último contacto', l.ultimo_contacto ? esc(fullDate(Date.parse(l.ultimo_contacto))) : '')}${fact('Trabalhado por', esc(l.trabalhado_por))}</div>
       </div>
       <div class="cardx"><h4>Resultado da chamada</h4>
         ${l.reuniao ? `<div class="dial-ok" style="margin:0 0 12px">Reunião marcada: <b>${esc(agDia(l.reuniao))} às ${esc(agHora(l.reuniao))}</b>. Veja ou altere na Agenda.</div>` : ''}
