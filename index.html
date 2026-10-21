@@ -292,8 +292,12 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
 .pf input[type="search"] { grid-column: 1 / -1; }
 .pf-chk { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); font-weight: 600; }
 .pf-chk input { accent-color: var(--violet); width: 16px; height: 16px; }
-#prTabs { gap: 8px; padding: 0 12px; justify-content: space-between; }
-#prTabs .tab { font-size: 10.5px; letter-spacing: 0.02em; }
+#prTabs { flex-wrap: wrap; gap: 6px; padding: 0 16px 12px; overflow: visible; }
+#prTabs .tab { padding: 6px 11px; border: 1px solid var(--line); border-radius: 999px; font-size: 10.5px; letter-spacing: 0.03em; background: var(--card); }
+#prTabs .tab[aria-pressed="true"] { background: var(--violet-soft); border-color: transparent; color: var(--violet); }
+#prTabs .tab[aria-pressed="true"]::after { display: none; }
+.pr-sum { padding: 0 12px 8px; font-size: 12px; color: var(--ink); line-height: 1.5; }
+.pr-sum b { font-weight: 800; }
 .pr-count { padding: 4px 12px 8px; font-size: 12px; color: var(--muted); font-weight: 600; }
 a.btn { text-decoration: none; display: inline-block; text-align: center; }
 a.chip { text-decoration: none; }
@@ -556,11 +560,12 @@ a.chip { text-decoration: none; }
         <label class="pf-chk"><input type="checkbox" id="prTel" checked> Só com telefone</label>
       </div>
       <div class="tabs" id="prTabs" role="toolbar" aria-label="Estados dos leads">
-        <button class="tab" data-f="hoje" aria-pressed="false" title="Try again e follow up com data de hoje ou anterior">Hoje</button>
+        <button class="tab" data-f="hoje" aria-pressed="false" title="Não atendeu / Pediu email com data de hoje ou anterior">Repetir hoje</button>
         <button class="tab" data-f="porligar" aria-pressed="true">Por ligar</button>
         <button class="tab" data-f="curso" aria-pressed="false">Em curso</button>
         <button class="tab" data-f="reuniao" aria-pressed="false">Reunião</button>
         <button class="tab" data-f="fechados" aria-pressed="false" title="Não interessados, número errado e alojamentos encerrados">Descartados</button>
+        <button class="tab" data-f="feitos" aria-pressed="false" title="Todos os leads que trabalhou hoje">Feitos hoje</button>
       </div>
       <div class="rows" id="prRows"><div class="empty">A carregar leads do Notion…</div></div>
     </aside>
@@ -2173,7 +2178,7 @@ a.chip { text-decoration: none; }
     ['wrong number', 'Número errado', 'O número não é do alojamento. Fica para pesquisar outro número.'],
     ['Invalid / closed', 'Encerrado', 'O alojamento já não existe ou fechou. Sai da lista de chamadas.']
   ];
-  const PREMPTY = { hoje: 'Ainda não há chamadas para repetir hoje. Quando marcar "Não atendeu" ou "Pediu email" com uma data em "Voltar a ligar", o hotel volta a aparecer aqui nesse dia.', porligar: 'Nenhum lead por ligar com estes filtros.', curso: 'Nenhum lead em curso com estes filtros.', reuniao: 'Ainda sem reuniões marcadas com estes filtros.', fechados: 'Nenhum lead descartado com estes filtros.' };
+  const PREMPTY = { feitos: 'Ainda não trabalhou nenhum lead hoje. Cada lead guardado ou com reunião marcada aparece aqui.', hoje: 'Ainda não há chamadas para repetir hoje. Quando marcar "Não atendeu" ou "Pediu email" com uma data em "Voltar a ligar", o hotel volta a aparecer aqui nesse dia.', porligar: 'Nenhum lead por ligar com estes filtros.', curso: 'Nenhum lead em curso com estes filtros.', reuniao: 'Ainda sem reuniões marcadas com estes filtros.', fechados: 'Nenhum lead descartado com estes filtros.' };
   let prTab = 'porligar', prZona = '', prQ = '', prTel = true, prItems = [], prTrunc = false, prSel = null, prOutcome = '', prBusy = false, prSeq = 0, prLoaded = false, prQT = null, prFlash = '', prDraft = null, prAutoDate = '';
   const prTag = e => { const t = PRST[e] || [e || 'sem estado', '']; return `<span class="tag ${t[1]}">${esc(t[0])}</span>`; };
   const prNextBiz = () => { const d = new Date(Date.now() + 2 * 3600000); d.setUTCDate(d.getUTCDate() + 1); while (d.getUTCDay() === 0 || d.getUTCDay() === 6) d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); };
@@ -2209,9 +2214,14 @@ a.chip { text-decoration: none; }
   }
   function renderPrRows() {
     document.querySelectorAll('#prTabs .tab').forEach(t => t.setAttribute('aria-pressed', String(t.dataset.f === prTab)));
-    const head = `<div class="pr-count">${prItems.length}${prTrunc ? '+' : ''} lead${prItems.length === 1 ? '' : 's'}${prTrunc ? ' · a mostrar os 300 primeiros, afine pela zona ou pesquisa' : ''}</div>`;
+    let head = `<div class="pr-count">${prItems.length}${prTrunc ? '+' : ''} lead${prItems.length === 1 ? '' : 's'}${prTab === 'feitos' ? ' trabalhado' + (prItems.length === 1 ? '' : 's') + ' hoje' : ''}${prTrunc ? ' · a mostrar os 300 primeiros, afine pela zona ou pesquisa' : ''}</div>`;
+    if (prTab === 'feitos' && prItems.length) {
+      const c = {}; prItems.forEach(l => { c[l.estado] = (c[l.estado] || 0) + 1; });
+      head += `<div class="pr-sum">${Object.keys(c).sort((a, b) => c[b] - c[a]).map(e => `<b>${c[e]}</b> ${esc((PRST[e] || [e])[0])}`).join(' · ')}</div>`;
+    }
     $('#prRows').innerHTML = head + (prItems.map(l => {
-      const extra = (l.devido ? '<span class="tag confirm">ligar hoje</span>' : (l.voltar_a_ligar && ['Try again', 'follow up'].includes(l.estado) ? `<span class="tag">ligar ${esc(prDM(l.voltar_a_ligar))}</span>` : '')) + (l.reuniao ? `<span class="tag meeting">${esc(agDia(l.reuniao))} ${esc(agHora(l.reuniao))}</span>` : '');
+      const feito = prTab === 'feitos' ? `<span class="tag">${esc(agHora(l.ultimo_contacto))}</span>${isAdmin() && l.trabalhado_por ? `<span class="tag answered">${esc(l.trabalhado_por)}</span>` : ''}` : '';
+      const extra = feito + (l.devido ? '<span class="tag confirm">ligar hoje</span>' : (l.voltar_a_ligar && ['Try again', 'follow up'].includes(l.estado) ? `<span class="tag">ligar ${esc(prDM(l.voltar_a_ligar))}</span>` : '')) + (l.reuniao ? `<span class="tag meeting">${esc(agDia(l.reuniao))} ${esc(agHora(l.reuniao))}</span>` : '');
       return `<button class="row" data-prid="${esc(l.id)}" aria-current="${!!prSel && prSel.id === l.id}">
         ${avatarFor(l.nome, 'pr' + l.id)}
         <span class="txt">
@@ -2265,8 +2275,7 @@ a.chip { text-decoration: none; }
           <label class="fl" style="margin-bottom:0">Notas<textarea id="prFNotas" maxlength="1900" placeholder="O que ficou combinado">${esc(notas)}</textarea></label>
         </div>
         <div class="ag-actions" style="margin-top:14px">
-          <button class="btn" type="button" data-pract="save">Guardar no Notion</button>
-          <button class="btn alt" type="button" data-pract="savenext">Guardar e abrir o próximo</button>
+          <button class="btn" type="button" data-pract="savenext">Guardar e abrir o próximo</button>
           <button class="ghost-btn" type="button" data-pract="skip" title="Passa ao lead seguinte sem gravar nada no Notion">Saltar (não grava)</button>
           <button class="btn warn" type="button" data-pract="book">${l.reuniao ? 'Marcar outro horário' : 'Marcar reunião'}</button>
         </div>
@@ -2354,7 +2363,6 @@ a.chip { text-decoration: none; }
     }
     const act = e.target.closest('[data-pract]'); if (!act || prBusy) return;
     const a = act.dataset.pract;
-    if (a === 'save') return prSave(false);
     if (a === 'savenext') return prSave(true);
     if (a === 'skip') return prSkip();
     if (a === 'book') return prBook();
