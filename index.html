@@ -298,6 +298,15 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
 #prTabs .tab[aria-pressed="true"]::after { display: none; }
 .pr-sum { padding: 0 12px 8px; font-size: 12px; color: var(--ink); line-height: 1.5; }
 .pr-sum b { font-weight: 800; }
+.row .l3 { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; margin-top: 2px; }
+.row .l3 .tag { max-width: 100%; white-space: normal; }
+@media (max-width: 760px) {
+  .ag-form .two { grid-template-columns: 1fr !important; }
+  .pr-actions > * { flex: 1 1 auto; }
+  .pr-actions > :first-child { flex: 1 1 100%; }
+  .pf { grid-template-columns: 1.3fr 1fr; }
+  .tl-wrap { max-height: 400px; }
+}
 .pr-count { padding: 4px 12px 8px; font-size: 12px; color: var(--muted); font-weight: 600; }
 a.btn { text-decoration: none; display: inline-block; text-align: center; }
 a.chip { text-decoration: none; }
@@ -369,7 +378,8 @@ a.chip { text-decoration: none; }
 /* ---------- phone ---------- */
 @media (max-width: 820px) {
   #app { padding: 0 0 62px; }
-  .frame { border-radius: 0; grid-template-columns: 1fr; }
+  .frame { border-radius: 0; grid-template-columns: minmax(0, 1fr); }
+  aside.side, section.thread { min-width: 0; }
   nav.rail { position: fixed; z-index: 5; left: 0; right: 0; bottom: 0; height: 62px; flex-direction: row; justify-content: space-around; padding: 0 8px; border-right: 0; border-top: 1px solid var(--line); background: var(--card); }
   nav.rail .logo { display: none; }
   .rbtn { padding: 6px 0 4px; }
@@ -380,6 +390,14 @@ a.chip { text-decoration: none; }
   .mail-compose { padding: 10px 14px 14px; }
   .thead { padding: 12px 14px; }
   .thead .back { display: grid; }
+  /* Cabecalho da conversa no telemovel: nome e etiquetas na 1.a fila, botoes na 2.a, nada empurra a largura. */
+  .thead { flex-wrap: wrap; row-gap: 10px; }
+  .thead .who { flex: 1 1 0; min-width: 0; }
+  .thead .sub { min-width: 0; }
+  .thead .sub .tag, .thead .sub .stage-meet { white-space: normal; max-width: 100%; }
+  .thead .tools { flex: 1 1 100%; flex-wrap: wrap; order: 5; }
+  .bubble, .bubble * { overflow-wrap: anywhere; }
+  .foot-note, .foot-bar * { min-width: 0; }
   .msgs { padding: 16px 14px; }
   .foot-bar { padding: 10px 14px 14px; }
   .bubble { max-width: 84%; }
@@ -2190,7 +2208,7 @@ a.chip { text-decoration: none; }
     const sel = $('#prZona'), one = zs.length === 1;
     const sig = zs.join('|');
     if (sel.dataset.sig !== sig) {
-      sel.innerHTML = (one ? '' : `<option value="">${zs.length >= 7 ? 'Todas as zonas' : 'Todas as minhas zonas'}</option>`) + zs.map(z => `<option value="${esc(z)}">${esc(z)}</option>`).join('');
+      sel.innerHTML = (one ? '' : `<option value="">${'Todas as zonas'}</option>`) + zs.map(z => `<option value="${esc(z)}">${esc(z)}</option>`).join('');
       sel.dataset.sig = sig;
     }
     if (one) prZona = zs[0];
@@ -2226,7 +2244,8 @@ a.chip { text-decoration: none; }
         ${avatarFor(l.nome, 'pr' + l.id)}
         <span class="txt">
           <span class="l1"><span class="name">${esc(l.nome)}</span><span class="when">${esc(l.zona)}</span></span>
-          <span class="l2"><span class="last mono">${esc(l.telefone || 'sem telefone')}</span>${extra}${prTag(l.estado)}</span>
+          <span class="l2"><span class="last mono">${esc(l.telefone || 'sem telefone')}</span></span>
+          <span class="l3">${extra}${prTag(l.estado)}</span>
         </span></button>`;
     }).join('') || `<div class="empty">${esc(PREMPTY[prTab] || '')}</div>`);
   }
@@ -2274,7 +2293,7 @@ a.chip { text-decoration: none; }
           <label class="fl">Email direto<input id="prFEmail" type="email" maxlength="120" value="${esc(email)}" placeholder="gestor@alojamento.com"></label>
           <label class="fl" style="margin-bottom:0">Notas<textarea id="prFNotas" maxlength="1900" placeholder="O que ficou combinado">${esc(notas)}</textarea></label>
         </div>
-        <div class="ag-actions" style="margin-top:14px">
+        <div class="ag-actions pr-actions" style="margin-top:14px">
           <button class="btn" type="button" data-pract="savenext">Guardar e abrir o próximo</button>
           <button class="ghost-btn" type="button" data-pract="skip" title="Passa ao lead seguinte sem gravar nada no Notion">Saltar (não grava)</button>
           <button class="btn warn" type="button" data-pract="book">${l.reuniao ? 'Marcar outro horário' : 'Marcar reunião'}</button>
