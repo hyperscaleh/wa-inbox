@@ -286,6 +286,20 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
 .ag-tipo { font-size: 10px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--violet); }
 @media (max-width: 760px) { .ag-form .two { grid-template-columns: 1fr; } }
 
+/* ---------- prospeccao ---------- */
+.pf { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 20px 12px; }
+.pf input[type="search"], .pf select { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--soft); color: var(--ink); font: 600 13.5px var(--f-ui); }
+.pf input[type="search"] { grid-column: 1 / -1; }
+.pf-chk { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.pf-chk input { accent-color: var(--violet); width: 16px; height: 16px; }
+#prTabs { gap: 8px; padding: 0 12px; justify-content: space-between; }
+#prTabs .tab { font-size: 10.5px; letter-spacing: 0.02em; }
+.pr-count { padding: 4px 12px 8px; font-size: 12px; color: var(--muted); font-weight: 600; }
+a.btn { text-decoration: none; display: inline-block; text-align: center; }
+a.chip { text-decoration: none; }
+.pr-phone { font: 600 24px var(--f-mono); letter-spacing: 0.01em; margin: 2px 0 12px; word-break: break-all; }
+.pr-out .chip small { display: none; }
+.pr-note { font-size: 13px; color: var(--muted); margin: 0 0 10px; }
 /* ---------- equipa ---------- */
 .team-form .fl { display: grid; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
 .team-form .fl input, .team-form .fl select { padding: 11px 13px; border: 1px solid var(--line); border-radius: 12px; background: var(--soft); color: var(--ink); font: 600 14px var(--f-ui); text-transform: none; letter-spacing: 0; }
@@ -398,6 +412,10 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
       <button class="rbtn" data-view="mail" aria-pressed="false" type="button" hidden title="Email info@indicostay.com">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
         Email<span class="rb" id="rbMail"></span>
+      </button>
+      <button class="rbtn" data-view="prosp" aria-pressed="false" type="button" hidden title="Prospecção: leads do Notion">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></svg>
+        Prospecção
       </button>
       <button class="rbtn" data-view="agenda" aria-pressed="false" type="button" hidden title="Agenda de reuniões">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
@@ -520,6 +538,39 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
       </div>
       <div class="pane-body" id="cBody">
         <div class="welcome"><div class="av lg brand">IS</div><h3>Escolha uma chamada</h3><p>Gravação, resumo, dados recolhidos pela Sara e a transcrição completa de cada chamada.</p></div>
+      </div>
+    </section>
+
+    <!-- ===== PROSPECCAO ===== -->
+    <aside class="side" data-view="prosp" hidden style="grid-template-rows:auto auto auto 1fr">
+      <div class="me">
+        <div class="av brand">IS</div>
+        <div class="who"><b>Prospecção</b><span>Alojamentos do Notion</span></div>
+        <button class="icon-btn" id="prReload" type="button" title="Atualizar agora" aria-label="Atualizar leads">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>
+        </button>
+      </div>
+      <div class="pf">
+        <input id="prQ" type="search" placeholder="Procurar nome, gestor ou número" autocomplete="off">
+        <select id="prZona" aria-label="Zona"><option value="">Todas as zonas</option><option>Maputo</option><option>Ponta do Ouro</option><option>Tofo</option><option>Bilene</option><option>Vilankulos</option><option>Inhambane</option><option>Macaneta</option></select>
+        <label class="pf-chk"><input type="checkbox" id="prTel" checked> Só com telefone</label>
+      </div>
+      <div class="tabs" id="prTabs" role="toolbar" aria-label="Estados dos leads">
+        <button class="tab" data-f="hoje" aria-pressed="false" title="Try again e follow up com data de hoje ou anterior">Hoje</button>
+        <button class="tab" data-f="porligar" aria-pressed="true">Por ligar</button>
+        <button class="tab" data-f="curso" aria-pressed="false">Em curso</button>
+        <button class="tab" data-f="reuniao" aria-pressed="false">Reunião</button>
+        <button class="tab" data-f="fechados" aria-pressed="false">Fechados</button>
+      </div>
+      <div class="rows" id="prRows"><div class="empty">A carregar leads do Notion…</div></div>
+    </aside>
+    <section class="thread" data-view="prosp" hidden style="grid-template-rows:auto 1fr">
+      <div class="thead" id="prHead">
+        <button class="icon-btn back" data-back type="button" aria-label="Voltar à lista"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+        <div class="who"><h2><span class="nm" id="prTitle">Escolha um alojamento</span></h2><div class="sub" id="prSub"></div></div>
+      </div>
+      <div class="pane-body" id="prBody">
+        <div class="welcome"><div class="av lg brand">IS</div><h3>Escolha um alojamento</h3><p>Os leads vêm do Notion (Mass Outreach). Ligue, registe o resultado e, se aceitarem, marque a reunião daqui mesmo. O Notion atualiza sozinho.</p></div>
       </div>
     </section>
 
@@ -1033,7 +1084,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
   function applyAccess() {
     document.querySelectorAll('#rail .rbtn').forEach(b => {
       const v = b.dataset.view;
-      b.hidden = v === 'team' ? !isAdmin() : v === 'agenda' ? !(can('agenda') || isAdmin()) : !can(v === 'mail' ? 'mail' : v);
+      b.hidden = v === 'team' ? !isAdmin() : (v === 'agenda' || v === 'prosp') ? !(can('agenda') || isAdmin()) : !can(v === 'mail' ? 'mail' : v);
     });
     $('#waDial').hidden = !can('calls');
     $('#agentName').textContent = 'ligado como ' + ME.name;
@@ -1182,8 +1233,8 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
   // ---------- vistas ----------
   let view = 'wa';
   function setView(v) {
-    const ok = x => x === 'team' ? isAdmin() : x === 'agenda' ? (can('agenda') || isAdmin()) : can(x);
-    if (!['wa', 'calls', 'mail', 'agenda', 'team'].includes(v) || !ok(v)) v = ['wa', 'calls', 'mail', 'agenda', 'team'].find(ok) || 'wa';
+    const ok = x => x === 'team' ? isAdmin() : (x === 'agenda' || x === 'prosp') ? (can('agenda') || isAdmin()) : can(x);
+    if (!['wa', 'calls', 'mail', 'prosp', 'agenda', 'team'].includes(v) || !ok(v)) v = ['wa', 'calls', 'mail', 'prosp', 'agenda', 'team'].find(ok) || 'wa';
     view = v;
     document.querySelectorAll('[data-view]').forEach(el => {
       if (el.classList.contains('rbtn')) el.setAttribute('aria-pressed', String(el.dataset.view === v));
@@ -1194,6 +1245,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
     if (v === 'calls') loadCalls(true);
     if (v === 'mail') loadMail(true);
     if (v === 'team') loadTeam();
+    if (v === 'prosp') { if (!prLoaded) prLoad(); else renderPrRows(); }
     if (v === 'agenda') { agMode = 'form'; agSelId = null; renderAgForm(); loadAgenda(); }
   }
   $('#rail').addEventListener('click', e => { const b = e.target.closest('.rbtn'); if (b) setView(b.dataset.view); });
@@ -1778,7 +1830,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
     return d;
   }
   const AGT = { anfitriao: 'Anfitrião', coanfitriao: 'Co-anfitrião', influencer: 'Influencer', bloqueio: 'Bloqueio', outro: 'Outro' };
-  let agDetTpl = null, agDetSig = '', agDayInit = false, agNotify = true;
+  let agDetTpl = null, agDetSig = '', agDayInit = false, agNotify = true, agLead = null;
   let agItems = [], agDias = [], agTab = null, agMode = 'form', agSelId = null, agTipo = 'anfitriao', agDay = 0, agSel = null, agBusy = false;
   let agForm = { instancia: '', contacto: '', tratamento: '', email: '', telefone: '', nota: '' };
   // Influencer: Influenciador/Influenciadora. Anfitriao e co-anfitriao: Dr./Dra.
@@ -1843,6 +1895,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
     $('#agTitle').textContent = 'Nova reunião';
     $('#agSub').textContent = 'Escolha o tipo, preencha os dados e um horário livre. O convite e o email seguem logo.';
     $('#agBody').innerHTML = `<form class="ag-form" id="agForm" autocomplete="off">
+      ${agLead ? `<div class="dial-ok" style="margin:0">Lead do Notion: <b>${esc(agLead.nome)}</b>. Ao marcar, o estado passa para <b>Demo booked</b> no Notion. <button type="button" class="ghost-btn" id="agUnlink" style="margin-left:8px;padding:5px 10px">Desligar</button></div>` : ''}
       <div class="cardx"><h4>Tipo de parceiro</h4>
         <div class="chips types" id="agTipos">${['anfitriao', 'coanfitriao', 'influencer'].map(k => `<button type="button" class="chip" data-tipo="${k}" aria-pressed="${agTipo === k}">${AGT[k]}</button>`).join('')}</div>
       </div>
@@ -1994,7 +2047,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
   }
 
   // eventos
-  $('#agNew').addEventListener('click', () => { renderAgForm(); renderAgList(); document.body.classList.add('chat-open'); });
+  $('#agNew').addEventListener('click', () => { agLead = null; renderAgForm(); renderAgList(); document.body.classList.add('chat-open'); });
   $('#agReload').addEventListener('click', () => loadAgenda());
   $('#agTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) { agTab = t.dataset.f; renderAgList(); } });
   $('#agRows').addEventListener('click', e => {
@@ -2021,6 +2074,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
     const tp = e.target.closest('[data-tpl]');
     if (tp) { agDetTpl = tp.dataset.tpl; agDetSig = ''; renderAgDetail(); return; }
     if (e.target.id === 'bkGo') return blockSlot();
+    if (e.target.id === 'agUnlink') { agLead = null; renderAgForm(); return; }
     const act = e.target.closest('[data-act]');
     if (act && !agBusy) return detailAction(act.dataset.act, act);
   });
@@ -2034,9 +2088,9 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
     if (!agSel) { $('#agErr').textContent = 'Escolha um horário livre.'; return; }
     agBusy = true; $('#agGo').disabled = true; $('#agGo').textContent = 'A marcar…'; $('#agErr').textContent = ''; $('#agOk').innerHTML = '';
     try {
-      const r = await ag('book', { tipo: agTipo, instancia: agForm.instancia, contacto: agForm.contacto, tratamento: agForm.tratamento, email: agForm.email, telefone: agForm.telefone, nota: agForm.nota, iso: agSel });
+      const r = await ag('book', { tipo: agTipo, instancia: agForm.instancia, contacto: agForm.contacto, tratamento: agForm.tratamento, email: agForm.email, telefone: agForm.telefone, nota: agForm.nota, iso: agSel, lead_id: agLead ? agLead.id : '' });
       const okMsg = `Reunião marcada para ${esc(r.quando)}. ${r.email === 'enviado' ? 'Convite e email de confirmação enviados.' : '<b>O convite seguiu, mas o email falhou: envie a confirmação à mão.</b>'}${r.meet ? ' <a href="' + esc(r.meet) + '" target="_blank" rel="noopener">Abrir Meet</a>' : ''}`;
-      agForm = { instancia: '', contacto: '', tratamento: '', email: '', telefone: '', nota: '' }; agSel = null;
+      agForm = { instancia: '', contacto: '', tratamento: '', email: '', telefone: '', nota: '' }; agSel = null; agLead = null; prLoaded = false;
       renderAgForm(); $('#agOk').innerHTML = `<div class="dial-ok">${okMsg}</div>`;
       loadAgenda();
     } catch (err) {
@@ -2088,6 +2142,182 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
     } finally { agBusy = false; }
   }
   setInterval(() => { if (view === 'agenda' && ME && document.visibilityState === 'visible' && !agBusy) loadAgenda(); }, 30000);
+
+
+  // =====================================================================
+  // PROSPECCAO: leads do Notion (Mass Outreach) -> chamada -> reuniao
+  // =====================================================================
+  const PR = 'https://backend.automationbig8agency.com/webhook/indicostay-prospecao-api';
+  async function pr(action, params, body) {
+    let r;
+    if (body) r = await fetch(PR, { method: 'POST', headers: { 'content-type': 'application/json', 'x-inbox-token': token }, body: JSON.stringify({ action, ...body }) });
+    else { const u = new URL(PR); u.searchParams.set('action', action); for (const [k, v] of Object.entries(params || {})) u.searchParams.set(k, v); r = await fetch(u, { headers: { 'x-inbox-token': token }, cache: 'no-store' }); }
+    let d = {};
+    try { d = await r.json(); } catch (e) {}
+    if (r.status === 401) { const e = new Error('unauthorized'); e.code = 401; throw e; }
+    if (!r.ok || d.ok === false) throw new Error(d.error || ('HTTP ' + r.status));
+    return d;
+  }
+  const PRST = { 'Not contacted': ['novo', ''], 'Email sent': ['email enviado', ''], 'Contacted': ['contactado', ''], 'Try again': ['tentar de novo', 'confirm'], 'follow up': ['follow up', 'confirm'], 'Replied': ['respondeu', 'answered'], 'Interested': ['interessado', 'answered'], 'Demo booked': ['reunião marcada', 'meeting'], 'Onboarding': ['onboarding', 'done'], 'Not interested': ['não interessado', 'missed'], 'Invalid / closed': ['fechado', 'missed'], 'wrong number': ['nº errado', 'missed'] };
+  const PROUT = [['Try again', 'Não atendeu'], ['follow up', 'Pediu email'], ['Replied', 'Respondeu'], ['Interested', 'Interessado'], ['Not interested', 'Não interessado'], ['wrong number', 'Número errado'], ['Invalid / closed', 'Fechado']];
+  const PREMPTY = { hoje: 'Nada para ligar hoje. Aqui aparecem os "Tentar de novo" e "follow up" com data de hoje ou anterior.', porligar: 'Nenhum lead por ligar com estes filtros.', curso: 'Nenhum lead em curso com estes filtros.', reuniao: 'Ainda sem reuniões marcadas com estes filtros.', fechados: 'Nenhum lead fechado com estes filtros.' };
+  let prTab = 'porligar', prZona = '', prQ = '', prTel = true, prItems = [], prTrunc = false, prSel = null, prOutcome = '', prBusy = false, prSeq = 0, prLoaded = false, prQT = null, prFlash = '';
+  const prTag = e => { const t = PRST[e] || [e || 'sem estado', '']; return `<span class="tag ${t[1]}">${esc(t[0])}</span>`; };
+  const prNextBiz = () => { const d = new Date(Date.now() + 2 * 3600000); d.setUTCDate(d.getUTCDate() + 1); while (d.getUTCDay() === 0 || d.getUTCDay() === 6) d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); };
+  const prDM = iso => { const x = String(iso || '').slice(0, 10).split('-'); return x.length === 3 ? x[2] + '/' + x[1] : ''; };
+  const prDigits = v => String(v || '').replace(/\D/g, '');
+
+  async function prLoad() {
+    const seq = ++prSeq;
+    $('#prRows').innerHTML = '<div class="empty">A carregar leads do Notion…</div>';
+    try {
+      const d = await pr('leads', { tab: prTab, zona: prZona, q: prQ, so_tel: prTel ? '1' : '0' });
+      if (seq !== prSeq) return;
+      prItems = d.items || []; prTrunc = !!d.truncado; prLoaded = true;
+      renderPrRows();
+    } catch (e) {
+      if (e.code === 401) return logout();
+      if (seq === prSeq) $('#prRows').innerHTML = `<div class="empty">Não foi possível ler o Notion (${esc(e.message)}). Tente atualizar.</div>`;
+    }
+  }
+  function renderPrRows() {
+    document.querySelectorAll('#prTabs .tab').forEach(t => t.setAttribute('aria-pressed', String(t.dataset.f === prTab)));
+    const head = `<div class="pr-count">${prItems.length}${prTrunc ? '+' : ''} lead${prItems.length === 1 ? '' : 's'}${prTrunc ? ' · a mostrar os 300 primeiros, afine pela zona ou pesquisa' : ''}</div>`;
+    $('#prRows').innerHTML = head + (prItems.map(l => {
+      const extra = (l.devido ? '<span class="tag confirm">ligar hoje</span>' : (l.voltar_a_ligar && ['Try again', 'follow up'].includes(l.estado) ? `<span class="tag">ligar ${esc(prDM(l.voltar_a_ligar))}</span>` : '')) + (l.reuniao ? `<span class="tag meeting">${esc(agDia(l.reuniao))} ${esc(agHora(l.reuniao))}</span>` : '');
+      return `<button class="row" data-prid="${esc(l.id)}" aria-current="${!!prSel && prSel.id === l.id}">
+        ${avatarFor(l.nome, 'pr' + l.id)}
+        <span class="txt">
+          <span class="l1"><span class="name">${esc(l.nome)}</span><span class="when">${esc(l.zona)}</span></span>
+          <span class="l2"><span class="last mono">${esc(l.telefone || 'sem telefone')}</span>${extra}${prTag(l.estado)}</span>
+        </span></button>`;
+    }).join('') || `<div class="empty">${esc(PREMPTY[prTab] || '')}</div>`);
+  }
+
+  function renderPrDetail() {
+    const l = prSel;
+    if (!l) return;
+    $('#prTitle').textContent = l.nome;
+    $('#prSub').innerHTML = `${esc([l.zona, l.tipo].filter(Boolean).join(' · '))} ${prTag(l.estado)}${l.devido ? ' <span class="tag confirm">ligar hoje</span>' : ''}`;
+    const fact = (k, v) => v ? `<div class="fact"><span>${esc(k)}</span><b style="word-break:break-word">${v}</b></div>` : '';
+    const wa = l.wa, dTel = wa ? '+' + wa : (prDigits(l.telefone) ? '+' + prDigits(l.telefone) : '');
+    const link = (u, t) => u ? `<a class="chip" href="${esc(u)}" target="_blank" rel="noopener">${t}</a>` : '';
+    const needsDate = prOutcome === 'Try again' || prOutcome === 'follow up';
+    const volta = (document.querySelector('#prFVolta') && document.querySelector('#prFVolta').value) || l.voltar_a_ligar || (needsDate ? prNextBiz() : '');
+    const phones = [l.telefone_geral && l.telefone_geral !== l.telefone ? 'Geral: ' + l.telefone_geral : '', l.outros_telefones ? 'Outros: ' + l.outros_telefones : ''].filter(Boolean).join(' · ');
+    $('#prBody').innerHTML = `<div class="cardx"><h4>Contactar</h4>
+        <div class="pr-phone">${l.telefone ? esc(l.telefone) : 'sem telefone'}</div>
+        <div class="ag-actions">
+          ${dTel ? `<a class="btn" href="tel:${esc(dTel)}">Ligar</a>` : ''}
+          ${l.telefone ? '<button class="btn alt" type="button" data-pract="copy">Copiar número</button>' : ''}
+          ${wa ? `<a class="btn alt" href="https://wa.me/${esc(wa)}" target="_blank" rel="noopener">WhatsApp</a><button class="btn alt" type="button" data-pract="chat">Conversa no painel</button>` : ''}
+        </div>
+        ${phones ? `<p class="pr-note" style="margin-top:10px">${esc(phones)}</p>` : ''}
+        <div class="chips" style="margin:12px 0 0">${l.email ? `<a class="chip" href="mailto:${esc(l.email)}">${esc(l.email)}${l.email_invalido ? ' (email inválido)' : ''}</a>` : ''}${link(l.maps, 'Google Maps')}${link(l.website, 'Website')}${link(l.instagram, 'Instagram')}${link(l.facebook, 'Facebook')}<a class="chip" href="https://www.notion.so/${esc(String(l.id).replace(/-/g, ''))}" target="_blank" rel="noopener">Abrir no Notion</a></div>
+        <div class="facts" style="margin-top:12px">${fact('Tipo', esc(l.tipo))}${fact('Google', l.rating ? '★ ' + esc(l.rating) + (l.reviews ? ' · ' + esc(l.reviews) + ' avaliações' : '') : (l.reviews ? esc(l.reviews) + ' avaliações' : ''))}${fact('Último contacto', l.ultimo_contacto ? esc(fullDate(Date.parse(l.ultimo_contacto))) : '')}${fact('Trabalhado por', esc(l.trabalhado_por))}</div>
+      </div>
+      <div class="cardx"><h4>Resultado da chamada</h4>
+        ${l.reuniao ? `<div class="dial-ok" style="margin:0 0 12px">Reunião marcada: <b>${esc(agDia(l.reuniao))} às ${esc(agHora(l.reuniao))}</b>. Veja ou altere na Agenda.</div>` : ''}
+        <p class="pr-note">O que aconteceu? <span style="color:var(--ink);font-weight:600">${prOutcome ? '' : 'Sem alteração do estado (' + esc((PRST[l.estado] || [l.estado])[0]) + ')'}</span></p>
+        <div class="chips pr-out" id="prOut">${PROUT.map(o => `<button type="button" class="chip" data-out="${esc(o[0])}" aria-pressed="${prOutcome === o[0]}">${esc(o[1])}</button>`).join('')}</div>
+        <div class="ag-form">
+          <div class="two" style="grid-template-columns:1fr 1fr">
+            <label class="fl">Voltar a ligar${needsDate ? ' (obrigatório)' : ''}<input id="prFVolta" type="date" value="${esc(volta)}"></label>
+            <label class="fl">Melhor hora para ligar<input id="prFHora" type="text" maxlength="80" value="${esc(l.melhor_hora)}" placeholder="Ex.: depois das 14h"></label>
+          </div>
+          <div class="two" style="grid-template-columns:1fr 1fr">
+            <label class="fl">Gestor / pessoa que decide<input id="prFGestor" type="text" maxlength="100" value="${esc(l.gestor)}" placeholder="Nome"></label>
+            <label class="fl">Telefone direto<input id="prFTel" type="tel" maxlength="25" value="${esc(l.telefone_direto)}" placeholder="84 123 4567"></label>
+          </div>
+          <label class="fl">Email direto<input id="prFEmail" type="email" maxlength="120" value="${esc(l.email_direto)}" placeholder="gestor@alojamento.com"></label>
+          <label class="fl" style="margin-bottom:0">Notas<textarea id="prFNotas" maxlength="1900" placeholder="O que ficou combinado">${esc(l.notas)}</textarea></label>
+        </div>
+        <div class="ag-actions" style="margin-top:14px">
+          <button class="btn" type="button" data-pract="save">Guardar no Notion</button>
+          <button class="btn alt" type="button" data-pract="savenext">Guardar e abrir o próximo</button>
+          <button class="btn warn" type="button" data-pract="book">${l.reuniao ? 'Marcar outro horário' : 'Marcar reunião'}</button>
+        </div>
+        <div class="ag-err" id="prErr"></div>
+        <div id="prOk">${prFlash ? `<div class="dial-ok">${esc(prFlash)}</div>` : ''}</div>
+      </div>`;
+    prFlash = '';
+  }
+
+  function prSelect(l) {
+    prSel = l; prOutcome = ''; prFlash = '';
+    renderPrDetail(); renderPrRows();
+    document.body.classList.add('chat-open');
+  }
+  function prForm() {
+    const g = id => ($('#' + id) ? $('#' + id).value.trim() : '');
+    return { volta: g('prFVolta'), hora: g('prFHora'), gestor: g('prFGestor'), tel: g('prFTel'), email: g('prFEmail'), notas: ($('#prFNotas') || { value: '' }).value.trim() };
+  }
+  async function prSave(next) {
+    const l = prSel; if (!l || prBusy) return;
+    const f = prForm(), body = { id: l.id };
+    if (prOutcome) body.estado = prOutcome;
+    if (f.volta !== (l.voltar_a_ligar || '') || prOutcome) body.voltar_a_ligar = f.volta;
+    if (f.hora !== (l.melhor_hora || '')) body.melhor_hora = f.hora;
+    if (f.gestor !== (l.gestor || '')) body.gestor = f.gestor;
+    if (f.tel !== (l.telefone_direto || '')) body.telefone_direto = f.tel;
+    if (f.email !== (l.email_direto || '')) body.email_direto = f.email;
+    if (f.notas !== (l.notas || '')) body.notas = f.notas;
+    const err = $('#prErr'); err.textContent = '';
+    if (Object.keys(body).length === 1) { err.textContent = 'Não há nada novo para guardar.'; return; }
+    if ((prOutcome === 'Try again' || prOutcome === 'follow up') && !f.volta) { err.textContent = 'Escolha a data em "Voltar a ligar".'; return; }
+    const idx = prItems.findIndex(x => x.id === l.id), nextId = idx >= 0 && prItems[idx + 1] ? prItems[idx + 1].id : null;
+    prBusy = true; document.querySelectorAll('#prBody [data-pract]').forEach(b => { b.disabled = true; });
+    try {
+      await pr('update', null, body);
+      if (body.estado) l.estado = body.estado;
+      if (body.voltar_a_ligar !== undefined) l.voltar_a_ligar = body.voltar_a_ligar;
+      if (body.melhor_hora !== undefined) l.melhor_hora = body.melhor_hora;
+      if (body.gestor !== undefined) l.gestor = body.gestor;
+      if (body.telefone_direto !== undefined) { l.telefone_direto = body.telefone_direto; if (body.telefone_direto) l.telefone = body.telefone_direto; }
+      if (body.email_direto !== undefined) { l.email_direto = body.email_direto; if (body.email_direto) l.email = body.email_direto; }
+      if (body.notas !== undefined) l.notas = body.notas;
+      l.trabalhado_por = (ME && ME.name) || l.trabalhado_por; l.ultimo_contacto = new Date().toISOString();
+      prOutcome = ''; prFlash = 'Guardado no Notion.';
+      await prLoad();
+      if (next) { const n = prItems.find(x => x.id === nextId) || prItems.find(x => x.id !== l.id); if (n) { prSelect(n); return; } }
+      renderPrDetail(); renderPrRows();
+    } catch (e) {
+      if (e.code === 401) return logout();
+      const er = $('#prErr'); if (er) er.textContent = e.message;
+      document.querySelectorAll('#prBody [data-pract]').forEach(b => { b.disabled = false; });
+    } finally { prBusy = false; }
+  }
+  function prBook() {
+    const l = prSel; if (!l) return;
+    const f = prForm();
+    agForm = { instancia: l.nome, contacto: f.gestor || l.gestor || '', tratamento: '', email: f.email || l.email || '', telefone: f.tel || l.telefone || '', nota: '' };
+    agTipo = 'anfitriao'; agSel = null; agLead = { id: l.id, nome: l.nome };
+    setView('agenda');
+  }
+
+  $('#prRows').addEventListener('click', e => { const r = e.target.closest('.row'); if (!r) return; const l = prItems.find(x => x.id === r.dataset.prid); if (l) prSelect(l); });
+  $('#prTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) { prTab = t.dataset.f; prLoad(); } });
+  $('#prZona').addEventListener('change', e => { prZona = e.target.value; prLoad(); });
+  $('#prTel').addEventListener('change', e => { prTel = e.target.checked; prLoad(); });
+  $('#prQ').addEventListener('input', e => { prQ = e.target.value.trim(); clearTimeout(prQT); prQT = setTimeout(prLoad, 450); });
+  $('#prReload').addEventListener('click', () => prLoad());
+  $('#prBody').addEventListener('click', async e => {
+    const out = e.target.closest('[data-out]');
+    if (out) {
+      prOutcome = prOutcome === out.dataset.out ? '' : out.dataset.out;
+      const f = prForm();
+      if ((prOutcome === 'Try again' || prOutcome === 'follow up') && !f.volta && prSel) prSel.voltar_a_ligar = prSel.voltar_a_ligar || prNextBiz();
+      if (prSel) { prSel.melhor_hora = f.hora; prSel.gestor = f.gestor; prSel.telefone_direto = f.tel; prSel.email_direto = f.email; prSel.notas = f.notas; if (f.volta) prSel.voltar_a_ligar = f.volta; }
+      renderPrDetail(); return;
+    }
+    const act = e.target.closest('[data-pract]'); if (!act || prBusy) return;
+    const a = act.dataset.pract;
+    if (a === 'save') return prSave(false);
+    if (a === 'savenext') return prSave(true);
+    if (a === 'book') return prBook();
+    if (a === 'copy') { try { await navigator.clipboard.writeText(prSel.telefone); act.textContent = 'Copiado ✓'; } catch (er) {} return; }
+    if (a === 'chat') { setView('wa'); try { openThread(prSel.wa); } catch (er) {} }
+  });
 
   // ---------- ciclo do hub: email sempre (para o contador), chamadas quando a vista esta aberta ----------
   let hubTimer = null;
