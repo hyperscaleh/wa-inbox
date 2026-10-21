@@ -307,6 +307,7 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
   .pf { grid-template-columns: 1.3fr 1fr; }
   .tl-wrap { max-height: 400px; }
 }
+.pr-sec { padding: 10px 12px 4px; font-size: 10.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 .pr-count { padding: 4px 12px 8px; font-size: 12px; color: var(--muted); font-weight: 600; }
 a.btn { text-decoration: none; display: inline-block; text-align: center; }
 a.chip { text-decoration: none; }
@@ -573,7 +574,7 @@ a.chip { text-decoration: none; }
         </button>
       </div>
       <div class="pf">
-        <input id="prQ" type="search" placeholder="Procurar nome, gestor ou número" autocomplete="off">
+        <input id="prQ" type="search" placeholder="Procurar por nome, email ou número" autocomplete="off">
         <select id="prZona" aria-label="Zona"><option value="">Todas as zonas</option><option>Maputo</option><option>Ponta do Ouro</option><option>Tofo</option><option>Bilene</option><option>Vilankulos</option><option>Inhambane</option><option>Macaneta</option></select>
         <label class="pf-chk"><input type="checkbox" id="prTel" checked> Só com telefone</label>
       </div>
@@ -1269,7 +1270,15 @@ a.chip { text-decoration: none; }
     if (v === 'mail') loadMail(true);
     if (v === 'team') loadTeam();
     if (v === 'prosp') { if (!prLoaded) prLoad(); else renderPrRows(); }
-    if (v === 'agenda') { agMode = 'form'; agSelId = null; renderAgForm(); loadAgenda(); }
+    if (v === 'agenda') {
+      if (agJump) {
+        // Veio de uma pesquisa: abre logo o detalhe dessa reuniao (reagendar / cancelar), mesmo que seja antiga.
+        agMode = 'detail'; agSelId = agJump; agPinId = agJump; agJump = 0; agDetTpl = null; agDetSig = ''; agNotify = true;
+        $('#agTitle').textContent = 'A abrir a reunião…'; $('#agSub').textContent = '';
+        $('#agBody').innerHTML = '<div class="empty">A abrir a reunião…</div>';
+      } else { agMode = 'form'; agSelId = null; agPinId = 0; renderAgForm(); }
+      loadAgenda();
+    }
   }
   $('#rail').addEventListener('click', e => { const b = e.target.closest('.rbtn'); if (b) setView(b.dataset.view); });
   document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', () => document.body.classList.remove('chat-open')));
@@ -1847,10 +1856,10 @@ a.chip { text-decoration: none; }
   // AGENDA: horarios livres, marcar reuniao (email automatico por tipo), estado e reagendamento
   // =====================================================================
   const AG = 'https://backend.automationbig8agency.com/webhook/indicostay-agenda-api';
-  async function ag(action, body) {
+  async function ag(action, body, params) {
     let r;
     if (body) r = await fetch(AG, { method: 'POST', headers: { 'content-type': 'application/json', 'x-inbox-token': token }, body: JSON.stringify({ action, ...body }) });
-    else { const u = new URL(AG); u.searchParams.set('action', action); r = await fetch(u, { headers: { 'x-inbox-token': token }, cache: 'no-store' }); }
+    else { const u = new URL(AG); u.searchParams.set('action', action); for (const [k, v] of Object.entries(params || {})) u.searchParams.set(k, v); r = await fetch(u, { headers: { 'x-inbox-token': token }, cache: 'no-store' }); }
     let d = {};
     try { d = await r.json(); } catch (e) {}
     if (r.status === 401) { const e = new Error('unauthorized'); e.code = 401; throw e; }
@@ -1858,7 +1867,7 @@ a.chip { text-decoration: none; }
     return d;
   }
   const AGT = { anfitriao: 'Anfitrião', coanfitriao: 'Co-anfitrião', influencer: 'Influencer', bloqueio: 'Bloqueio', outro: 'Outro' };
-  let agDetTpl = null, agDetSig = '', agDayInit = false, agNotify = true, agLead = null;
+  let agDetTpl = null, agDetSig = '', agDayInit = false, agNotify = true, agLead = null, agJump = 0, agPinId = 0;
   let agItems = [], agDias = [], agTab = null, agMode = 'form', agSelId = null, agTipo = 'anfitriao', agDay = 0, agSel = null, agBusy = false;
   let agForm = { instancia: '', contacto: '', tratamento: '', email: '', telefone: '', nota: '' };
   // Influencer: Influenciador/Influenciadora. Anfitriao e co-anfitriao: Dr./Dra.
@@ -1886,7 +1895,7 @@ a.chip { text-decoration: none; }
 
   async function loadAgenda() {
     try {
-      const [l, s] = await Promise.all([ag('list'), ag('slots')]);
+      const [l, s] = await Promise.all([ag('list', null, agPinId ? { id: String(agPinId) } : null), ag('slots')]);
       agItems = l.items || [];
       agDias = s.dias || [];
       if (!agDayInit || agDay >= agDias.length) { agDay = Math.max(0, agDias.findIndex(d => d.horas.length)); agDayInit = true; }
@@ -2075,12 +2084,12 @@ a.chip { text-decoration: none; }
   }
 
   // eventos
-  $('#agNew').addEventListener('click', () => { agLead = null; renderAgForm(); renderAgList(); document.body.classList.add('chat-open'); });
+  $('#agNew').addEventListener('click', () => { agLead = null; agPinId = 0; renderAgForm(); renderAgList(); document.body.classList.add('chat-open'); });
   $('#agReload').addEventListener('click', () => loadAgenda());
   $('#agTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) { agTab = t.dataset.f; renderAgList(); } });
   $('#agRows').addEventListener('click', e => {
     const r = e.target.closest('.row'); if (!r) return;
-    agSelId = Number(r.dataset.agid); agMode = 'detail'; agDetTpl = null; agDetSig = ''; agNotify = true; renderAgDetail(); renderAgList(); document.body.classList.add('chat-open');
+    agSelId = Number(r.dataset.agid); agPinId = 0; agMode = 'detail'; agDetTpl = null; agDetSig = ''; agNotify = true; renderAgDetail(); renderAgList(); document.body.classList.add('chat-open');
   });
   $('#agBody').addEventListener('input', e => {
     const map = { agInst: 'instancia', agCont: 'contacto', agTrat: 'tratamento', agEmail: 'email', agTel: 'telefone', agNota: 'nota' };
@@ -2158,7 +2167,7 @@ a.chip { text-decoration: none; }
         const r = await ag('cancel', { id: m.id, enviar_email: act === 'cancel' && avisar });
         msg = m.tipo === 'bloqueio' ? 'Bloqueio removido.' : r.email === 'enviado' ? `Reunião cancelada. Email de cancelamento enviado a ${esc(m.email)}.` : r.email === 'FALHOU' ? 'Reunião cancelada, mas o email falhou: avise o lead à mão.' : 'Reunião cancelada, sem email.';
       } else if (act === 'resched') { const r = await ag('reagendar', { id: m.id }); msg = r.email === 'enviado' ? `Email de reagendamento enviado a ${esc(m.email)}.` : 'O email falhou: envie o reagendamento à mão.'; }
-      if (act === 'cancel' || act === 'cancel_silent') { agSelId = null; agMode = 'form'; }
+      if (act === 'cancel' || act === 'cancel_silent') { agSelId = null; agPinId = 0; agMode = 'form'; }
       agDetSig = '';
       await loadAgenda();
       if (act === 'cancel' || act === 'cancel_silent') { renderAgForm(); if ($('#agOk')) $('#agOk').innerHTML = `<div class="dial-ok">${msg}</div>`; }
@@ -2197,7 +2206,7 @@ a.chip { text-decoration: none; }
     ['Invalid / closed', 'Encerrado', 'O alojamento já não existe ou fechou. Sai da lista de chamadas.']
   ];
   const PREMPTY = { feitos: 'Ainda não trabalhou nenhum lead hoje. Cada lead guardado ou com reunião marcada aparece aqui.', hoje: 'Ainda não há chamadas para repetir hoje. Quando marcar "Não atendeu" ou "Pediu email" com uma data em "Voltar a ligar", o hotel volta a aparecer aqui nesse dia.', porligar: 'Nenhum lead por ligar com estes filtros.', curso: 'Nenhum lead em curso com estes filtros.', reuniao: 'Ainda sem reuniões marcadas com estes filtros.', fechados: 'Nenhum lead descartado com estes filtros.' };
-  let prTab = 'porligar', prZona = '', prQ = '', prTel = true, prItems = [], prTrunc = false, prSel = null, prOutcome = '', prBusy = false, prSeq = 0, prLoaded = false, prQT = null, prFlash = '', prDraft = null, prAutoDate = '';
+  let prMeet = [], prBusca = false, prTab = 'porligar', prZona = '', prQ = '', prTel = true, prItems = [], prTrunc = false, prSel = null, prOutcome = '', prBusy = false, prSeq = 0, prLoaded = false, prQT = null, prFlash = '', prDraft = null, prAutoDate = '';
   const prTag = e => { const t = PRST[e] || [e || 'sem estado', '']; return `<span class="tag ${t[1]}">${esc(t[0])}</span>`; };
   const prNextBiz = () => { const d = new Date(Date.now() + 2 * 3600000); d.setUTCDate(d.getUTCDate() + 1); while (d.getUTCDay() === 0 || d.getUTCDay() === 6) d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); };
   const prDM = iso => { const x = String(iso || '').slice(0, 10).split('-'); return x.length === 3 ? x[2] + '/' + x[1] : ''; };
@@ -2222,7 +2231,7 @@ a.chip { text-decoration: none; }
     try {
       const d = await pr('leads', { tab: prTab, zona: prZona, q: prQ, so_tel: prTel ? '1' : '0' });
       if (seq !== prSeq) return;
-      prItems = d.items || []; prTrunc = !!d.truncado; prLoaded = true;
+      prItems = d.items || []; prTrunc = !!d.truncado; prLoaded = true; prMeet = d.reunioes || []; prBusca = !!d.busca;
       if (d.zonas) prZonas(d.zonas);
       renderPrRows();
     } catch (e) {
@@ -2231,14 +2240,23 @@ a.chip { text-decoration: none; }
     }
   }
   function renderPrRows() {
-    document.querySelectorAll('#prTabs .tab').forEach(t => t.setAttribute('aria-pressed', String(t.dataset.f === prTab)));
-    let head = `<div class="pr-count">${prItems.length}${prTrunc ? '+' : ''} lead${prItems.length === 1 ? '' : 's'}${prTab === 'feitos' ? ' trabalhado' + (prItems.length === 1 ? '' : 's') + ' hoje' : ''}${prTrunc ? ' · a mostrar os 300 primeiros, afine pela zona ou pesquisa' : ''}</div>`;
-    if (prTab === 'feitos' && prItems.length) {
+    document.querySelectorAll('#prTabs .tab').forEach(t => t.setAttribute('aria-pressed', String(!prBusca && t.dataset.f === prTab)));
+    let head = prBusca
+      ? `<div class="pr-count">Pesquisa "${esc(prQ)}": ${prMeet.length} reunião${prMeet.length === 1 ? '' : 'ões'} e ${prItems.length} lead${prItems.length === 1 ? '' : 's'}, em todos os estados.</div>`
+      : `<div class="pr-count">${prItems.length}${prTrunc ? '+' : ''} lead${prItems.length === 1 ? '' : 's'}${prTab === 'feitos' ? ' trabalhado' + (prItems.length === 1 ? '' : 's') + ' hoje' : ''}${prTrunc ? ' · a mostrar os 300 primeiros, afine pela zona ou pesquisa' : ''}</div>`;
+    if (!prBusca && prTab === 'feitos' && prItems.length) {
       const c = {}; prItems.forEach(l => { c[l.estado] = (c[l.estado] || 0) + 1; });
       head += `<div class="pr-sum">${Object.keys(c).sort((a, b) => c[b] - c[a]).map(e => `<b>${c[e]}</b> ${esc((PRST[e] || [e])[0])}`).join(' · ')}</div>`;
     }
-    $('#prRows').innerHTML = head + (prItems.map(l => {
-      const feito = prTab === 'feitos' ? `<span class="tag">${esc(agHora(l.ultimo_contacto))}</span>${isAdmin() && l.trabalhado_por ? `<span class="tag answered">${esc(l.trabalhado_por)}</span>` : ''}` : '';
+    const meetRows = prBusca ? prMeet.map(m => `<button class="row" data-prmeet="${m.id}">
+        ${avatarFor(m.instancia || '?', 'pm' + m.id)}
+        <span class="txt">
+          <span class="l1"><span class="name">${esc(m.instancia || '')}</span><span class="when">${esc(agDia(m.inicio))}</span></span>
+          <span class="l2"><span class="last mono">${esc(agHora(m.inicio))}${m.email ? ' · ' + esc(m.email) : ''}${m.telefone ? ' · ' + esc(m.telefone) : ''}</span></span>
+          <span class="l3"><span class="ag-tipo">${esc(AGT[m.tipo] || m.tipo)}</span>${agTag(m)}</span>
+        </span></button>`).join('') : '';
+    const leadRows = prItems.map(l => {
+      const feito = prTab === 'feitos' && !prBusca ? `<span class="tag">${esc(agHora(l.ultimo_contacto))}</span>${isAdmin() && l.trabalhado_por ? `<span class="tag answered">${esc(l.trabalhado_por)}</span>` : ''}` : '';
       const extra = feito + (l.devido ? '<span class="tag confirm">ligar hoje</span>' : (l.voltar_a_ligar && ['Try again', 'follow up'].includes(l.estado) ? `<span class="tag">ligar ${esc(prDM(l.voltar_a_ligar))}</span>` : '')) + (l.reuniao ? `<span class="tag meeting">${esc(agDia(l.reuniao))} ${esc(agHora(l.reuniao))}</span>` : '');
       return `<button class="row" data-prid="${esc(l.id)}" aria-current="${!!prSel && prSel.id === l.id}">
         ${avatarFor(l.nome, 'pr' + l.id)}
@@ -2247,8 +2265,12 @@ a.chip { text-decoration: none; }
           <span class="l2"><span class="last mono">${esc(l.telefone || 'sem telefone')}</span></span>
           <span class="l3">${extra}${prTag(l.estado)}</span>
         </span></button>`;
-    }).join('') || `<div class="empty">${esc(PREMPTY[prTab] || '')}</div>`);
+    }).join('');
+    const vazio = prBusca ? 'Nada encontrado. Tente outro nome, email ou número (pode escrever só parte).' : (PREMPTY[prTab] || '');
+    $('#prRows').innerHTML = head + (prBusca && meetRows ? '<div class="pr-sec">Reuniões</div>' + meetRows : '') + (prBusca && leadRows ? '<div class="pr-sec">Leads do Notion</div>' : '') + leadRows + (!meetRows && !leadRows ? `<div class="empty">${esc(vazio)}</div>` : '');
   }
+  // Abre a Agenda diretamente no detalhe de uma reuniao (para reagendar ou cancelar).
+  function agGoto(id) { agJump = id; setView('agenda'); document.body.classList.add('chat-open'); }
 
   function renderPrDetail() {
     const l = prSel;
@@ -2277,7 +2299,7 @@ a.chip { text-decoration: none; }
         <div class="facts" style="margin-top:12px">${fact('Tipo', esc(l.tipo))}${fact('Último contacto', l.ultimo_contacto ? esc(fullDate(Date.parse(l.ultimo_contacto))) : '')}${fact('Trabalhado por', esc(l.trabalhado_por))}</div>
       </div>
       <div class="cardx"><h4>Resultado da chamada</h4>
-        ${l.reuniao ? `<div class="dial-ok" style="margin:0 0 12px">Reunião marcada: <b>${esc(agDia(l.reuniao))} às ${esc(agHora(l.reuniao))}</b>. Veja ou altere na Agenda.</div>` : ''}
+        ${l.reuniao ? `<div class="dial-ok" style="margin:0 0 12px">Reunião marcada: <b>${esc(agDia(l.reuniao))} às ${esc(agHora(l.reuniao))}</b>.${l.reuniao_id ? ' <button type="button" class="ghost-btn" data-pract="meet" style="margin-left:8px;padding:5px 10px">Reagendar ou cancelar</button>' : ' Veja ou altere na Agenda.'}</div>` : ''}
         <p class="pr-note">O que aconteceu na chamada? <span style="color:var(--ink);font-weight:600">${prOutcome ? '' : 'Sem alteração do estado (' + esc((PRST[l.estado] || [l.estado])[0]) + ')'}</span></p>
         <div class="chips pr-out" id="prOut">${PROUT.map(o => `<button type="button" class="chip" data-out="${esc(o[0])}" title="${esc(o[2])}" aria-pressed="${prOutcome === o[0]}">${esc(o[1])}</button>`).join('')}</div>
         ${prOutcome ? `<p class="pr-note" style="margin:-2px 0 12px">${esc((PROUT.find(o => o[0] === prOutcome) || [])[2] || '')}</p>` : ''}
@@ -2363,7 +2385,7 @@ a.chip { text-decoration: none; }
     setView('agenda');
   }
 
-  $('#prRows').addEventListener('click', e => { const r = e.target.closest('.row'); if (!r) return; const l = prItems.find(x => x.id === r.dataset.prid); if (l) prSelect(l); });
+  $('#prRows').addEventListener('click', e => { const r = e.target.closest('.row'); if (!r) return; if (r.dataset.prmeet) return agGoto(Number(r.dataset.prmeet)); const l = prItems.find(x => x.id === r.dataset.prid); if (l) prSelect(l); });
   $('#prTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) { prTab = t.dataset.f; prLoad(); } });
   $('#prZona').addEventListener('change', e => { prZona = e.target.value; prLoad(); });
   $('#prTel').addEventListener('change', e => { prTel = e.target.checked; prLoad(); });
@@ -2385,6 +2407,7 @@ a.chip { text-decoration: none; }
     if (a === 'savenext') return prSave(true);
     if (a === 'skip') return prSkip();
     if (a === 'book') return prBook();
+    if (a === 'meet') return agGoto(prSel.reuniao_id);
     if (a === 'copy') { try { await navigator.clipboard.writeText(prSel.telefone); act.textContent = 'Copiado ✓'; } catch (er) {} return; }
     if (a === 'chat') { setView('wa'); try { openThread(prSel.wa); } catch (er) {} }
   });
