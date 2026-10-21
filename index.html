@@ -222,6 +222,15 @@ dialog.sheet .acts { display: flex; gap: 8px; justify-content: flex-end; margin-
 .dial-grid { display: grid; gap: 6px; }
 .dial-grid label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
 .dial-grid .opt { text-transform: none; letter-spacing: 0; font-weight: 500; }
+dialog.sheet.guide { width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; }
+.gd-dots { display: flex; gap: 6px; margin: 0 0 14px; }
+.gd-dots i { flex: 1; height: 4px; border-radius: 4px; background: var(--line); }
+.gd-dots i.on { background: var(--violet); }
+.gd-body { font-size: 14px; line-height: 1.6; }
+.gd-body ul { margin: 0 0 10px; padding-left: 20px; }
+.gd-body li { margin-bottom: 6px; }
+.gd-body p { color: var(--ink); }
+.gd-tip { background: var(--soft); border-radius: 14px; padding: 10px 12px; font-size: 13px; margin-top: 10px; }
 dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--soft); color: var(--ink); font: 600 14px var(--f-ui); }
 .sugg { display: grid; gap: 2px; max-height: 214px; overflow-y: auto; border: 1px solid var(--line); border-radius: 14px; padding: 4px; background: var(--card); }
 .sugg button { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; background: none; text-align: left; padding: 7px 8px; border-radius: 10px; cursor: pointer; }
@@ -443,6 +452,10 @@ a.chip { text-decoration: none; }
       <button class="rbtn" data-view="agenda" aria-pressed="false" type="button" hidden title="Agenda de reuniões">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
         Agenda<span class="rb" id="rbAg"></span>
+      </button>
+      <button class="rbtn" id="guideBtn" type="button" hidden title="Guia: como usar o painel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4.2"/><path d="M12 17.5h.01"/></svg>
+        Guia
       </button>
       <button class="rbtn" data-view="team" aria-pressed="false" type="button" title="Equipa e acessos (super admin)" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></svg>
@@ -710,6 +723,18 @@ a.chip { text-decoration: none; }
       <button class="btn" id="dGo" type="submit">Ligar agora</button>
     </div>
   </form>
+</dialog>
+
+<dialog class="sheet guide" id="guideDlg">
+  <h3 id="gdTitle"></h3>
+  <p id="gdStep"></p>
+  <div class="gd-dots" id="gdDots"></div>
+  <div class="gd-body" id="gdBody"></div>
+  <div class="acts">
+    <button class="ghost-btn" id="gdClose" type="button">Fechar</button>
+    <button class="ghost-btn" id="gdPrev" type="button">Anterior</button>
+    <button class="btn" id="gdNext" type="button">Seguinte</button>
+  </div>
 </dialog>
 
 <dialog class="sheet" id="renameDlg">
@@ -1111,6 +1136,7 @@ a.chip { text-decoration: none; }
       b.hidden = v === 'team' ? !isAdmin() : v === 'agenda' ? !(can('agenda') || isAdmin()) : v === 'prosp' ? !(isAdmin() || (can('agenda') && (ME.zonas || []).length > 0)) : !can(v === 'mail' ? 'mail' : v);
     });
     $('#waDial').hidden = !can('calls');
+    $('#guideBtn').hidden = isAdmin() || !(can('agenda') && (ME.zonas || []).length);
     $('#agentName').textContent = 'ligado como ' + ME.name;
   }
   async function showApp() {
@@ -1129,6 +1155,7 @@ a.chip { text-decoration: none; }
     const v = location.hash && can('wa') ? 'wa' : (store.get('hub_view') || 'wa');
     setView(v);
     if (current && view === 'wa') openThread(current, { markRead: false });
+    if (!$('#guideBtn').hidden && !store.get('guide_seen_' + ME.name)) openGuide(0);
   }
   function logout(msg) {
     stopPolling(); stopHub(); token = ''; store.del('wa_inbox_token'); seen = null; ME = null; dialer = null;
@@ -1254,6 +1281,38 @@ a.chip { text-decoration: none; }
   }
   const fullDate = ms => new Intl.DateTimeFormat('pt-PT', { timeZone: TZ, weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(ms));
 
+  // ---------- guia de utilizacao ----------
+  // Passo a passo para quem trabalha leads (Prospecção + Agenda). Abre sozinho no primeiro acesso e fica no botão Guia.
+  const GUIDE = () => [
+    ['Bem-vinda ao painel', `<p>Aqui trabalha os leads de <b>${esc((ME.zonas || []).join(', '))}</b>, liga, regista o resultado e marca reuniões. Não precisa de Notion nem de mais nenhuma conta: tudo o que fizer aqui fica guardado automaticamente.</p><ul><li><b>Prospecção</b>: a lista de leads e a ficha de cada um.</li><li><b>Agenda</b>: ver horários livres, marcar e gerir reuniões.</li></ul><div class="gd-tip">Cada ação sua fica registada com o seu nome (<b>${esc(ME.name.split(' ')[0])}</b>).</div>`],
+    ['Prospecção: a sua lista', `<ul><li><b>Hoje</b>: os leads que tem de ligar hoje aparecem primeiro, marcados <i>ligar hoje</i>.</li><li><b>Feitos hoje</b>: tudo o que já trabalhou. Confira no fim do dia.</li><li>A pesquisa encontra um lead ou uma reunião por nome, número ou email, em qualquer estado.</li><li>Pode filtrar só os que têm telefone.</li></ul><p>Toque num lead para abrir a ficha.</p>`],
+    ['Fazer a chamada', `<ul><li>Na ficha, toque em <b>Ligar</b> (ou <b>Copiar número</b>).</li><li>Se o número começar por <b>+27</b> (África do Sul), use o <b>WhatsApp</b> em vez de ligar.</li><li>Se não houver telefone, veja o email ou o website na ficha.</li></ul>`],
+    ['Registar o resultado', `<ul><li>Depois da chamada, escolha o que aconteceu. A explicação aparece por baixo de cada opção.</li><li><b>Não atendeu</b> e <b>Pediu email</b> pedem uma data em <i>Voltar a ligar</i>. O painel sugere o próximo dia útil e o lead volta ao separador Hoje nesse dia.</li><li>Preencha o que apurou: gestor, telefone direto, email, melhor hora, notas.</li><li>Toque em <b>Guardar e próximo</b>. Guarda sozinho e abre o lead seguinte.</li></ul><div class="gd-tip">Ao registar um resultado manual, os emails automáticos desse lead param. Só o faça depois de falar mesmo com alguém.</div>`],
+    ['Marcar uma reunião', `<ul><li>Com o lead <b>Interessado</b>, toque em <b>Marcar reunião</b> na ficha (ou abra a <b>Agenda</b>) e escolha o tipo de reunião.</li><li>Preencha nome, email e telefone. O telefone é opcional, mas sem ele não há lembrete por SMS.</li><li>Escolha um horário livre: das 08:00 às 19:00, de 30 em 30 minutos, com pelo menos 2 horas de antecedência.</li><li>Ao marcar, o painel cria o evento com Google Meet e envia o email de confirmação certo para esse tipo.</li></ul><div class="gd-tip"><b>Demo booked</b> só aparece no lead quando marca a reunião aqui. Não se muda à mão.</div>`],
+    ['Depois da reunião', `<ul><li>Na Agenda, abra a reunião. À hora marcada aparecem os botões <b>Compareceu</b> e <b>Não compareceu</b>.</li><li>Se a pessoa não compareceu, o painel oferece o email de remarcação.</li><li><b>Reagendar</b> ou <b>cancelar</b>: o painel pergunta se quer avisar a pessoa por email.</li><li>30 minutos antes, os números de Moçambique recebem um SMS de lembrete.</li></ul>`],
+    ['Regras para não falhar', `<ul><li>O estado <b>Email enviado</b> é só da automação. Não o tente mudar.</li><li><b>Onboarding</b> é com o Dellon.</li><li>Se algo não carregar, volte a abrir a ficha. Se o código deixar de valer, peça um novo ao Dellon.</li><li>Dúvidas: fale com o Dellon ou o Keano.</li></ul><p>Pode reabrir este guia a qualquer momento no botão <b>Guia</b>.</p>`]
+  ];
+  let gdI = 0;
+  function openGuide(i) {
+    if (!ME) return;
+    gdI = i || 0; renderGuide();
+    const d = $('#guideDlg'); if (!d.open) d.showModal();
+  }
+  function renderGuide() {
+    const g = GUIDE(), [t, html] = g[gdI];
+    $('#gdTitle').textContent = t;
+    $('#gdStep').textContent = 'Passo ' + (gdI + 1) + ' de ' + g.length;
+    $('#gdDots').innerHTML = g.map((_, k) => `<i class="${k <= gdI ? 'on' : ''}"></i>`).join('');
+    $('#gdBody').innerHTML = html;
+    $('#gdPrev').hidden = gdI === 0;
+    $('#gdNext').textContent = gdI === g.length - 1 ? 'Concluir' : 'Seguinte';
+  }
+  function closeGuide() { store.set('guide_seen_' + (ME ? ME.name : ''), '1'); $('#guideDlg').close(); }
+  $('#gdPrev').addEventListener('click', () => { if (gdI > 0) { gdI--; renderGuide(); } });
+  $('#gdNext').addEventListener('click', () => { if (gdI < GUIDE().length - 1) { gdI++; renderGuide(); } else closeGuide(); });
+  $('#gdClose').addEventListener('click', closeGuide);
+  $('#guideDlg').addEventListener('cancel', () => store.set('guide_seen_' + (ME ? ME.name : ''), '1'));
+
   // ---------- vistas ----------
   let view = 'wa';
   function setView(v) {
@@ -1280,7 +1339,7 @@ a.chip { text-decoration: none; }
       loadAgenda();
     }
   }
-  $('#rail').addEventListener('click', e => { const b = e.target.closest('.rbtn'); if (b) setView(b.dataset.view); });
+  $('#rail').addEventListener('click', e => { const b = e.target.closest('.rbtn'); if (!b) return; if (b.id === 'guideBtn') return openGuide(0); setView(b.dataset.view); });
   document.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', () => document.body.classList.remove('chat-open')));
 
   // ---------- mudar nome (WhatsApp + chamadas, por numero) ----------
