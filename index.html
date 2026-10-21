@@ -2264,8 +2264,8 @@ a.chip { text-decoration: none; }
     ['wrong number', 'Número errado', 'O número não é do alojamento. Fica para pesquisar outro número.'],
     ['Invalid / closed', 'Encerrado', 'O alojamento já não existe ou fechou. Sai da lista de chamadas.']
   ];
-  const PREMPTY = { feitos: 'Ainda não trabalhou nenhum lead hoje. Cada lead guardado ou com reunião marcada aparece aqui.', hoje: 'Ainda não há chamadas para repetir hoje. Quando marcar "Não atendeu" ou "Pediu email" com uma data em "Voltar a ligar", o hotel volta a aparecer aqui nesse dia.', porligar: 'Nenhum lead por ligar com estes filtros.', curso: 'Nenhum lead em curso com estes filtros.', reuniao: 'Ainda sem reuniões marcadas com estes filtros.', fechados: 'Nenhum lead descartado com estes filtros.' };
-  let prMeet = [], prBusca = false, prTab = 'porligar', prZona = '', prQ = '', prTel = true, prItems = [], prTrunc = false, prSel = null, prOutcome = '', prBusy = false, prSeq = 0, prLoaded = false, prQT = null, prFlash = '', prDraft = null, prAutoDate = '';
+  const PREMPTY = { feitos: 'Ainda não há atividade hoje. Leads guardados e reuniões do dia aparecem aqui.', hoje: 'Ainda não há chamadas para repetir hoje. Quando marcar "Não atendeu" ou "Pediu email" com uma data em "Voltar a ligar", o hotel volta a aparecer aqui nesse dia.', porligar: 'Nenhum lead por ligar com estes filtros.', curso: 'Nenhum lead em curso com estes filtros.', reuniao: 'Ainda sem reuniões marcadas com estes filtros.', fechados: 'Nenhum lead descartado com estes filtros.' };
+  let prMeet = [], prHoje = [], prBusca = false, prTab = 'porligar', prZona = '', prQ = '', prTel = true, prItems = [], prTrunc = false, prSel = null, prOutcome = '', prBusy = false, prSeq = 0, prLoaded = false, prQT = null, prFlash = '', prDraft = null, prAutoDate = '';
   const prTag = e => { const t = PRST[e] || [e || 'sem estado', '']; return `<span class="tag ${t[1]}">${esc(t[0])}</span>`; };
   const prNextBiz = () => { const d = new Date(Date.now() + 2 * 3600000); d.setUTCDate(d.getUTCDate() + 1); while (d.getUTCDay() === 0 || d.getUTCDay() === 6) d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); };
   const prDM = iso => { const x = String(iso || '').slice(0, 10).split('-'); return x.length === 3 ? x[2] + '/' + x[1] : ''; };
@@ -2290,7 +2290,7 @@ a.chip { text-decoration: none; }
     try {
       const d = await pr('leads', { tab: prTab, zona: prZona, q: prQ, so_tel: prTel ? '1' : '0' });
       if (seq !== prSeq) return;
-      prItems = d.items || []; prTrunc = !!d.truncado; prLoaded = true; prMeet = d.reunioes || []; prBusca = !!d.busca;
+      prItems = d.items || []; prTrunc = !!d.truncado; prLoaded = true; prMeet = d.reunioes || []; prHoje = d.hoje || []; prBusca = !!d.busca;
       if (d.zonas) prZonas(d.zonas);
       renderPrRows();
     } catch (e) {
@@ -2307,13 +2307,19 @@ a.chip { text-decoration: none; }
       const c = {}; prItems.forEach(l => { c[l.estado] = (c[l.estado] || 0) + 1; });
       head += `<div class="pr-sum">${Object.keys(c).sort((a, b) => c[b] - c[a]).map(e => `<b>${c[e]}</b> ${esc((PRST[e] || [e])[0])}`).join(' · ')}</div>`;
     }
-    const meetRows = prBusca ? prMeet.map(m => `<button class="row" data-prmeet="${m.id}">
+    const showHoje = !prBusca && prTab === 'feitos' && prHoje.length;
+    if (showHoje) {
+      const n = e => prHoje.filter(m => m.estado === e).length, passou = prHoje.filter(m => m.estado === 'marcada' && new Date(m.fim).getTime() < Date.now()).length;
+      head += `<div class="pr-sum"><b>${prHoje.length}</b> reunião${prHoje.length === 1 ? '' : 'ões'} hoje · <b>${n('realizada')}</b> realizada${n('realizada') === 1 ? '' : 's'} · <b>${n('nao_compareceu')}</b> não compareceu · <b>${n('cancelada')}</b> cancelada${n('cancelada') === 1 ? '' : 's'}${passou ? ` · <b>${passou}</b> por confirmar` : ''}</div>`;
+    }
+    const meetList = prBusca ? prMeet : (showHoje ? prHoje : []);
+    const meetRows = meetList.map(m => `<button class="row" data-prmeet="${m.id}">
         ${avatarFor(m.instancia || '?', 'pm' + m.id)}
         <span class="txt">
           <span class="l1"><span class="name">${esc(m.instancia || '')}</span><span class="when">${esc(agDia(m.inicio))}</span></span>
           <span class="l2"><span class="last mono">${esc(agHora(m.inicio))}${m.email ? ' · ' + esc(m.email) : ''}${m.telefone ? ' · ' + esc(m.telefone) : ''}</span></span>
           <span class="l3"><span class="ag-tipo">${esc(AGT[m.tipo] || m.tipo)}</span>${agTag(m)}</span>
-        </span></button>`).join('') : '';
+        </span></button>`).join('');
     const leadRows = prItems.map(l => {
       const feito = prTab === 'feitos' && !prBusca ? `<span class="tag">${esc(agHora(l.ultimo_contacto))}</span>${isAdmin() && l.trabalhado_por ? `<span class="tag answered">${esc(l.trabalhado_por)}</span>` : ''}` : '';
       const extra = feito + (l.devido ? '<span class="tag confirm">ligar hoje</span>' : (l.voltar_a_ligar && ['Try again', 'follow up'].includes(l.estado) ? `<span class="tag">ligar ${esc(prDM(l.voltar_a_ligar))}</span>` : '')) + (l.reuniao ? `<span class="tag meeting">${esc(agDia(l.reuniao))} ${esc(agHora(l.reuniao))}</span>` : '');
@@ -2326,7 +2332,7 @@ a.chip { text-decoration: none; }
         </span></button>`;
     }).join('');
     const vazio = prBusca ? 'Nada encontrado. Tente outro nome, email ou número (pode escrever só parte).' : (PREMPTY[prTab] || '');
-    $('#prRows').innerHTML = head + (prBusca && meetRows ? '<div class="pr-sec">Reuniões</div>' + meetRows : '') + (prBusca && leadRows ? '<div class="pr-sec">Leads do Notion</div>' : '') + leadRows + (!meetRows && !leadRows ? `<div class="empty">${esc(vazio)}</div>` : '');
+    $('#prRows').innerHTML = head + (meetRows ? '<div class="pr-sec">Reuniões' + (prBusca ? '' : ' de hoje') + '</div>' + meetRows : '') + ((prBusca || showHoje) && leadRows ? '<div class="pr-sec">Leads do Notion</div>' : '') + leadRows + (!meetRows && !leadRows ? `<div class="empty">${esc(vazio)}</div>` : '');
   }
   // Abre a Agenda diretamente no detalhe de uma reuniao (para reagendar ou cancelar).
   function agGoto(id) { agJump = id; setView('agenda'); document.body.classList.add('chat-open'); }
