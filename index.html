@@ -560,7 +560,7 @@ a.chip { text-decoration: none; }
         <button class="tab" data-f="porligar" aria-pressed="true">Por ligar</button>
         <button class="tab" data-f="curso" aria-pressed="false">Em curso</button>
         <button class="tab" data-f="reuniao" aria-pressed="false">Reunião</button>
-        <button class="tab" data-f="fechados" aria-pressed="false">Fechados</button>
+        <button class="tab" data-f="fechados" aria-pressed="false" title="Não interessados, número errado e alojamentos encerrados">Descartados</button>
       </div>
       <div class="rows" id="prRows"><div class="empty">A carregar leads do Notion…</div></div>
     </aside>
@@ -2163,10 +2163,18 @@ a.chip { text-decoration: none; }
     if (!r.ok || d.ok === false) throw new Error(d.error || ('HTTP ' + r.status));
     return d;
   }
-  const PRST = { 'Not contacted': ['novo', ''], 'Email sent': ['email enviado', ''], 'Contacted': ['contactado', ''], 'Try again': ['tentar de novo', 'confirm'], 'follow up': ['follow up', 'confirm'], 'Replied': ['respondeu', 'answered'], 'Interested': ['interessado', 'answered'], 'Demo booked': ['reunião marcada', 'meeting'], 'Onboarding': ['onboarding', 'done'], 'Not interested': ['não interessado', 'missed'], 'Invalid / closed': ['fechado', 'missed'], 'wrong number': ['nº errado', 'missed'] };
-  const PROUT = [['Try again', 'Não atendeu'], ['follow up', 'Pediu email'], ['Replied', 'Respondeu'], ['Interested', 'Interessado'], ['Not interested', 'Não interessado'], ['wrong number', 'Número errado'], ['Invalid / closed', 'Fechado']];
-  const PREMPTY = { hoje: 'Nada para ligar hoje. Aqui aparecem os "Tentar de novo" e "follow up" com data de hoje ou anterior.', porligar: 'Nenhum lead por ligar com estes filtros.', curso: 'Nenhum lead em curso com estes filtros.', reuniao: 'Ainda sem reuniões marcadas com estes filtros.', fechados: 'Nenhum lead fechado com estes filtros.' };
-  let prTab = 'porligar', prZona = '', prQ = '', prTel = true, prItems = [], prTrunc = false, prSel = null, prOutcome = '', prBusy = false, prSeq = 0, prLoaded = false, prQT = null, prFlash = '';
+  const PRST = { 'Not contacted': ['novo', ''], 'Email sent': ['email enviado', ''], 'Contacted': ['contactado', ''], 'Try again': ['tentar de novo', 'confirm'], 'follow up': ['follow up', 'confirm'], 'Replied': ['respondeu', 'answered'], 'Interested': ['interessado', 'answered'], 'Demo booked': ['reunião marcada', 'meeting'], 'Onboarding': ['onboarding', 'done'], 'Not interested': ['não interessado', 'missed'], 'Invalid / closed': ['encerrado', 'missed'], 'wrong number': ['nº errado', 'missed'] };
+  const PROUT = [
+    ['Try again', 'Não atendeu', 'Ninguém atendeu. Escolha quando voltar a ligar: o hotel aparece no separador Hoje nesse dia.'],
+    ['follow up', 'Pediu email', 'Pediram para enviar um email. Preencha o email direto e a data de "Voltar a ligar".'],
+    ['Replied', 'Respondeu', 'Responderam (email ou WhatsApp) mas ainda não decidiram.'],
+    ['Interested', 'Interessado', 'Quer saber mais ou aceitou conversar. O próximo passo é marcar a reunião.'],
+    ['Not interested', 'Não interessado', 'Disseram que não querem. Sai da lista de chamadas.'],
+    ['wrong number', 'Número errado', 'O número não é do alojamento. Fica para pesquisar outro número.'],
+    ['Invalid / closed', 'Encerrado', 'O alojamento já não existe ou fechou. Sai da lista de chamadas.']
+  ];
+  const PREMPTY = { hoje: 'Ainda não há chamadas para repetir hoje. Quando marcar "Não atendeu" ou "Pediu email" com uma data em "Voltar a ligar", o hotel volta a aparecer aqui nesse dia.', porligar: 'Nenhum lead por ligar com estes filtros.', curso: 'Nenhum lead em curso com estes filtros.', reuniao: 'Ainda sem reuniões marcadas com estes filtros.', fechados: 'Nenhum lead descartado com estes filtros.' };
+  let prTab = 'porligar', prZona = '', prQ = '', prTel = true, prItems = [], prTrunc = false, prSel = null, prOutcome = '', prBusy = false, prSeq = 0, prLoaded = false, prQT = null, prFlash = '', prDraft = null, prAutoDate = '';
   const prTag = e => { const t = PRST[e] || [e || 'sem estado', '']; return `<span class="tag ${t[1]}">${esc(t[0])}</span>`; };
   const prNextBiz = () => { const d = new Date(Date.now() + 2 * 3600000); d.setUTCDate(d.getUTCDate() + 1); while (d.getUTCDay() === 0 || d.getUTCDay() === 6) d.setUTCDate(d.getUTCDate() + 1); return d.toISOString().slice(0, 10); };
   const prDM = iso => { const x = String(iso || '').slice(0, 10).split('-'); return x.length === 3 ? x[2] + '/' + x[1] : ''; };
@@ -2222,7 +2230,11 @@ a.chip { text-decoration: none; }
     const wa = l.wa, dTel = wa ? '+' + wa : (prDigits(l.telefone) ? '+' + prDigits(l.telefone) : '');
     const link = (u, t) => u ? `<a class="chip" href="${esc(u)}" target="_blank" rel="noopener">${t}</a>` : '';
     const needsDate = prOutcome === 'Try again' || prOutcome === 'follow up';
-    const volta = (document.querySelector('#prFVolta') && document.querySelector('#prFVolta').value) || l.voltar_a_ligar || (needsDate ? prNextBiz() : '');
+    // Rascunho deste lead (so existe depois de escolher um resultado). Nunca herda valores do lead anterior.
+    const D = prDraft || {}, pick = (k, v) => D[k] !== undefined ? D[k] : v;
+    let volta = pick('volta', l.voltar_a_ligar || '');
+    if (!volta && needsDate) { volta = prNextBiz(); prAutoDate = volta; }
+    const hora = pick('hora', l.melhor_hora || ''), gestor = pick('gestor', l.gestor || ''), tel = pick('tel', l.telefone_direto || ''), email = pick('email', l.email_direto || ''), notas = pick('notas', l.notas || '');
     const phones = [l.telefone_geral && l.telefone_geral !== l.telefone ? 'Geral: ' + l.telefone_geral : '', l.outros_telefones ? 'Outros: ' + l.outros_telefones : ''].filter(Boolean).join(' · ');
     $('#prBody').innerHTML = `<div class="cardx"><h4>Contactar</h4>
         <div class="pr-phone">${l.telefone ? esc(l.telefone) : 'sem telefone'}</div>
@@ -2237,23 +2249,25 @@ a.chip { text-decoration: none; }
       </div>
       <div class="cardx"><h4>Resultado da chamada</h4>
         ${l.reuniao ? `<div class="dial-ok" style="margin:0 0 12px">Reunião marcada: <b>${esc(agDia(l.reuniao))} às ${esc(agHora(l.reuniao))}</b>. Veja ou altere na Agenda.</div>` : ''}
-        <p class="pr-note">O que aconteceu? <span style="color:var(--ink);font-weight:600">${prOutcome ? '' : 'Sem alteração do estado (' + esc((PRST[l.estado] || [l.estado])[0]) + ')'}</span></p>
-        <div class="chips pr-out" id="prOut">${PROUT.map(o => `<button type="button" class="chip" data-out="${esc(o[0])}" aria-pressed="${prOutcome === o[0]}">${esc(o[1])}</button>`).join('')}</div>
+        <p class="pr-note">O que aconteceu na chamada? <span style="color:var(--ink);font-weight:600">${prOutcome ? '' : 'Sem alteração do estado (' + esc((PRST[l.estado] || [l.estado])[0]) + ')'}</span></p>
+        <div class="chips pr-out" id="prOut">${PROUT.map(o => `<button type="button" class="chip" data-out="${esc(o[0])}" title="${esc(o[2])}" aria-pressed="${prOutcome === o[0]}">${esc(o[1])}</button>`).join('')}</div>
+        ${prOutcome ? `<p class="pr-note" style="margin:-2px 0 12px">${esc((PROUT.find(o => o[0] === prOutcome) || [])[2] || '')}</p>` : ''}
         <div class="ag-form">
           <div class="two" style="grid-template-columns:1fr 1fr">
             <label class="fl">Voltar a ligar${needsDate ? ' (obrigatório)' : ''}<input id="prFVolta" type="date" value="${esc(volta)}"></label>
-            <label class="fl">Melhor hora para ligar<input id="prFHora" type="text" maxlength="80" value="${esc(l.melhor_hora)}" placeholder="Ex.: depois das 14h"></label>
+            <label class="fl">Melhor hora para ligar<input id="prFHora" type="text" maxlength="80" value="${esc(hora)}" placeholder="Ex.: depois das 14h"></label>
           </div>
           <div class="two" style="grid-template-columns:1fr 1fr">
-            <label class="fl">Gestor / pessoa que decide<input id="prFGestor" type="text" maxlength="100" value="${esc(l.gestor)}" placeholder="Nome"></label>
-            <label class="fl">Telefone direto<input id="prFTel" type="tel" maxlength="25" value="${esc(l.telefone_direto)}" placeholder="84 123 4567"></label>
+            <label class="fl">Gestor / pessoa que decide<input id="prFGestor" type="text" maxlength="100" value="${esc(gestor)}" placeholder="Nome"></label>
+            <label class="fl">Telefone direto<input id="prFTel" type="tel" maxlength="25" value="${esc(tel)}" placeholder="84 123 4567"></label>
           </div>
-          <label class="fl">Email direto<input id="prFEmail" type="email" maxlength="120" value="${esc(l.email_direto)}" placeholder="gestor@alojamento.com"></label>
-          <label class="fl" style="margin-bottom:0">Notas<textarea id="prFNotas" maxlength="1900" placeholder="O que ficou combinado">${esc(l.notas)}</textarea></label>
+          <label class="fl">Email direto<input id="prFEmail" type="email" maxlength="120" value="${esc(email)}" placeholder="gestor@alojamento.com"></label>
+          <label class="fl" style="margin-bottom:0">Notas<textarea id="prFNotas" maxlength="1900" placeholder="O que ficou combinado">${esc(notas)}</textarea></label>
         </div>
         <div class="ag-actions" style="margin-top:14px">
           <button class="btn" type="button" data-pract="save">Guardar no Notion</button>
           <button class="btn alt" type="button" data-pract="savenext">Guardar e abrir o próximo</button>
+          <button class="ghost-btn" type="button" data-pract="skip" title="Passa ao lead seguinte sem gravar nada no Notion">Saltar (não grava)</button>
           <button class="btn warn" type="button" data-pract="book">${l.reuniao ? 'Marcar outro horário' : 'Marcar reunião'}</button>
         </div>
         <div class="ag-err" id="prErr"></div>
@@ -2263,7 +2277,7 @@ a.chip { text-decoration: none; }
   }
 
   function prSelect(l) {
-    prSel = l; prOutcome = ''; prFlash = '';
+    prSel = l; prOutcome = ''; prFlash = ''; prDraft = null; prAutoDate = '';
     renderPrDetail(); renderPrRows();
     document.body.classList.add('chat-open');
   }
@@ -2282,7 +2296,7 @@ a.chip { text-decoration: none; }
     if (f.email !== (l.email_direto || '')) body.email_direto = f.email;
     if (f.notas !== (l.notas || '')) body.notas = f.notas;
     const err = $('#prErr'); err.textContent = '';
-    if (Object.keys(body).length === 1) { err.textContent = 'Não há nada novo para guardar.'; return; }
+    if (Object.keys(body).length === 1) { if (next) return prSkip(); err.textContent = 'Não há nada novo para guardar.'; return; }
     if ((prOutcome === 'Try again' || prOutcome === 'follow up') && !f.volta) { err.textContent = 'Escolha a data em "Voltar a ligar".'; return; }
     const idx = prItems.findIndex(x => x.id === l.id), nextId = idx >= 0 && prItems[idx + 1] ? prItems[idx + 1].id : null;
     prBusy = true; document.querySelectorAll('#prBody [data-pract]').forEach(b => { b.disabled = true; });
@@ -2296,7 +2310,7 @@ a.chip { text-decoration: none; }
       if (body.email_direto !== undefined) { l.email_direto = body.email_direto; if (body.email_direto) l.email = body.email_direto; }
       if (body.notas !== undefined) l.notas = body.notas;
       l.trabalhado_por = (ME && ME.name) || l.trabalhado_por; l.ultimo_contacto = new Date().toISOString();
-      prOutcome = ''; prFlash = 'Guardado no Notion.';
+      prOutcome = ''; prFlash = 'Guardado no Notion.'; prDraft = null; prAutoDate = '';
       await prLoad();
       if (next) { const n = prItems.find(x => x.id === nextId) || prItems.find(x => x.id !== l.id); if (n) { prSelect(n); return; } }
       renderPrDetail(); renderPrRows();
@@ -2305,6 +2319,13 @@ a.chip { text-decoration: none; }
       const er = $('#prErr'); if (er) er.textContent = e.message;
       document.querySelectorAll('#prBody [data-pract]').forEach(b => { b.disabled = false; });
     } finally { prBusy = false; }
+  }
+  // Passa ao lead seguinte da lista sem gravar nada.
+  function prSkip() {
+    if (!prSel || !prItems.length) return;
+    const idx = prItems.findIndex(x => x.id === prSel.id);
+    const n = prItems[idx + 1] || prItems[0];
+    if (n && n.id !== prSel.id) prSelect(n);
   }
   function prBook() {
     const l = prSel; if (!l) return;
@@ -2325,14 +2346,17 @@ a.chip { text-decoration: none; }
     if (out) {
       prOutcome = prOutcome === out.dataset.out ? '' : out.dataset.out;
       const f = prForm();
-      if ((prOutcome === 'Try again' || prOutcome === 'follow up') && !f.volta && prSel) prSel.voltar_a_ligar = prSel.voltar_a_ligar || prNextBiz();
-      if (prSel) { prSel.melhor_hora = f.hora; prSel.gestor = f.gestor; prSel.telefone_direto = f.tel; prSel.email_direto = f.email; prSel.notas = f.notas; if (f.volta) prSel.voltar_a_ligar = f.volta; }
+      const needs = prOutcome === 'Try again' || prOutcome === 'follow up';
+      // A data sugerida automaticamente so fica se o resultado precisar dela.
+      if (!needs && f.volta && f.volta === prAutoDate) f.volta = (prSel && prSel.voltar_a_ligar) || '';
+      prDraft = f;
       renderPrDetail(); return;
     }
     const act = e.target.closest('[data-pract]'); if (!act || prBusy) return;
     const a = act.dataset.pract;
     if (a === 'save') return prSave(false);
     if (a === 'savenext') return prSave(true);
+    if (a === 'skip') return prSkip();
     if (a === 'book') return prBook();
     if (a === 'copy') { try { await navigator.clipboard.writeText(prSel.telefone); act.textContent = 'Copiado ✓'; } catch (er) {} return; }
     if (a === 'chat') { setView('wa'); try { openThread(prSel.wa); } catch (er) {} }
