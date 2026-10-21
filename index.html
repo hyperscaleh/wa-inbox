@@ -1926,7 +1926,7 @@ a.chip { text-decoration: none; }
     return d;
   }
   const AGT = { anfitriao: 'Anfitrião', coanfitriao: 'Co-anfitrião', influencer: 'Influencer', bloqueio: 'Bloqueio', outro: 'Outro' };
-  let agDetTpl = null, agDetSig = '', agDayInit = false, agNotify = true, agLead = null, agJump = 0, agPinId = 0;
+  let agResEmail = '', agDetTpl = null, agDetSig = '', agDayInit = false, agNotify = true, agLead = null, agJump = 0, agPinId = 0;
   let agItems = [], agDias = [], agTab = null, agMode = 'form', agSelId = null, agTipo = 'anfitriao', agDay = 0, agSel = null, agBusy = false;
   let agForm = { instancia: '', contacto: '', tratamento: '', email: '', telefone: '', nota: '' };
   // Influencer: Influenciador/Influenciadora. Anfitriao e co-anfitriao: Dr./Dra.
@@ -2117,7 +2117,7 @@ a.chip { text-decoration: none; }
     // Reagendar (depois da hora, se houver email) e Cancelar (sempre, se ainda nao foi cancelada).
     const tpls = [];
     if (m.tipo !== 'bloqueio' && m.estado !== 'cancelada') {
-      if (agStarted(m) && m.email) tpls.push('reagendar');
+      if (agStarted(m)) tpls.push('reagendar');
       tpls.push('cancelar');
     }
     if (!tpls.includes(agDetTpl)) agDetTpl = tpls[0] || null;
@@ -2132,6 +2132,7 @@ a.chip { text-decoration: none; }
         <div class="chips" id="agTpls">${tpls.map(k => `<button type="button" class="chip" data-tpl="${k}" aria-pressed="${k === agDetTpl}">${T[k]}</button>`).join('')}</div>
         <p class="summary" style="margin:0 0 10px;font-size:13px;color:var(--muted)">${agDetTpl === 'reagendar' ? 'Marca a reunião como não compareceu e envia este email com o link para escolher um novo horário.' : 'Cancela a reunião e retira o convite do calendário. Escolha se a pessoa é avisada por email.'}</p>
         ${notifyBox}
+        ${agDetTpl === 'reagendar' && !m.email ? `<label class="fld" style="display:block;margin-bottom:12px"><span style="display:block;font-weight:600;margin-bottom:4px">Email da pessoa</span><input id="agResEmail" type="email" inputmode="email" autocomplete="off" placeholder="nome@exemplo.com" value="${esc(agResEmail)}" style="width:100%"><small style="display:block;color:var(--muted);margin-top:4px">Esta reunião não tem email. Escreva-o aqui: fica guardado e o email segue já para lá. O email pede também o número de WhatsApp.</small></label>` : ''}
         ${showPrev ? '<div class="mail-prev" id="agDPrev"><div class="empty" style="padding:14px">A preparar a pré-visualização…</div></div>' : ''}
         <div class="ag-actions">${agDetTpl === 'reagendar'
           ? `<button class="btn warn" data-act="resched" type="button">${m.reagendado_em ? 'Reenviar email de reagendamento' : 'Enviar email de reagendamento'}</button>`
@@ -2148,10 +2149,11 @@ a.chip { text-decoration: none; }
   $('#agTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) { agTab = t.dataset.f; renderAgList(); } });
   $('#agRows').addEventListener('click', e => {
     const r = e.target.closest('.row'); if (!r) return;
-    agSelId = Number(r.dataset.agid); agPinId = 0; agMode = 'detail'; agDetTpl = null; agDetSig = ''; agNotify = true; renderAgDetail(); renderAgList(); document.body.classList.add('chat-open');
+    agSelId = Number(r.dataset.agid); agResEmail = ''; agPinId = 0; agMode = 'detail'; agDetTpl = null; agDetSig = ''; agNotify = true; renderAgDetail(); renderAgList(); document.body.classList.add('chat-open');
   });
   $('#agBody').addEventListener('input', e => {
     const map = { agInst: 'instancia', agCont: 'contacto', agTrat: 'tratamento', agEmail: 'email', agTel: 'telefone', agNota: 'nota' };
+    if (e.target.id === 'agResEmail') { agResEmail = e.target.value; return; }
     if (map[e.target.id]) { agForm[map[e.target.id]] = e.target.value; updateAgSum(); if (e.target.id !== 'agTel' && e.target.id !== 'agNota') agFormPreview(); }
   });
   $('#agBody').addEventListener('click', async e => {
@@ -2215,7 +2217,11 @@ a.chip { text-decoration: none; }
     const avisar = agNotify && !!m.email && m.tipo !== 'bloqueio';
     if (act === 'cancel' && !confirm(m.tipo === 'bloqueio' ? 'Remover este bloqueio?' : avisar ? `Cancelar a reunião com ${m.instancia} e avisar por email ${m.email}?` : `Cancelar a reunião com ${m.instancia} SEM avisar a pessoa?`)) return;
     if (act === 'cancel_silent' && !confirm(`Cancelar a reunião com ${m.instancia} SEM enviar email? (O Google retira o convite do calendário dele.)`)) return;
-    if (act === 'resched' && !confirm(`Marcar "${m.instancia}" como não compareceu e enviar já o email de reagendamento para ${m.email}?`)) return;
+    const reEmail = (m.email || agResEmail || '').trim().toLowerCase();
+    if (act === 'resched') {
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(reEmail)) { const er = btn.closest('.cardx').querySelector('.ag-err'); if (er) er.textContent = 'Escreva um email válido para enviar o reagendamento.'; return; }
+      if (!confirm(`Marcar "${m.instancia}" como não compareceu e enviar já o email de reagendamento para ${reEmail}?`)) return;
+    }
     const card = btn.closest('.cardx'), errEl = card && card.querySelector('.ag-err');
     agBusy = true; document.querySelectorAll('#agBody [data-act]').forEach(b => { b.disabled = true; }); if (errEl) errEl.textContent = '';
     try {
@@ -2225,7 +2231,7 @@ a.chip { text-decoration: none; }
       else if (act === 'cancel' || act === 'cancel_silent') {
         const r = await ag('cancel', { id: m.id, enviar_email: act === 'cancel' && avisar });
         msg = m.tipo === 'bloqueio' ? 'Bloqueio removido.' : r.email === 'enviado' ? `Reunião cancelada. Email de cancelamento enviado a ${esc(m.email)}.` : r.email === 'FALHOU' ? 'Reunião cancelada, mas o email falhou: avise o lead à mão.' : 'Reunião cancelada, sem email.';
-      } else if (act === 'resched') { const r = await ag('reagendar', { id: m.id }); msg = r.email === 'enviado' ? `Email de reagendamento enviado a ${esc(m.email)}.` : 'O email falhou: envie o reagendamento à mão.'; }
+      } else if (act === 'resched') { const r = await ag('reagendar', { id: m.id, email: m.email ? '' : reEmail }); msg = r.email === 'enviado' ? `Email de reagendamento enviado a ${esc(reEmail)}.` : 'O email falhou: envie o reagendamento à mão.'; }
       if (act === 'cancel' || act === 'cancel_silent') { agSelId = null; agPinId = 0; agMode = 'form'; }
       agDetSig = '';
       await loadAgenda();
