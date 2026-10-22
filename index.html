@@ -223,6 +223,12 @@ dialog.sheet .acts { display: flex; gap: 8px; justify-content: flex-end; margin-
 .dial-grid label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
 .dial-grid .opt { text-transform: none; letter-spacing: 0; font-weight: 500; }
 dialog.sheet.guide { width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; }
+.gd-tabs { display: flex; gap: 6px; margin: 0 0 14px; }
+.gd-tabs button { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 7px 14px; font-weight: 700; font-size: 12px; cursor: pointer; }
+.gd-tabs button[aria-pressed="true"] { background: var(--violet); border-color: var(--violet); color: #fff; }
+.gd-vid { margin: 0 0 16px; }
+.gd-vid h4 { margin: 0 0 8px; font-size: 13px; }
+.gd-vid video { width: 100%; border-radius: 14px; background: #1B1830; aspect-ratio: 16 / 9; }
 .gd-dots { display: flex; gap: 6px; margin: 0 0 14px; }
 .gd-dots i { flex: 1; height: 4px; border-radius: 4px; background: var(--line); }
 .gd-dots i.on { background: var(--violet); }
@@ -726,6 +732,13 @@ a.chip { text-decoration: none; }
 </dialog>
 
 <dialog class="sheet guide" id="guideDlg">
+  <div class="gd-tabs" id="gdTabs"><button type="button" data-gt="passos" aria-pressed="true">Passo a passo</button><button type="button" data-gt="videos" aria-pressed="false">Vídeos</button></div>
+  <div id="gdVideos" hidden>
+    <h3>Vídeos do painel</h3>
+    <p>Dois vídeos curtos, com a Sara como exemplo, a mostrar o trabalho do dia a dia.</p>
+    <div class="gd-vid"><h4>1. Reuniões: marcar, reagendar, cancelar e depois da reunião</h4><video controls playsinline preload="metadata" src="guia/video-reunioes.mp4"></video></div>
+    <div class="gd-vid"><h4>2. Chamadas: pedido de email, ligar mais tarde e números sul-africanos</h4><video controls playsinline preload="metadata" src="guia/video-chamadas.mp4"></video></div>
+  </div>
   <h3 id="gdTitle"></h3>
   <p id="gdStep"></p>
   <div class="gd-dots" id="gdDots"></div>
@@ -1284,7 +1297,7 @@ a.chip { text-decoration: none; }
   // ---------- guia de utilizacao ----------
   // Passo a passo para quem trabalha leads (Prospecção + Agenda). Abre sozinho no primeiro acesso e fica no botão Guia.
   const GUIDE = () => [
-    ['Bem-vinda ao painel', `<p>Aqui trabalha os leads de <b>${esc((ME.zonas || []).join(', '))}</b>, liga, regista o resultado e marca reuniões. Não precisa de Notion nem de mais nenhuma conta: tudo o que fizer aqui fica guardado automaticamente.</p><ul><li><b>Prospecção</b>: a lista de leads e a ficha de cada um.</li><li><b>Agenda</b>: ver horários livres, marcar e gerir reuniões.</li></ul><div class="gd-tip">Cada ação sua fica registada com o seu nome (<b>${esc(ME.name.split(' ')[0])}</b>).</div>`],
+    ['Bem-vinda ao painel', `<p>Aqui trabalha os leads de <b>${esc((ME.zonas || []).join(', '))}</b>, liga, regista o resultado e marca reuniões. Não precisa de Notion nem de mais nenhuma conta: tudo o que fizer aqui fica guardado automaticamente.</p><ul><li><b>Prospecção</b>: a lista de leads e a ficha de cada um.</li><li><b>Agenda</b>: ver horários livres, marcar e gerir reuniões.</li></ul><div class="gd-tip">Cada ação sua fica registada com o seu nome (<b>${esc(ME.name.split(' ')[0])}</b>). Veja também os <b>vídeos</b> no separador acima: mostram o dia a dia com a Sara.</div>`],
     ['Prospecção: a sua lista', `<ul><li><b>Hoje</b>: os leads que tem de ligar hoje aparecem primeiro, marcados <i>ligar hoje</i>.</li><li><b>Feitos hoje</b>: tudo o que já trabalhou. Confira no fim do dia.</li><li>A pesquisa encontra um lead ou uma reunião por nome, número ou email, em qualquer estado.</li><li>Pode filtrar só os que têm telefone.</li></ul><p>Toque num lead para abrir a ficha.</p>`],
     ['Fazer a chamada', `<ul><li>Na ficha, toque em <b>Copiar número</b> e ligue do seu telemóvel. O botão Ligar do painel é do agente de IA e, por agora, não é para si.</li><li>Se o número começar por <b>+27</b> (África do Sul), use o <b>WhatsApp</b> em vez de ligar.</li><li>Se não houver telefone, veja o email ou o website na ficha.</li></ul>`],
     ['Registar o resultado', `<ul><li>Depois da chamada, escolha o que aconteceu. A explicação aparece por baixo de cada opção.</li><li><b>Não atendeu</b> e <b>Pediu email</b> pedem uma data em <i>Voltar a ligar</i>. O painel sugere o próximo dia útil e o lead volta ao separador Hoje nesse dia.</li><li>Preencha o que apurou: gestor, telefone direto, email, melhor hora, notas.</li><li>Toque em <b>Guardar e próximo</b>. Guarda sozinho e abre o lead seguinte.</li></ul><div class="gd-tip">Ao registar um resultado manual, os emails automáticos desse lead param. Só o faça depois de falar mesmo com alguém.</div>`],
@@ -1295,7 +1308,7 @@ a.chip { text-decoration: none; }
   let gdI = 0;
   function openGuide(i) {
     if (!ME) return;
-    gdI = i || 0; renderGuide();
+    gdI = i || 0; renderGuide(); setGuideTab(i === 'videos' ? 'videos' : 'passos');
     const d = $('#guideDlg'); if (!d.open) d.showModal();
   }
   function renderGuide() {
@@ -1307,7 +1320,16 @@ a.chip { text-decoration: none; }
     $('#gdPrev').hidden = gdI === 0;
     $('#gdNext').textContent = gdI === g.length - 1 ? 'Concluir' : 'Seguinte';
   }
-  function closeGuide() { store.set('guide_seen_' + (ME ? ME.name : ''), '1'); $('#guideDlg').close(); }
+  function setGuideTab(k) {
+    const v = k === 'videos';
+    document.querySelectorAll('#gdTabs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.gt === k)));
+    $('#gdVideos').hidden = !v;
+    ['#gdTitle', '#gdStep', '#gdDots', '#gdBody'].forEach(x => { $(x).hidden = v; });
+    $('#gdPrev').hidden = v || gdI === 0; $('#gdNext').hidden = v;
+    if (!v) document.querySelectorAll('#gdVideos video').forEach(x => x.pause());
+  }
+  $('#gdTabs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setGuideTab(b.dataset.gt); });
+  function closeGuide() { document.querySelectorAll('#gdVideos video').forEach(x => x.pause()); store.set('guide_seen_' + (ME ? ME.name : ''), '1'); $('#guideDlg').close(); }
   $('#gdPrev').addEventListener('click', () => { if (gdI > 0) { gdI--; renderGuide(); } });
   $('#gdNext').addEventListener('click', () => { if (gdI < GUIDE().length - 1) { gdI++; renderGuide(); } else closeGuide(); });
   $('#gdClose').addEventListener('click', closeGuide);
