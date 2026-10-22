@@ -1167,7 +1167,7 @@ a.chip { text-decoration: none; }
     $('#loginErr').textContent = '';
     if (token.length !== 32) { $('#loginErr').textContent = `O código tem 32 caracteres e este tem ${token.length}. Copie-o outra vez.`; return; }
     try { await hub('me'); store.set('wa_inbox_token', token); showApp(); }
-    catch (err) { $('#loginErr').textContent = err.code === 401 ? 'Código errado ou desactivado. Confirme com o Dellon.' : 'Não foi possível ligar ao servidor (' + (err.message || 'erro de rede') + '). Tente outra vez.'; }
+    catch (err) { $('#loginErr').textContent = err.code === 401 ? 'Código errado ou desactivado. Confirme com a equipa.' : 'Não foi possível ligar ao servidor (' + (err.message || 'erro de rede') + '). Tente outra vez.'; }
   });
   $('#logoutBtn').addEventListener('click', () => logout());
   $('#notifyBtn').addEventListener('click', async () => {
@@ -1290,7 +1290,7 @@ a.chip { text-decoration: none; }
     ['Registar o resultado', `<ul><li>Depois da chamada, escolha o que aconteceu. A explicação aparece por baixo de cada opção.</li><li><b>Não atendeu</b> e <b>Pediu email</b> pedem uma data em <i>Voltar a ligar</i>. O painel sugere o próximo dia útil e o lead volta ao separador Hoje nesse dia.</li><li>Preencha o que apurou: gestor, telefone direto, email, melhor hora, notas.</li><li>Toque em <b>Guardar e próximo</b>. Guarda sozinho e abre o lead seguinte.</li></ul><div class="gd-tip">Ao registar um resultado manual, os emails automáticos desse lead param. Só o faça depois de falar mesmo com alguém.</div>`],
     ['Marcar uma reunião', `<ul><li>Com o lead <b>Interessado</b>, toque em <b>Marcar reunião</b> na ficha (ou abra a <b>Agenda</b>) e escolha o tipo de reunião.</li><li>Preencha nome, email e telefone. O telefone é opcional, mas sem ele não há lembrete por SMS.</li><li>Escolha um horário livre: das 08:00 às 19:00, de 30 em 30 minutos, com pelo menos 2 horas de antecedência.</li><li>Ao marcar, o painel cria o evento com Google Meet e envia o email de confirmação certo para esse tipo.</li></ul><div class="gd-tip"><b>Demo booked</b> só aparece no lead quando marca a reunião aqui. Não se muda à mão.</div>`],
     ['Depois da reunião', `<ul><li>Na Agenda, abra a reunião. À hora marcada aparecem os botões <b>Compareceu</b> e <b>Não compareceu</b>.</li><li>Se a pessoa não compareceu, o painel oferece o email de remarcação.</li><li><b>Reagendar</b> ou <b>cancelar</b>: o painel pergunta se quer avisar a pessoa por email.</li><li>30 minutos antes, os números de Moçambique recebem um SMS de lembrete.</li></ul>`],
-    ['Regras para não falhar', `<ul><li>O estado <b>Email enviado</b> é só da automação. Não o tente mudar.</li><li><b>Onboarding</b> é com o Dellon.</li><li>Se algo não carregar, volte a abrir a ficha. Se o código deixar de valer, peça um novo ao Dellon.</li><li>Dúvidas: fale com o Dellon ou o Keano.</li></ul><p>Pode reabrir este guia a qualquer momento no botão <b>Guia</b>.</p>`]
+    ['Regras para não falhar', `<ul><li>O estado <b>Email enviado</b> é só da automação. Não o tente mudar.</li><li><b>Onboarding</b> é com a equipa.</li><li>Se algo não carregar, volte a abrir a ficha. Se o código deixar de valer, peça um novo à equipa.</li><li>Dúvidas: fale com a equipa.</li></ul><p>Pode reabrir este guia a qualquer momento no botão <b>Guia</b>.</p>`]
   ];
   let gdI = 0;
   function openGuide(i) {
