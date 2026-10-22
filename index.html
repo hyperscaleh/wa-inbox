@@ -393,6 +393,7 @@ a.chip { text-decoration: none; }
 
 /* ---------- phone ---------- */
 @media (max-width: 820px) {
+  #guideBtn.adm { display: none; }
   #app { padding: 0 0 62px; }
   .frame { border-radius: 0; grid-template-columns: minmax(0, 1fr); }
   aside.side, section.thread { min-width: 0; }
@@ -1149,7 +1150,8 @@ a.chip { text-decoration: none; }
       b.hidden = v === 'team' ? !isAdmin() : v === 'agenda' ? !(can('agenda') || isAdmin()) : v === 'prosp' ? !(isAdmin() || (can('agenda') && (ME.zonas || []).length > 0)) : !can(v === 'mail' ? 'mail' : v);
     });
     $('#waDial').hidden = !can('calls');
-    $('#guideBtn').hidden = isAdmin() || !(can('agenda') && (ME.zonas || []).length);
+    $('#guideBtn').hidden = !(isAdmin() || (can('agenda') && (ME.zonas || []).length));
+    $('#guideBtn').classList.toggle('adm', isAdmin());
     $('#agentName').textContent = 'ligado como ' + ME.name;
   }
   async function showApp() {
@@ -1168,7 +1170,7 @@ a.chip { text-decoration: none; }
     const v = location.hash && can('wa') ? 'wa' : (store.get('hub_view') || 'wa');
     setView(v);
     if (current && view === 'wa') openThread(current, { markRead: false });
-    if (!$('#guideBtn').hidden && !store.get('guide_seen_' + ME.name)) openGuide(0);
+    if (!$('#guideBtn').hidden && !isAdmin() && !store.get('guide_seen_' + ME.name)) openGuide(0);
   }
   function logout(msg) {
     stopPolling(); stopHub(); token = ''; store.del('wa_inbox_token'); seen = null; ME = null; dialer = null;
