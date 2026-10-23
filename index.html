@@ -223,6 +223,9 @@ dialog.sheet .acts { display: flex; gap: 8px; justify-content: flex-end; margin-
 .dial-grid label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
 .dial-grid .opt { text-transform: none; letter-spacing: 0; font-weight: 500; }
 dialog.sheet.guide { width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow-y: auto; }
+.dtoast { position: fixed; z-index: 60; left: 50%; top: max(18px, env(safe-area-inset-top, 0px)); transform: translate(-50%, -16px); max-width: calc(100vw - 32px); padding: 12px 18px; border-radius: 999px; background: #17805A; color: #fff; font-weight: 700; font-size: 14px; box-shadow: 0 16px 40px -14px rgba(23, 128, 90, 0.7); opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; }
+.dtoast.show { opacity: 1; transform: translate(-50%, 0); }
+.dtoast.bad { background: var(--bad); box-shadow: 0 16px 40px -14px rgba(229, 72, 77, 0.7); }
 .gd-tabs { display: flex; gap: 6px; margin: 0 0 14px; }
 .gd-tabs button { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 7px 14px; font-weight: 700; font-size: 12px; cursor: pointer; }
 .gd-tabs button[aria-pressed="true"] { background: var(--violet); border-color: var(--violet); color: #fff; }
@@ -731,6 +734,8 @@ a.chip { text-decoration: none; }
     </div>
   </form>
 </dialog>
+
+<div id="dToast" class="dtoast" role="status" aria-live="polite"></div>
 
 <dialog class="sheet guide" id="guideDlg">
   <div class="gd-tabs" id="gdTabs"><button type="button" data-gt="passos" aria-pressed="true">Passo a passo</button><button type="button" data-gt="videos" aria-pressed="false">Vídeos</button></div>
@@ -1296,6 +1301,13 @@ a.chip { text-decoration: none; }
   }
   const fullDate = ms => new Intl.DateTimeFormat('pt-PT', { timeZone: TZ, weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(ms));
 
+  // ---------- aviso rapido no topo (email enviado, etc.) ----------
+  let dToastT = null;
+  function toastNote(msg, bad) {
+    const t = $('#dToast'); t.textContent = msg; t.classList.toggle('bad', !!bad); t.classList.add('show');
+    clearTimeout(dToastT); dToastT = setTimeout(() => t.classList.remove('show'), bad ? 5000 : 3500);
+  }
+
   // ---------- guia de utilizacao ----------
   // Passo a passo para quem trabalha leads (Prospecção + Agenda). Abre sozinho no primeiro acesso e fica no botão Guia.
   const GUIDE = () => [
@@ -1823,6 +1835,7 @@ a.chip { text-decoration: none; }
     $('#mSend').disabled = true; $('#mErr').textContent = ''; $('#mSend').textContent = 'A enviar…';
     try {
       await hubPost({ action: 'email_send', mb, to, subject, text, reply_ext: sameThread ? mReplyExt : '' });
+      toastNote('Email enviado para ' + to);
       $('#mText').value = '';
       await loadMail(true);
       const key = mb + '|' + to;
@@ -1830,6 +1843,7 @@ a.chip { text-decoration: none; }
     } catch (err) {
       if (err.code === 401) return logout('O código deixou de ser válido. Entre outra vez.');
       $('#mErr').textContent = err.message;
+      toastNote('Email não enviado: ' + err.message, true);
     } finally { $('#mSend').disabled = false; $('#mSend').textContent = 'Enviar email'; }
   });
 
