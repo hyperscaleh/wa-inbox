@@ -310,10 +310,10 @@ dialog.sheet select { width: 100%; padding: 12px 14px; border: 1px solid var(--l
 .pf input[type="search"] { grid-column: 1 / -1; }
 .pf-chk { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); font-weight: 600; }
 .pf-chk input { accent-color: var(--violet); width: 16px; height: 16px; }
-#prTabs { flex-wrap: wrap; gap: 6px; padding: 0 16px 12px; overflow: visible; }
-#prTabs .tab { padding: 6px 11px; border: 1px solid var(--line); border-radius: 999px; font-size: 10.5px; letter-spacing: 0.03em; background: var(--card); }
-#prTabs .tab[aria-pressed="true"] { background: var(--violet-soft); border-color: transparent; color: var(--violet); }
-#prTabs .tab[aria-pressed="true"]::after { display: none; }
+#prTabs, #mlTabs { flex-wrap: wrap; gap: 6px; padding: 0 16px 12px; overflow: visible; }
+#prTabs .tab, #mlTabs .tab { padding: 6px 11px; border: 1px solid var(--line); border-radius: 999px; font-size: 10.5px; letter-spacing: 0.03em; background: var(--card); }
+#prTabs .tab[aria-pressed="true"], #mlTabs .tab[aria-pressed="true"] { background: var(--violet-soft); border-color: transparent; color: var(--violet); }
+#prTabs .tab[aria-pressed="true"]::after, #mlTabs .tab[aria-pressed="true"]::after { display: none; }
 .pr-sum { padding: 0 12px 8px; font-size: 12px; color: var(--ink); line-height: 1.5; }
 .pr-sum b { font-weight: 800; }
 .row .l3 { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; margin-top: 2px; }
@@ -626,7 +626,7 @@ a.chip { text-decoration: none; }
     </section>
 
     <!-- ===== LEADS META (so super admins) ===== -->
-    <aside class="side" data-view="metaleads" hidden style="grid-template-rows:auto auto 1fr">
+    <aside class="side" data-view="metaleads" hidden style="grid-template-rows:auto auto auto 1fr">
       <div class="me">
         <div class="av brand">IS</div>
         <div class="who"><b>Leads Meta</b><span id="mlWho">Formulário Indico Development</span></div>
@@ -635,6 +635,7 @@ a.chip { text-decoration: none; }
         </button>
       </div>
       <div class="pf"><input id="mlQ" type="search" placeholder="Procurar por nome, email, número ou serviço" autocomplete="off"></div>
+      <div class="tabs" id="mlTabs" role="toolbar" aria-label="Estados dos leads Meta"></div>
       <div class="rows" id="mlRows"><div class="empty">A carregar leads…</div></div>
     </aside>
     <section class="thread" data-view="metaleads" hidden style="grid-template-rows:auto 1fr">
@@ -2409,7 +2410,11 @@ a.chip { text-decoration: none; }
   // LEADS META: respostas do formulario da campanha (so super admins; o servidor tambem recusa os outros)
   // =====================================================================
   const ML = 'https://backend.automationbig8agency.com/webhook/indicostay-leads-meta-api';
-  let mlItems = [], mlSel = null, mlQ = '', mlSeq = 0, mlLoadedAt = 0, mlKnown = null;
+  let mlItems = [], mlSel = null, mlQ = '', mlSeq = 0, mlLoadedAt = 0, mlKnown = null, mlTab = 'todos', mlBusy = false;
+  // Estados que se escolhem no painel (o valor e o do Notion). Os outros estados do Notion aparecem so em "Todos".
+  const MLST = [['CREATED', 'Novo', 'confirm'], ['CONTACTED', 'Contactado', ''], ['FOLLOW UP', 'Follow up', 'confirm'], ['MEETING BOOKED', 'Reunião marcada', 'meeting'], ['WON', 'Ganho', 'done'], ['LOST', 'Perdido', 'missed']];
+  const mlLabel = e => (MLST.find(x => x[0] === e) || [e, String(e || '').toLowerCase(), ''])[1];
+  const mlCls = e => (MLST.find(x => x[0] === e) || ['', '', ''])[2];
   const mlDigits = v => String(v || '').replace(/\D/g, '');
   const mlWhen = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString('pt-PT', { timeZone: 'Africa/Maputo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); };
   async function mlLoad(quiet) {
@@ -2434,25 +2439,33 @@ a.chip { text-decoration: none; }
   }
   function renderMlRows() {
     const q = mlQ.trim().toLowerCase(), qd = mlDigits(mlQ);
-    const list = !q ? mlItems : mlItems.filter(l => [l.nome, l.email, l.servico, l.local, l.telefone].join(' ').toLowerCase().includes(q) || (qd.length >= 3 && mlDigits(l.telefone).includes(qd)));
+    const cnt = e => mlItems.filter(l => l.estado === e).length;
+    $('#mlTabs').innerHTML = `<button class="tab" data-f="todos" aria-pressed="${mlTab === 'todos'}">Todos ${mlItems.length}</button>` + MLST.map(x => `<button class="tab" data-f="${esc(x[0])}" aria-pressed="${mlTab === x[0]}">${esc(x[1])} ${cnt(x[0])}</button>`).join('');
+    const base = mlTab === 'todos' ? mlItems : mlItems.filter(l => l.estado === mlTab);
+    const list = !q ? base : base.filter(l => [l.nome, l.email, l.servico, l.local, l.telefone].join(' ').toLowerCase().includes(q) || (qd.length >= 3 && mlDigits(l.telefone).includes(qd)));
     const head = `<div class="pr-count">${list.length} lead${list.length === 1 ? '' : 's'}${q ? ' encontrado' + (list.length === 1 ? '' : 's') : ''}</div>`;
     const rows = list.map(l => `<button class="row" data-mlid="${esc(l.id)}" aria-current="${!!mlSel && mlSel.id === l.id}">
         ${avatarFor(l.nome, 'ml' + l.id)}
         <span class="txt">
           <span class="l1"><span class="name">${esc(l.nome)}</span><span class="when">${esc(mlWhen(l.criado))}</span></span>
           <span class="l2"><span class="last mono">${esc(l.telefone || 'sem telefone')}</span></span>
-          <span class="l3">${l.estado === 'CREATED' ? '<span class="tag confirm">ligar já</span>' : `<span class="tag">${esc(l.estado.toLowerCase())}</span>`}${l.servico ? `<span class="tag">${esc(l.servico.slice(0, 40))}</span>` : ''}</span>
+          <span class="l3">${l.estado === 'CREATED' ? '<span class="tag confirm">ligar já</span>' : `<span class="tag ${mlCls(l.estado)}">${esc(mlLabel(l.estado))}</span>`}${l.servico ? `<span class="tag">${esc(l.servico.slice(0, 40))}</span>` : ''}</span>
         </span></button>`).join('');
-    $('#mlRows').innerHTML = head + (rows || '<div class="empty">Ainda não há leads do formulário. Quando alguém responder, aparece aqui em cerca de 1 minuto.</div>');
+    $('#mlRows').innerHTML = head + (rows || `<div class="empty">${mlItems.length ? 'Nenhum lead neste estado.' : 'Ainda não há leads do formulário. Quando alguém responder, aparece aqui em cerca de 1 minuto.'}</div>`);
   }
   function renderMlDetail() {
     const l = mlSel; if (!l) return;
     $('#mlTitle').textContent = l.nome;
-    $('#mlSub').innerHTML = `${esc(mlWhen(l.criado))} <span class="tag ${l.estado === 'CREATED' ? 'confirm' : ''}">${esc(l.estado.toLowerCase())}</span>`;
+    $('#mlSub').innerHTML = `${esc(mlWhen(l.criado))} <span class="tag ${mlCls(l.estado)}">${esc(mlLabel(l.estado))}</span>`;
     const fact = (k, v) => `<div class="fact"><span>${esc(k)}</span><b style="word-break:break-word">${v ? esc(v) : '<i style="opacity:.5">sem resposta</i>'}</b></div>`;
     const dTel = mlDigits(l.telefone) ? '+' + mlDigits(l.telefone) : '';
     const waNum = mlDigits(l.telefone);
     $('#mlBody').innerHTML = `
+      <div class="cardx">
+        <h4>Estado do lead</h4>
+        <div class="pr-actions" id="mlStatus" style="display:flex;flex-wrap:wrap;gap:8px">${MLST.map(x => `<button class="chip" type="button" data-st="${esc(x[0])}" aria-pressed="${l.estado === x[0]}" ${mlBusy ? 'disabled' : ''}>${esc(x[1])}</button>`).join('')}</div>
+        <p class="pr-note" style="margin:8px 0 0">Muda também no Notion.</p>
+      </div>
       <div class="cardx">
         <h4>Contacto</h4>
         ${dTel ? `<div class="pr-phone">${esc(dTel)}</div>` : '<p class="pr-note">Este lead não deixou telefone.</p>'}
@@ -2480,6 +2493,25 @@ a.chip { text-decoration: none; }
       </div>`;
   }
   $('#mlRows').addEventListener('click', e => { const r = e.target.closest('.row'); if (!r) return; const l = mlItems.find(x => x.id === r.dataset.mlid); if (l) { mlSel = l; renderMlDetail(); renderMlRows(); document.body.classList.add('chat-open'); } });
+  $('#mlTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) { mlTab = t.dataset.f; renderMlRows(); } });
+  $('#mlBody').addEventListener('click', async e => {
+    const b = e.target.closest('[data-st]'); if (!b || !mlSel || mlBusy) return;
+    const estado = b.dataset.st, id = mlSel.id, antes = mlSel.estado;
+    if (estado === antes) return;
+    mlBusy = true; mlSel.estado = estado; renderMlDetail(); renderMlRows();
+    try {
+      const r = await fetch(ML, { method: 'POST', headers: { 'content-type': 'application/json', 'x-inbox-token': token }, body: JSON.stringify({ action: 'status', id, estado }) });
+      let d = {}; try { d = await r.json(); } catch (er) {}
+      if (!r.ok || d.ok === false) throw new Error(d.error || ('HTTP ' + r.status));
+    } catch (er) {
+      const l = mlItems.find(x => x.id === id); if (l) l.estado = antes;
+      mlBusy = false; renderMlDetail(); renderMlRows();
+      alert('Não foi possível guardar o estado (' + er.message + '). Tente outra vez.');
+      return;
+    }
+    mlBusy = false; renderMlDetail(); renderMlRows();
+    $('#rbMeta').textContent = mlItems.filter(l => l.estado === 'CREATED').length || '';
+  });
   $('#mlQ').addEventListener('input', e => { mlQ = e.target.value; renderMlRows(); });
   $('#mlReload').addEventListener('click', () => mlLoad());
   setInterval(() => { if (ME && isAdmin() && document.visibilityState === 'visible') mlLoad(true); }, 60000);
