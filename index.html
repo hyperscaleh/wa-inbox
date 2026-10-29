@@ -463,6 +463,10 @@ a.chip { text-decoration: none; }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
         Agenda<span class="rb" id="rbAg"></span>
       </button>
+      <button class="rbtn" data-view="metaleads" aria-pressed="false" type="button" hidden title="Leads do formulário Meta (só Dellon e Keano)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5z"/></svg>
+        Leads Meta<span class="rb" id="rbMeta"></span>
+      </button>
       <button class="rbtn" id="guideBtn" type="button" hidden title="Guia: como usar o painel">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4.2"/><path d="M12 17.5h.01"/></svg>
         Guia
@@ -618,6 +622,28 @@ a.chip { text-decoration: none; }
       </div>
       <div class="pane-body" id="prBody">
         <div class="welcome"><div class="av lg brand">IS</div><h3>Escolha um alojamento</h3><p>Os leads vêm do Notion (Mass Outreach). Ligue, registe o resultado e, se aceitarem, marque a reunião daqui mesmo. O Notion atualiza sozinho.</p></div>
+      </div>
+    </section>
+
+    <!-- ===== LEADS META (so super admins) ===== -->
+    <aside class="side" data-view="metaleads" hidden style="grid-template-rows:auto auto 1fr">
+      <div class="me">
+        <div class="av brand">IS</div>
+        <div class="who"><b>Leads Meta</b><span id="mlWho">Formulário Indico Development</span></div>
+        <button class="icon-btn" id="mlReload" type="button" title="Atualizar agora" aria-label="Atualizar leads">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>
+        </button>
+      </div>
+      <div class="pf"><input id="mlQ" type="search" placeholder="Procurar por nome, email, número ou serviço" autocomplete="off"></div>
+      <div class="rows" id="mlRows"><div class="empty">A carregar leads…</div></div>
+    </aside>
+    <section class="thread" data-view="metaleads" hidden style="grid-template-rows:auto 1fr">
+      <div class="thead">
+        <button class="icon-btn back" data-back type="button" aria-label="Voltar à lista"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+        <div class="who"><h2><span class="nm" id="mlTitle">Escolha um lead</span></h2><div class="sub" id="mlSub"></div></div>
+      </div>
+      <div class="pane-body" id="mlBody">
+        <div class="welcome"><div class="av lg brand">IS</div><h3>Escolha um lead</h3><p>Cada pessoa que responde ao formulário da campanha Meta aparece aqui, com as respostas dela, para ligar de imediato. Esta área só é visível para o Dellon e o Keano.</p></div>
       </div>
     </section>
 
@@ -1152,7 +1178,7 @@ a.chip { text-decoration: none; }
   function applyAccess() {
     document.querySelectorAll('#rail .rbtn').forEach(b => {
       const v = b.dataset.view;
-      b.hidden = v === 'team' ? !isAdmin() : v === 'agenda' ? !(can('agenda') || isAdmin()) : v === 'prosp' ? !(isAdmin() || (can('agenda') && (ME.zonas || []).length > 0)) : !can(v === 'mail' ? 'mail' : v);
+      b.hidden = v === 'team' || v === 'metaleads' ? !isAdmin() : v === 'agenda' ? !(can('agenda') || isAdmin()) : v === 'prosp' ? !(isAdmin() || (can('agenda') && (ME.zonas || []).length > 0)) : !can(v === 'mail' ? 'mail' : v);
     });
     $('#waDial').hidden = !can('calls');
     $('#guideBtn').hidden = !(isAdmin() || (can('agenda') && (ME.zonas || []).length));
@@ -1352,8 +1378,8 @@ a.chip { text-decoration: none; }
   // ---------- vistas ----------
   let view = 'wa';
   function setView(v) {
-    const ok = x => x === 'team' ? isAdmin() : x === 'agenda' ? (can('agenda') || isAdmin()) : x === 'prosp' ? (isAdmin() || (can('agenda') && !!(ME && (ME.zonas || []).length))) : can(x);
-    if (!['wa', 'calls', 'mail', 'prosp', 'agenda', 'team'].includes(v) || !ok(v)) v = ['wa', 'calls', 'mail', 'prosp', 'agenda', 'team'].find(ok) || 'wa';
+    const ok = x => x === 'team' || x === 'metaleads' ? isAdmin() : x === 'agenda' ? (can('agenda') || isAdmin()) : x === 'prosp' ? (isAdmin() || (can('agenda') && !!(ME && (ME.zonas || []).length))) : can(x);
+    if (!['wa', 'calls', 'mail', 'prosp', 'agenda', 'metaleads', 'team'].includes(v) || !ok(v)) v = ['wa', 'calls', 'mail', 'prosp', 'agenda', 'metaleads', 'team'].find(ok) || 'wa';
     view = v;
     document.querySelectorAll('[data-view]').forEach(el => {
       if (el.classList.contains('rbtn')) el.setAttribute('aria-pressed', String(el.dataset.view === v));
@@ -1364,6 +1390,7 @@ a.chip { text-decoration: none; }
     if (v === 'calls') loadCalls(true);
     if (v === 'mail') loadMail(true);
     if (v === 'team') loadTeam();
+    if (v === 'metaleads') mlLoad();
     if (v === 'prosp') { if (!prLoaded) prLoad(); else renderPrRows(); }
     if (v === 'agenda') {
       if (agJump) {
@@ -2378,6 +2405,85 @@ a.chip { text-decoration: none; }
     const vazio = prBusca ? 'Nada encontrado. Tente outro nome, email ou número (pode escrever só parte).' : (PREMPTY[prTab] || '');
     $('#prRows').innerHTML = head + (meetRows ? '<div class="pr-sec">Reuniões' + (prBusca ? '' : ' de hoje') + '</div>' + meetRows : '') + ((prBusca || showHoje) && leadRows ? '<div class="pr-sec">Leads do Notion</div>' : '') + leadRows + (!meetRows && !leadRows ? `<div class="empty">${esc(vazio)}</div>` : '');
   }
+  // =====================================================================
+  // LEADS META: respostas do formulario da campanha (so super admins; o servidor tambem recusa os outros)
+  // =====================================================================
+  const ML = 'https://backend.automationbig8agency.com/webhook/indicostay-leads-meta-api';
+  let mlItems = [], mlSel = null, mlQ = '', mlSeq = 0, mlLoadedAt = 0, mlKnown = null;
+  const mlDigits = v => String(v || '').replace(/\D/g, '');
+  const mlWhen = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString('pt-PT', { timeZone: 'Africa/Maputo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); };
+  async function mlLoad(quiet) {
+    if (!isAdmin()) return;
+    const seq = ++mlSeq;
+    if (!quiet) $('#mlRows').innerHTML = '<div class="empty">A carregar leads…</div>';
+    try {
+      const r = await fetch(ML, { headers: { 'x-inbox-token': token }, cache: 'no-store' });
+      let d = {}; try { d = await r.json(); } catch (e) {}
+      if (r.status === 401) { if (quiet) return; return $('#mlRows').innerHTML = '<div class="empty">Sem permissão. Esta área é só para super admins.</div>'; }
+      if (!r.ok || d.ok === false) throw new Error(d.error || ('HTTP ' + r.status));
+      if (seq !== mlSeq) return;
+      mlItems = d.items || []; mlLoadedAt = Date.now();
+      if (mlSel) mlSel = mlItems.find(x => x.id === mlSel.id) || mlSel;
+      const nNovos = mlItems.filter(l => l.estado === 'CREATED').length;
+      $('#rbMeta').textContent = nNovos ? String(nNovos) : '';
+      renderMlRows();
+      if (mlSel && view === 'metaleads') renderMlDetail();
+    } catch (e) {
+      if (!quiet && seq === mlSeq) $('#mlRows').innerHTML = `<div class="empty">Não foi possível ler os leads (${esc(e.message)}). Tente atualizar.</div>`;
+    }
+  }
+  function renderMlRows() {
+    const q = mlQ.trim().toLowerCase(), qd = mlDigits(mlQ);
+    const list = !q ? mlItems : mlItems.filter(l => [l.nome, l.email, l.servico, l.local, l.telefone].join(' ').toLowerCase().includes(q) || (qd.length >= 3 && mlDigits(l.telefone).includes(qd)));
+    const head = `<div class="pr-count">${list.length} lead${list.length === 1 ? '' : 's'}${q ? ' encontrado' + (list.length === 1 ? '' : 's') : ''}</div>`;
+    const rows = list.map(l => `<button class="row" data-mlid="${esc(l.id)}" aria-current="${!!mlSel && mlSel.id === l.id}">
+        ${avatarFor(l.nome, 'ml' + l.id)}
+        <span class="txt">
+          <span class="l1"><span class="name">${esc(l.nome)}</span><span class="when">${esc(mlWhen(l.criado))}</span></span>
+          <span class="l2"><span class="last mono">${esc(l.telefone || 'sem telefone')}</span></span>
+          <span class="l3">${l.estado === 'CREATED' ? '<span class="tag confirm">ligar já</span>' : `<span class="tag">${esc(l.estado.toLowerCase())}</span>`}${l.servico ? `<span class="tag">${esc(l.servico.slice(0, 40))}</span>` : ''}</span>
+        </span></button>`).join('');
+    $('#mlRows').innerHTML = head + (rows || '<div class="empty">Ainda não há leads do formulário. Quando alguém responder, aparece aqui em cerca de 1 minuto.</div>');
+  }
+  function renderMlDetail() {
+    const l = mlSel; if (!l) return;
+    $('#mlTitle').textContent = l.nome;
+    $('#mlSub').innerHTML = `${esc(mlWhen(l.criado))} <span class="tag ${l.estado === 'CREATED' ? 'confirm' : ''}">${esc(l.estado.toLowerCase())}</span>`;
+    const fact = (k, v) => `<div class="fact"><span>${esc(k)}</span><b style="word-break:break-word">${v ? esc(v) : '<i style="opacity:.5">sem resposta</i>'}</b></div>`;
+    const dTel = mlDigits(l.telefone) ? '+' + mlDigits(l.telefone) : '';
+    const waNum = mlDigits(l.telefone);
+    $('#mlBody').innerHTML = `
+      <div class="cardx">
+        <h4>Contacto</h4>
+        ${dTel ? `<div class="pr-phone">${esc(dTel)}</div>` : '<p class="pr-note">Este lead não deixou telefone.</p>'}
+        <div class="pr-actions" style="display:flex;flex-wrap:wrap;gap:8px">
+          ${dTel ? `<a class="btn" href="tel:${esc(dTel)}">Ligar</a><a class="chip" href="https://wa.me/${esc(waNum)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
+          ${l.email ? `<a class="chip" href="mailto:${esc(l.email)}">${esc(l.email)}</a>` : ''}
+        </div>
+      </div>
+      <div class="cardx">
+        <h4>Respostas do cliente</h4>
+        <div style="display:grid;gap:8px">
+          ${fact('De que serviço precisa', l.servico)}
+          ${fact('Quando gostaria de iniciar o projecto', l.inicio)}
+          ${fact('Orçamento previsto', l.orcamento)}
+          ${fact('Orçamento mínimo de 100.000 MZN está dentro do orçamento', l.minimo_ok)}
+          ${fact('Onde está localizado o projecto', l.local)}
+        </div>
+      </div>
+      <div class="cardx">
+        <h4>Origem</h4>
+        <div style="display:grid;gap:8px">
+          ${fact('Campanha', l.campanha)}${fact('Anúncio', l.anuncio)}${fact('Formulário', l.formulario)}
+        </div>
+        ${l.url ? `<p class="pr-note" style="margin-top:10px"><a class="chip" href="${esc(l.url)}" target="_blank" rel="noopener">Abrir no Notion</a></p>` : ''}
+      </div>`;
+  }
+  $('#mlRows').addEventListener('click', e => { const r = e.target.closest('.row'); if (!r) return; const l = mlItems.find(x => x.id === r.dataset.mlid); if (l) { mlSel = l; renderMlDetail(); renderMlRows(); document.body.classList.add('chat-open'); } });
+  $('#mlQ').addEventListener('input', e => { mlQ = e.target.value; renderMlRows(); });
+  $('#mlReload').addEventListener('click', () => mlLoad());
+  setInterval(() => { if (ME && isAdmin() && document.visibilityState === 'visible') mlLoad(true); }, 60000);
+
   // Abre a Agenda diretamente no detalhe de uma reuniao (para reagendar ou cancelar).
   function agGoto(id) { agJump = id; setView('agenda'); document.body.classList.add('chat-open'); }
 
