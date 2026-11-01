@@ -1992,7 +1992,7 @@ a.chip { text-decoration: none; }
     return d;
   }
   const AGT = { anfitriao: 'Anfitrião', coanfitriao: 'Co-anfitrião', influencer: 'Influencer', bloqueio: 'Bloqueio', outro: 'Outro' };
-  let agResEmail = '', agDetTpl = null, agDetSig = '', agDayInit = false, agNotify = true, agLead = null, agJump = 0, agPinId = 0;
+  let agResEmail = '', agDetTpl = null, agDetSig = '', agDayInit = false, agNotify = true, agLead = null, agMeta = null, agJump = 0, agPinId = 0;
   let agItems = [], agDias = [], agTab = null, agMode = 'form', agSelId = null, agTipo = 'anfitriao', agDay = 0, agSel = null, agBusy = false;
   let agForm = { instancia: '', contacto: '', tratamento: '', email: '', telefone: '', nota: '' };
   // Influencer: Influenciador/Influenciadora. Anfitriao e co-anfitriao: Dr./Dra.
@@ -2057,6 +2057,7 @@ a.chip { text-decoration: none; }
     $('#agTitle').textContent = 'Nova reunião';
     $('#agSub').textContent = 'Escolha o tipo, preencha os dados e um horário livre. O convite e o email seguem logo.';
     $('#agBody').innerHTML = `<form class="ag-form" id="agForm" autocomplete="off">
+      ${agMeta ? `<div class="dial-ok" style="margin:0">Lead Meta: <b>${esc(agMeta.nome)}</b>. Ao marcar, o estado passa para <b>Reunião marcada</b>. <button type="button" class="ghost-btn" id="agUnlinkMeta" style="margin-left:8px;padding:5px 10px">Desligar</button></div>` : ''}
       ${agLead ? `<div class="dial-ok" style="margin:0">Lead do Notion: <b>${esc(agLead.nome)}</b>. Ao marcar, o estado passa para <b>Demo booked</b> no Notion. <button type="button" class="ghost-btn" id="agUnlink" style="margin-left:8px;padding:5px 10px">Desligar</button></div>` : ''}
       <div class="cardx"><h4>Tipo de parceiro</h4>
         <div class="chips types" id="agTipos">${['anfitriao', 'coanfitriao', 'influencer', 'outro'].map(k => `<button type="button" class="chip" data-tipo="${k}" aria-pressed="${agTipo === k}">${AGT[k]}</button>`).join('')}</div>
@@ -2071,6 +2072,7 @@ a.chip { text-decoration: none; }
           <label class="fl">Email<input id="agEmail" type="email" required value="${esc(agForm.email)}" placeholder="nome@gmail.com"></label>
           <label class="fl">Telefone (opcional, para o SMS)<input id="agTel" type="tel" value="${esc(agForm.telefone)}" placeholder="84 123 4567"></label>
         </div>
+        <label class="fl">Outros emails para receber o convite (opcional)<input id="agCc" type="text" value="${esc(agForm.cc || '')}" placeholder="colega@empresa.com, outro@empresa.com" autocapitalize="off" spellcheck="false"><small style="text-transform:none;letter-spacing:0;font-weight:500">Separe por vírgula. Recebem o convite do Google Meet e o email de confirmação, como colegas da pessoa.</small></label>
         <label class="fl" style="margin-bottom:0">Nota interna (opcional)<textarea id="agNota" maxlength="500" placeholder="Ex.: prefere de manhã, dono do alojamento">${esc(agForm.nota)}</textarea></label>
       </div>
       <div class="cardx"><h4>Horário livre <span style="text-transform:none;letter-spacing:0;font-weight:600">(hora de Maputo, 30 min)</span></h4>
@@ -2157,7 +2159,7 @@ a.chip { text-decoration: none; }
   function updateAgSum() {
     const el = $('#agSum'); if (!el) return;
     const t = { anfitriao: 'anfitrião', coanfitriao: 'co-anfitrião', influencer: 'influencer', outro: 'contacto' }[agTipo];
-    el.innerHTML = agSel ? `Reunião de <b>${esc(t)}</b> em <b>${esc(fullDate(Date.parse(agSel)))}</b>. O convite do Google Meet e o email acima seguem para ${esc(agForm.email || 'o email indicado')}, com cópia para si e para o Keano. SMS 30 min antes: ${agForm.telefone ? 'sim, para ' + esc(agForm.telefone) : 'não (sem telefone)'}.` : 'Escolha um horário acima.';
+    el.innerHTML = agSel ? `Reunião de <b>${esc(t)}</b> em <b>${esc(fullDate(Date.parse(agSel)))}</b>. O convite do Google Meet e o email acima seguem para ${esc([agForm.email || 'o email indicado'].concat((agForm.cc || '').split(/[\s,;]+/).filter(Boolean)).join(', '))}, com cópia para si e para o Keano. SMS 30 min antes: ${agForm.telefone ? 'sim, para ' + esc(agForm.telefone) : 'não (sem telefone)'}.` : 'Escolha um horário acima.';
   }
 
   function renderAgDetail() {
@@ -2210,7 +2212,7 @@ a.chip { text-decoration: none; }
   }
 
   // eventos
-  $('#agNew').addEventListener('click', () => { agLead = null; agPinId = 0; renderAgForm(); renderAgList(); document.body.classList.add('chat-open'); });
+  $('#agNew').addEventListener('click', () => { agLead = null; agMeta = null; agPinId = 0; renderAgForm(); renderAgList(); document.body.classList.add('chat-open'); });
   $('#agReload').addEventListener('click', () => loadAgenda());
   $('#agTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) { agTab = t.dataset.f; renderAgList(); } });
   $('#agRows').addEventListener('click', e => {
@@ -2218,9 +2220,9 @@ a.chip { text-decoration: none; }
     agSelId = Number(r.dataset.agid); agResEmail = ''; agPinId = 0; agMode = 'detail'; agDetTpl = null; agDetSig = ''; agNotify = true; renderAgDetail(); renderAgList(); document.body.classList.add('chat-open');
   });
   $('#agBody').addEventListener('input', e => {
-    const map = { agInst: 'instancia', agCont: 'contacto', agTrat: 'tratamento', agEmail: 'email', agTel: 'telefone', agNota: 'nota' };
+    const map = { agInst: 'instancia', agCont: 'contacto', agTrat: 'tratamento', agEmail: 'email', agTel: 'telefone', agNota: 'nota', agCc: 'cc' };
     if (e.target.id === 'agResEmail') { agResEmail = e.target.value; return; }
-    if (map[e.target.id]) { agForm[map[e.target.id]] = e.target.value; updateAgSum(); if (e.target.id !== 'agTel' && e.target.id !== 'agNota') agFormPreview(); }
+    if (map[e.target.id]) { agForm[map[e.target.id]] = e.target.value; updateAgSum(); if (e.target.id !== 'agTel' && e.target.id !== 'agNota' && e.target.id !== 'agCc') agFormPreview(); }
   });
   $('#agBody').addEventListener('click', async e => {
     const tipo = e.target.closest('[data-tipo]');
@@ -2239,6 +2241,7 @@ a.chip { text-decoration: none; }
     if (tp) { agDetTpl = tp.dataset.tpl; agDetSig = ''; renderAgDetail(); return; }
     if (e.target.id === 'bkGo') return blockSlot();
     if (e.target.id === 'agUnlink') { agLead = null; renderAgForm(); return; }
+    if (e.target.id === 'agUnlinkMeta') { agMeta = null; renderAgForm(); return; }
     const act = e.target.closest('[data-act]');
     if (act && !agBusy) return detailAction(act.dataset.act, act);
   });
@@ -2252,9 +2255,10 @@ a.chip { text-decoration: none; }
     if (!agSel) { $('#agErr').textContent = 'Escolha um horário livre.'; return; }
     agBusy = true; $('#agGo').disabled = true; $('#agGo').textContent = 'A marcar…'; $('#agErr').textContent = ''; $('#agOk').innerHTML = '';
     try {
-      const r = await ag('book', { tipo: agTipo, instancia: agForm.instancia, contacto: agForm.contacto, tratamento: agForm.tratamento, email: agForm.email, telefone: agForm.telefone, nota: agForm.nota, iso: agSel, lead_id: agLead ? agLead.id : '' });
+      const r = await ag('book', { tipo: agTipo, instancia: agForm.instancia, contacto: agForm.contacto, tratamento: agForm.tratamento, email: agForm.email, telefone: agForm.telefone, nota: agForm.nota, cc: agForm.cc || '', iso: agSel, lead_id: agLead ? agLead.id : '' });
       const okMsg = `Reunião marcada para ${esc(r.quando)}. ${r.email === 'enviado' ? 'Convite e email de confirmação enviados.' : '<b>O convite seguiu, mas o email falhou: envie a confirmação à mão.</b>'}${r.meet ? ' <a href="' + esc(r.meet) + '" target="_blank" rel="noopener">Abrir Meet</a>' : ''}`;
-      agForm = { instancia: '', contacto: '', tratamento: '', email: '', telefone: '', nota: '' }; agSel = null; agLead = null; prLoaded = false;
+      const metaDone = agMeta; agForm = { instancia: '', contacto: '', tratamento: '', email: '', telefone: '', nota: '' }; agSel = null; agLead = null; agMeta = null; prLoaded = false;
+      if (metaDone) mlMarkBooked(metaDone.id);
       renderAgForm(); $('#agOk').innerHTML = `<div class="dial-ok">${okMsg}</div>`;
       loadAgenda();
     } catch (err) {
@@ -2278,7 +2282,7 @@ a.chip { text-decoration: none; }
     const m = agItems.find(x => x.id === agSelId); if (!m) return;
     if (act === 'rebook') {
       agForm = { instancia: m.instancia || '', contacto: m.contacto || '', tratamento: m.tratamento || '', email: m.email || '', telefone: m.telefone || '', nota: '' };
-      agTipo = m.tipo; agSel = null; renderAgForm(); renderAgList(); return;
+      agTipo = m.tipo; agSel = null; agMeta = null; renderAgForm(); renderAgList(); return;
     }
     const avisar = agNotify && !!m.email && m.tipo !== 'bloqueio';
     if (act === 'cancel' && !confirm(m.tipo === 'bloqueio' ? 'Remover este bloqueio?' : avisar ? `Cancelar a reunião com ${m.instancia} e avisar por email ${m.email}?` : `Cancelar a reunião com ${m.instancia} SEM avisar a pessoa?`)) return;
@@ -2410,13 +2414,40 @@ a.chip { text-decoration: none; }
   // LEADS META: respostas do formulario da campanha (so super admins; o servidor tambem recusa os outros)
   // =====================================================================
   const ML = 'https://backend.automationbig8agency.com/webhook/indicostay-leads-meta-api';
-  let mlItems = [], mlSel = null, mlQ = '', mlSeq = 0, mlLoadedAt = 0, mlKnown = null, mlTab = 'todos', mlBusy = false;
+  let mlItems = [], mlSel = null, mlQ = '', mlSeq = 0, mlLoadedAt = 0, mlKnown = null, mlTab = 'todos', mlBusy = false, mlFuBusy = false;
   // Estados que se escolhem no painel (o valor e o do Notion). Os outros estados do Notion aparecem so em "Todos".
-  const MLST = [['CREATED', 'Novo', 'confirm'], ['CONTACTED', 'Contactado', ''], ['FOLLOW UP', 'Follow up', 'confirm'], ['MEETING BOOKED', 'Reunião marcada', 'meeting'], ['WON', 'Ganho', 'done'], ['LOST', 'Perdido', 'missed']];
+  const MLST = [['CREATED', 'Novo', 'confirm'], ['CONTACTED', 'Contactado', ''], ['FOLLOW UP', 'Follow up', 'confirm'], ['MEETING BOOKED', 'Reunião marcada', 'meeting'], ['WON', 'Ganho', 'done'], ['LOST', 'Perdido', 'missed'], ['NOT QUALIFIED', 'Não qualificado', '']];
   const mlLabel = e => (MLST.find(x => x[0] === e) || [e, String(e || '').toLowerCase(), ''])[1];
   const mlCls = e => (MLST.find(x => x[0] === e) || ['', '', ''])[2];
   const mlDigits = v => String(v || '').replace(/\D/g, '');
   const mlWhen = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString('pt-PT', { timeZone: 'Africa/Maputo', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }); };
+  // Follow up: data e hora (Maputo). 'Hoje' = follow ups de hoje ou atrasados, em leads ainda em aberto.
+  const mlToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Maputo' });
+  const mlFuDay = l => !l.followup ? '' : l.followup.includes('T') ? new Date(l.followup).toLocaleDateString('en-CA', { timeZone: 'Africa/Maputo' }) : l.followup;
+  const mlFuTime = l => l.followup && l.followup.includes('T') ? new Date(l.followup).toLocaleTimeString('pt-PT', { timeZone: 'Africa/Maputo', hour: '2-digit', minute: '2-digit' }) : '';
+  const mlOpen = l => !['WON', 'LOST', 'NOT QUALIFIED', 'MEETING BOOKED'].includes(l.estado);
+  const mlDue = l => !!l.followup && mlOpen(l) && mlFuDay(l) <= mlToday();
+  const mlFuLabel = l => { const d = mlFuDay(l), t = mlToday(); return (d === t ? 'hoje' : d < t ? 'atrasado ' + d.slice(8) + '/' + d.slice(5, 7) : d.slice(8) + '/' + d.slice(5, 7)) + (mlFuTime(l) ? ' ' + mlFuTime(l) : ''); };
+  async function mlPost(body) {
+    const r = await fetch(ML, { method: 'POST', headers: { 'content-type': 'application/json', 'x-inbox-token': token }, body: JSON.stringify(body) });
+    let d = {}; try { d = await r.json(); } catch (e) {}
+    if (!r.ok || d.ok === false) throw new Error(d.error || ('HTTP ' + r.status));
+    return d;
+  }
+  // Depois de marcar a reuniao na Agenda a partir de um lead Meta: passa o lead a Reunião marcada.
+  async function mlMarkBooked(id) {
+    const l = mlItems.find(x => x.id === id);
+    try { await mlPost({ action: 'status', id, estado: 'MEETING BOOKED' }); if (l) l.estado = 'MEETING BOOKED'; } catch (e) {}
+    $('#rbMeta').textContent = mlItems.filter(x => x.estado === 'CREATED').length || '';
+    if (view === 'metaleads') { renderMlRows(); if (mlSel) renderMlDetail(); }
+  }
+  // "Reunião marcada": abre logo a Agenda com nome, email e telefone do lead.
+  function mlBook(l) {
+    const nota = [l.servico, l.local].filter(Boolean).join(' · ').slice(0, 500);
+    agForm = { instancia: l.nome, contacto: '', tratamento: '', email: l.email || '', telefone: l.telefone || '', nota, cc: '' };
+    agTipo = 'outro'; agSel = null; agLead = null; agMeta = { id: l.id, nome: l.nome };
+    setView('agenda'); document.body.classList.add('chat-open');
+  }
   async function mlLoad(quiet) {
     if (!isAdmin()) return;
     const seq = ++mlSeq;
@@ -2440,8 +2471,9 @@ a.chip { text-decoration: none; }
   function renderMlRows() {
     const q = mlQ.trim().toLowerCase(), qd = mlDigits(mlQ);
     const cnt = e => mlItems.filter(l => l.estado === e).length;
-    $('#mlTabs').innerHTML = `<button class="tab" data-f="todos" aria-pressed="${mlTab === 'todos'}">Todos ${mlItems.length}</button>` + MLST.map(x => `<button class="tab" data-f="${esc(x[0])}" aria-pressed="${mlTab === x[0]}">${esc(x[1])} ${cnt(x[0])}</button>`).join('');
-    const base = mlTab === 'todos' ? mlItems : mlItems.filter(l => l.estado === mlTab);
+    const nHoje = mlItems.filter(mlDue).length, nSemWa = mlItems.filter(l => l.sem_whatsapp).length;
+    $('#mlTabs').innerHTML = `<button class="tab" data-f="hoje" aria-pressed="${mlTab === 'hoje'}">Follow up hoje ${nHoje}</button><button class="tab" data-f="todos" aria-pressed="${mlTab === 'todos'}">Todos ${mlItems.length}</button>` + MLST.map(x => `<button class="tab" data-f="${esc(x[0])}" aria-pressed="${mlTab === x[0]}">${esc(x[1])} ${cnt(x[0])}</button>`).join('') + `<button class="tab" data-f="sem_wa" aria-pressed="${mlTab === 'sem_wa'}">Sem WhatsApp ${nSemWa}</button>`;
+    let base = mlTab === 'todos' ? mlItems : mlTab === 'hoje' ? mlItems.filter(mlDue).sort((a, b) => a.followup.localeCompare(b.followup)) : mlTab === 'sem_wa' ? mlItems.filter(l => l.sem_whatsapp) : mlItems.filter(l => l.estado === mlTab);
     const list = !q ? base : base.filter(l => [l.nome, l.email, l.servico, l.local, l.telefone].join(' ').toLowerCase().includes(q) || (qd.length >= 3 && mlDigits(l.telefone).includes(qd)));
     const head = `<div class="pr-count">${list.length} lead${list.length === 1 ? '' : 's'}${q ? ' encontrado' + (list.length === 1 ? '' : 's') : ''}</div>`;
     const rows = list.map(l => `<button class="row" data-mlid="${esc(l.id)}" aria-current="${!!mlSel && mlSel.id === l.id}">
@@ -2449,7 +2481,7 @@ a.chip { text-decoration: none; }
         <span class="txt">
           <span class="l1"><span class="name">${esc(l.nome)}</span><span class="when">${esc(mlWhen(l.criado))}</span></span>
           <span class="l2"><span class="last mono">${esc(l.telefone || 'sem telefone')}</span></span>
-          <span class="l3">${l.estado === 'CREATED' ? '<span class="tag confirm">ligar já</span>' : `<span class="tag ${mlCls(l.estado)}">${esc(mlLabel(l.estado))}</span>`}${l.servico ? `<span class="tag">${esc(l.servico.slice(0, 40))}</span>` : ''}</span>
+          <span class="l3">${mlDue(l) ? `<span class="tag confirm">follow up ${esc(mlFuLabel(l))}</span>` : ''}${l.sem_whatsapp ? '<span class="tag missed">sem WhatsApp, ligar</span>' : ''}${l.estado === 'CREATED' ? '<span class="tag confirm">ligar já</span>' : `<span class="tag ${mlCls(l.estado)}">${esc(mlLabel(l.estado))}</span>`}${l.servico ? `<span class="tag">${esc(l.servico.slice(0, 40))}</span>` : ''}</span>
         </span></button>`).join('');
     $('#mlRows').innerHTML = head + (rows || `<div class="empty">${mlItems.length ? 'Nenhum lead neste estado.' : 'Ainda não há leads do formulário. Quando alguém responder, aparece aqui em cerca de 1 minuto.'}</div>`);
   }
@@ -2460,6 +2492,7 @@ a.chip { text-decoration: none; }
     const fact = (k, v) => `<div class="fact"><span>${esc(k)}</span><b style="word-break:break-word">${v ? esc(v) : '<i style="opacity:.5">sem resposta</i>'}</b></div>`;
     const dTel = mlDigits(l.telefone) ? '+' + mlDigits(l.telefone) : '';
     const waNum = mlDigits(l.telefone);
+    const fuVal = l.followup ? new Date(l.followup).toLocaleString('sv-SE', { timeZone: 'Africa/Maputo' }).slice(0, 16).replace(' ', 'T') : '';
     $('#mlBody').innerHTML = `
       <div class="cardx">
         <h4>Estado do lead</h4>
@@ -2470,9 +2503,24 @@ a.chip { text-decoration: none; }
         <h4>Contacto</h4>
         ${dTel ? `<div class="pr-phone">${esc(dTel)}</div>` : '<p class="pr-note">Este lead não deixou telefone.</p>'}
         <div class="pr-actions" style="display:flex;flex-wrap:wrap;gap:8px">
-          ${dTel ? `<a class="btn" href="tel:${esc(dTel)}">Ligar</a><a class="chip" href="https://wa.me/${esc(waNum)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
+          ${dTel ? `<a class="btn" href="tel:${esc(dTel)}">Ligar</a>${l.sem_whatsapp ? '' : `<a class="chip" href="https://wa.me/${esc(waNum)}" target="_blank" rel="noopener">WhatsApp</a>`}` : ''}
           ${l.email ? `<a class="chip" href="mailto:${esc(l.email)}">${esc(l.email)}</a>` : ''}
         </div>
+        <div class="pr-actions" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><button class="chip" type="button" data-nowa="${l.sem_whatsapp ? '0' : '1'}" aria-pressed="${!!l.sem_whatsapp}">Sem WhatsApp (ligar normalmente)</button></div>
+        ${l.sem_whatsapp ? '<p class="pr-note" style="margin:8px 0 0">Este lead não tem WhatsApp: ligue normalmente.</p>' : ''}
+      </div>
+      <div class="cardx">
+        <h4>Follow up</h4>
+        ${l.followup ? `<div class="dial-ok" style="margin:0 0 10px">${mlDue(l) ? '<b>Para fazer hoje:</b> ' : 'Marcado: '}<b>${esc(mlFuLabel(l))}</b></div>` : '<p class="pr-note" style="margin:0 0 10px">Sem follow up marcado.</p>'}
+        <div class="ag-form"><label class="fl" style="margin-bottom:10px">Data e hora (Maputo)<input id="mlFuIn" type="datetime-local" value="${esc(fuVal)}"></label></div>
+        <div class="pr-actions" style="display:flex;flex-wrap:wrap;gap:8px">
+          <button class="btn" type="button" data-fu="save" ${mlFuBusy ? 'disabled' : ''}>Guardar follow up</button>
+          <button class="chip" type="button" data-fu="tom">Amanhã 09:00</button>
+          <button class="chip" type="button" data-fu="3d">Daqui a 3 dias 09:00</button>
+          ${l.followup ? '<button class="chip" type="button" data-fu="clear">Limpar</button>' : ''}
+        </div>
+        <p class="pr-note" style="margin:8px 0 0">Aparece no separador "Follow up hoje" no dia marcado. Se o lead ainda estiver em Novo ou Contactado, passa a Follow up.</p>
+        <div class="ag-err" id="mlFuErr"></div>
       </div>
       <div class="cardx">
         <h4>Respostas do cliente</h4>
@@ -2495,8 +2543,31 @@ a.chip { text-decoration: none; }
   $('#mlRows').addEventListener('click', e => { const r = e.target.closest('.row'); if (!r) return; const l = mlItems.find(x => x.id === r.dataset.mlid); if (l) { mlSel = l; renderMlDetail(); renderMlRows(); document.body.classList.add('chat-open'); } });
   $('#mlTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) { mlTab = t.dataset.f; renderMlRows(); } });
   $('#mlBody').addEventListener('click', async e => {
+    const nw = e.target.closest('[data-nowa]');
+    if (nw && mlSel && !mlBusy) {
+      const l = mlSel, v = nw.dataset.nowa === '1', antes = !!l.sem_whatsapp;
+      mlBusy = true; l.sem_whatsapp = v; renderMlDetail(); renderMlRows();
+      try { await mlPost({ action: 'nowa', id: l.id, valor: v }); }
+      catch (er) { l.sem_whatsapp = antes; alert('Não foi possível guardar (' + er.message + '). Tente outra vez.'); }
+      mlBusy = false; renderMlDetail(); renderMlRows(); return;
+    }
+    const fu = e.target.closest('[data-fu]');
+    if (fu && mlSel && !mlFuBusy) {
+      const l = mlSel, k = fu.dataset.fu;
+      let quando = '';
+      if (k === 'save') { const v = ($('#mlFuIn') || {}).value; if (!v) { $('#mlFuErr').textContent = 'Escolha a data e a hora.'; return; } quando = v + ':00+02:00'; }
+      else if (k === 'tom' || k === '3d') { const d = new Date(Date.now() + 2 * 3600000); d.setUTCDate(d.getUTCDate() + (k === 'tom' ? 1 : 3)); quando = d.toISOString().slice(0, 10) + 'T09:00:00+02:00'; }
+      const antesFu = l.followup, antesSt = l.estado, novoSt = quando && ['CREATED', 'CONTACTED'].includes(l.estado) ? 'FOLLOW UP' : undefined;
+      mlFuBusy = true; l.followup = quando; if (novoSt) l.estado = novoSt; renderMlDetail(); renderMlRows();
+      try { await mlPost({ action: 'followup', id: l.id, quando, estado: novoSt }); }
+      catch (er) { l.followup = antesFu; l.estado = antesSt; alert('Não foi possível guardar o follow up (' + er.message + '). Tente outra vez.'); }
+      mlFuBusy = false; renderMlDetail(); renderMlRows();
+      $('#rbMeta').textContent = mlItems.filter(x => x.estado === 'CREATED').length || '';
+      return;
+    }
     const b = e.target.closest('[data-st]'); if (!b || !mlSel || mlBusy) return;
     const estado = b.dataset.st, id = mlSel.id, antes = mlSel.estado;
+    if (estado === 'MEETING BOOKED') return mlBook(mlSel);
     if (estado === antes) return;
     mlBusy = true; mlSel.estado = estado; renderMlDetail(); renderMlRows();
     try {
