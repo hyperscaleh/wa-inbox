@@ -467,6 +467,10 @@ a.chip { text-decoration: none; }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5z"/></svg>
         Leads Meta<span class="rb" id="rbMeta"></span>
       </button>
+      <button class="rbtn" data-view="velleads" aria-pressed="false" type="button" hidden title="Leads Veloura: mobiliário por medida (só Dellon e Keano)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3"/><path d="M3 13a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v5H3z"/><path d="M5 18v2M19 18v2"/></svg>
+        Leads Veloura<span class="rb" id="rbVel"></span>
+      </button>
       <button class="rbtn" id="guideBtn" type="button" hidden title="Guia: como usar o painel">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4.2"/><path d="M12 17.5h.01"/></svg>
         Guia
@@ -634,7 +638,7 @@ a.chip { text-decoration: none; }
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 4v5h-5"/></svg>
         </button>
       </div>
-      <div class="pf"><input id="mlQ" type="search" placeholder="Procurar por nome, email, número ou serviço" autocomplete="off"></div>
+      <div class="pf"><input id="mlQ" type="search" placeholder="Procurar por nome, email, número, serviço ou projecto" autocomplete="off"></div>
       <div class="tabs" id="mlTabs" role="toolbar" aria-label="Estados dos leads Meta"></div>
       <div class="rows" id="mlRows"><div class="empty">A carregar leads…</div></div>
     </aside>
@@ -1179,7 +1183,7 @@ a.chip { text-decoration: none; }
   function applyAccess() {
     document.querySelectorAll('#rail .rbtn').forEach(b => {
       const v = b.dataset.view;
-      b.hidden = v === 'team' || v === 'metaleads' ? !isAdmin() : v === 'agenda' ? !(can('agenda') || isAdmin()) : v === 'prosp' ? !(isAdmin() || (can('agenda') && (ME.zonas || []).length > 0)) : !can(v === 'mail' ? 'mail' : v);
+      b.hidden = v === 'team' || v === 'metaleads' || v === 'velleads' ? !isAdmin() : v === 'agenda' ? !(can('agenda') || isAdmin()) : v === 'prosp' ? !(isAdmin() || (can('agenda') && (ME.zonas || []).length > 0)) : !can(v === 'mail' ? 'mail' : v);
     });
     $('#waDial').hidden = !can('calls');
     $('#guideBtn').hidden = !(isAdmin() || (can('agenda') && (ME.zonas || []).length));
@@ -1379,19 +1383,20 @@ a.chip { text-decoration: none; }
   // ---------- vistas ----------
   let view = 'wa';
   function setView(v) {
-    const ok = x => x === 'team' || x === 'metaleads' ? isAdmin() : x === 'agenda' ? (can('agenda') || isAdmin()) : x === 'prosp' ? (isAdmin() || (can('agenda') && !!(ME && (ME.zonas || []).length))) : can(x);
-    if (!['wa', 'calls', 'mail', 'prosp', 'agenda', 'metaleads', 'team'].includes(v) || !ok(v)) v = ['wa', 'calls', 'mail', 'prosp', 'agenda', 'metaleads', 'team'].find(ok) || 'wa';
+    const ok = x => x === 'team' || x === 'metaleads' || x === 'velleads' ? isAdmin() : x === 'agenda' ? (can('agenda') || isAdmin()) : x === 'prosp' ? (isAdmin() || (can('agenda') && !!(ME && (ME.zonas || []).length))) : can(x);
+    if (!['wa', 'calls', 'mail', 'prosp', 'agenda', 'metaleads', 'velleads', 'team'].includes(v) || !ok(v)) v = ['wa', 'calls', 'mail', 'prosp', 'agenda', 'metaleads', 'velleads', 'team'].find(ok) || 'wa';
     view = v;
+    const dv = v === 'velleads' ? 'metaleads' : v;
     document.querySelectorAll('[data-view]').forEach(el => {
       if (el.classList.contains('rbtn')) el.setAttribute('aria-pressed', String(el.dataset.view === v));
-      else el.hidden = el.dataset.view !== v;
+      else el.hidden = el.dataset.view !== dv;
     });
     document.body.classList.remove('chat-open');
     store.set('hub_view', v);
     if (v === 'calls') loadCalls(true);
     if (v === 'mail') loadMail(true);
     if (v === 'team') loadTeam();
-    if (v === 'metaleads') mlLoad();
+    if (v === 'metaleads' || v === 'velleads') mlSwitch(v === 'velleads' ? 'veloura' : 'meta');
     if (v === 'prosp') { if (!prLoaded) prLoad(); else renderPrRows(); }
     if (v === 'agenda') {
       if (agJump) {
@@ -2413,8 +2418,12 @@ a.chip { text-decoration: none; }
   // =====================================================================
   // LEADS META: respostas do formulario da campanha (so super admins; o servidor tambem recusa os outros)
   // =====================================================================
-  const ML = 'https://backend.automationbig8agency.com/webhook/indicostay-leads-meta-api';
-  let mlItems = [], mlSel = null, mlQ = '', mlSeq = 0, mlLoadedAt = 0, mlKnown = null, mlTab = 'todos', mlBusy = false, mlFuBusy = false;
+  const ML0 = 'https://backend.automationbig8agency.com/webhook/indicostay-leads-meta-api';
+  let mlSrc = 'meta'; const mlCnt = { meta: 0, veloura: 0 }, mlBadge = { meta: '#rbMeta', veloura: '#rbVel' };
+  const mlUrl = src => ML0 + '?src=' + (src || mlSrc);
+  const mlIn = () => view === 'metaleads' || view === 'velleads';
+  const mlSetBadge = (src, n) => { mlCnt[src] = n; const el = $(mlBadge[src]); if (el) el.textContent = n ? String(n) : ''; };
+  let mlItems = [], mlSel = null, mlQ = '', mlSeq = 0, mlLoadedAt = 0, mlKnown = null, mlTab = 'todos', mlBusy = false, mlFuBusy = false, mlProjBusy = false;
   // Estados que se escolhem no painel (o valor e o do Notion). Os outros estados do Notion aparecem so em "Todos".
   const MLST = [['CREATED', 'Novo', 'confirm'], ['CONTACTED', 'Contactado', ''], ['FOLLOW UP', 'Follow up', 'confirm'], ['MEETING BOOKED', 'Reunião marcada', 'meeting'], ['WON', 'Ganho', 'done'], ['LOST', 'Perdido', 'missed'], ['NOT QUALIFIED', 'Não qualificado', '']];
   const mlLabel = e => (MLST.find(x => x[0] === e) || [e, String(e || '').toLowerCase(), ''])[1];
@@ -2429,7 +2438,7 @@ a.chip { text-decoration: none; }
   const mlDue = l => !!l.followup && mlOpen(l) && mlFuDay(l) <= mlToday();
   const mlFuLabel = l => { const d = mlFuDay(l), t = mlToday(); return (d === t ? 'hoje' : d < t ? 'atrasado ' + d.slice(8) + '/' + d.slice(5, 7) : d.slice(8) + '/' + d.slice(5, 7)) + (mlFuTime(l) ? ' ' + mlFuTime(l) : ''); };
   async function mlPost(body) {
-    const r = await fetch(ML, { method: 'POST', headers: { 'content-type': 'application/json', 'x-inbox-token': token }, body: JSON.stringify(body) });
+    const r = await fetch(ML0, { method: 'POST', headers: { 'content-type': 'application/json', 'x-inbox-token': token }, body: JSON.stringify(Object.assign({ src: mlSrc }, body)) });
     let d = {}; try { d = await r.json(); } catch (e) {}
     if (!r.ok || d.ok === false) throw new Error(d.error || ('HTTP ' + r.status));
     return d;
@@ -2438,8 +2447,8 @@ a.chip { text-decoration: none; }
   async function mlMarkBooked(id) {
     const l = mlItems.find(x => x.id === id);
     try { await mlPost({ action: 'status', id, estado: 'MEETING BOOKED' }); if (l) l.estado = 'MEETING BOOKED'; } catch (e) {}
-    $('#rbMeta').textContent = mlItems.filter(x => x.estado === 'CREATED').length || '';
-    if (view === 'metaleads') { renderMlRows(); if (mlSel) renderMlDetail(); }
+    mlSetBadge(mlSrc, mlItems.filter(x => x.estado === 'CREATED').length);
+    if (mlIn()) { renderMlRows(); if (mlSel) renderMlDetail(); }
   }
   // "Reunião marcada": abre logo a Agenda com nome, email e telefone do lead.
   function mlBook(l) {
@@ -2448,22 +2457,30 @@ a.chip { text-decoration: none; }
     agTipo = 'outro'; agSel = null; agLead = null; agMeta = { id: l.id, nome: l.nome };
     setView('agenda'); document.body.classList.add('chat-open');
   }
+  // Muda de fonte (Meta Indico Development <-> Veloura mobiliario): limpa a lista e recarrega.
+  function mlSwitch(src) {
+    const mudou = src !== mlSrc;
+    mlSrc = src;
+    if (mudou) { mlItems = []; mlSel = null; mlQ = ''; mlTab = 'todos'; $('#mlQ').value = ''; $('#mlTitle').textContent = 'Escolha um lead'; $('#mlSub').textContent = ''; $('#mlBody').innerHTML = mlWelcome(); }
+    $('#mlWho').textContent = src === 'veloura' ? 'Formulário Veloura · mobiliário por medida' : 'Formulário Indico Development';
+    mlLoad();
+  }
+  const mlWelcome = () => `<div class="welcome"><div class="av lg brand">IS</div><h3>Escolha um lead</h3><p>${mlSrc === 'veloura' ? 'Cada pessoa que responde ao formulário Mobiliário por Medida (Veloura) aparece aqui, com as respostas dela, para ligar de imediato.' : 'Cada pessoa que responde ao formulário da campanha Meta aparece aqui, com as respostas dela, para ligar de imediato.'} Esta área só é visível para o Dellon e o Keano.</p></div>`;
   async function mlLoad(quiet) {
     if (!isAdmin()) return;
-    const seq = ++mlSeq;
+    const seq = ++mlSeq, src = mlSrc;
     if (!quiet) $('#mlRows').innerHTML = '<div class="empty">A carregar leads…</div>';
     try {
-      const r = await fetch(ML, { headers: { 'x-inbox-token': token }, cache: 'no-store' });
+      const r = await fetch(mlUrl(src), { headers: { 'x-inbox-token': token }, cache: 'no-store' });
       let d = {}; try { d = await r.json(); } catch (e) {}
       if (r.status === 401) { if (quiet) return; return $('#mlRows').innerHTML = '<div class="empty">Sem permissão. Esta área é só para super admins.</div>'; }
       if (!r.ok || d.ok === false) throw new Error(d.error || ('HTTP ' + r.status));
-      if (seq !== mlSeq) return;
+      if (seq !== mlSeq || src !== mlSrc) return;
       mlItems = d.items || []; mlLoadedAt = Date.now();
       if (mlSel) mlSel = mlItems.find(x => x.id === mlSel.id) || mlSel;
-      const nNovos = mlItems.filter(l => l.estado === 'CREATED').length;
-      $('#rbMeta').textContent = nNovos ? String(nNovos) : '';
+      mlSetBadge(src, mlItems.filter(l => l.estado === 'CREATED').length);
       renderMlRows();
-      if (mlSel && view === 'metaleads') renderMlDetail();
+      if (mlSel && mlIn()) renderMlDetail();
     } catch (e) {
       if (!quiet && seq === mlSeq) $('#mlRows').innerHTML = `<div class="empty">Não foi possível ler os leads (${esc(e.message)}). Tente atualizar.</div>`;
     }
@@ -2474,14 +2491,14 @@ a.chip { text-decoration: none; }
     const nHoje = mlItems.filter(mlDue).length, nSemWa = mlItems.filter(l => l.sem_whatsapp).length;
     $('#mlTabs').innerHTML = `<button class="tab" data-f="hoje" aria-pressed="${mlTab === 'hoje'}">Follow up hoje ${nHoje}</button><button class="tab" data-f="todos" aria-pressed="${mlTab === 'todos'}">Todos ${mlItems.length}</button>` + MLST.map(x => `<button class="tab" data-f="${esc(x[0])}" aria-pressed="${mlTab === x[0]}">${esc(x[1])} ${cnt(x[0])}</button>`).join('') + `<button class="tab" data-f="sem_wa" aria-pressed="${mlTab === 'sem_wa'}">Sem WhatsApp ${nSemWa}</button>`;
     let base = mlTab === 'todos' ? mlItems : mlTab === 'hoje' ? mlItems.filter(mlDue).sort((a, b) => a.followup.localeCompare(b.followup)) : mlTab === 'sem_wa' ? mlItems.filter(l => l.sem_whatsapp) : mlItems.filter(l => l.estado === mlTab);
-    const list = !q ? base : base.filter(l => [l.nome, l.email, l.servico, l.local, l.telefone].join(' ').toLowerCase().includes(q) || (qd.length >= 3 && mlDigits(l.telefone).includes(qd)));
+    const list = !q ? base : base.filter(l => [l.nome, l.email, l.servico, l.local, l.telefone, l.projecto].join(' ').toLowerCase().includes(q) || (qd.length >= 3 && mlDigits(l.telefone).includes(qd)));
     const head = `<div class="pr-count">${list.length} lead${list.length === 1 ? '' : 's'}${q ? ' encontrado' + (list.length === 1 ? '' : 's') : ''}</div>`;
     const rows = list.map(l => `<button class="row" data-mlid="${esc(l.id)}" aria-current="${!!mlSel && mlSel.id === l.id}">
         ${avatarFor(l.nome, 'ml' + l.id)}
         <span class="txt">
           <span class="l1"><span class="name">${esc(l.nome)}</span><span class="when">${esc(mlWhen(l.criado))}</span></span>
           <span class="l2"><span class="last mono">${esc(l.telefone || 'sem telefone')}</span></span>
-          <span class="l3">${mlDue(l) ? `<span class="tag confirm">follow up ${esc(mlFuLabel(l))}</span>` : ''}${l.sem_whatsapp ? '<span class="tag missed">sem WhatsApp, ligar</span>' : ''}${l.estado === 'CREATED' ? '<span class="tag confirm">ligar já</span>' : `<span class="tag ${mlCls(l.estado)}">${esc(mlLabel(l.estado))}</span>`}${l.servico ? `<span class="tag">${esc(l.servico.slice(0, 40))}</span>` : ''}</span>
+          <span class="l3">${mlDue(l) ? `<span class="tag confirm">follow up ${esc(mlFuLabel(l))}</span>` : ''}${l.sem_whatsapp ? '<span class="tag missed">sem WhatsApp, ligar</span>' : ''}${l.estado === 'CREATED' ? '<span class="tag confirm">ligar já</span>' : `<span class="tag ${mlCls(l.estado)}">${esc(mlLabel(l.estado))}</span>`}${l.projecto ? `<span class="tag meeting">${esc(l.projecto.slice(0, 40))}</span>` : ''}${l.servico ? `<span class="tag">${esc(l.servico.slice(0, 40))}</span>` : ''}</span>
         </span></button>`).join('');
     $('#mlRows').innerHTML = head + (rows || `<div class="empty">${mlItems.length ? 'Nenhum lead neste estado.' : 'Ainda não há leads do formulário. Quando alguém responder, aparece aqui em cerca de 1 minuto.'}</div>`);
   }
@@ -2498,6 +2515,13 @@ a.chip { text-decoration: none; }
         <h4>Estado do lead</h4>
         <div class="pr-actions" id="mlStatus" style="display:flex;flex-wrap:wrap;gap:8px">${MLST.map(x => `<button class="chip" type="button" data-st="${esc(x[0])}" aria-pressed="${l.estado === x[0]}" ${mlBusy ? 'disabled' : ''}>${esc(x[1])}</button>`).join('')}</div>
         <p class="pr-note" style="margin:8px 0 0">Muda também no Notion.</p>
+      </div>
+      <div class="cardx">
+        <h4>Projecto</h4>
+        <p class="pr-note" style="margin:0 0 10px">${mlSrc === 'veloura' ? 'O projecto do cliente que estamos a desenvolver (ex.: cozinha, sala de estar).' : 'O projecto do cliente que estamos a desenvolver (ex.: nome da casa ou do terreno).'}</p>
+        <div class="ag-form"><label class="fl" style="margin-bottom:10px">Nome do projecto<input id="mlProjIn" type="text" maxlength="200" value="${esc(l.projecto || '')}" placeholder="Ex.: Casa Lume"></label></div>
+        <div class="pr-actions" style="display:flex;flex-wrap:wrap;gap:8px"><button class="btn" type="button" data-proj="save" ${mlProjBusy ? 'disabled' : ''}>Guardar projecto</button>${l.projecto ? '<button class="chip" type="button" data-proj="clear">Limpar</button>' : ''}</div>
+        <div class="ag-err" id="mlProjErr"></div>
       </div>
       <div class="cardx">
         <h4>Contacto</h4>
@@ -2525,11 +2549,11 @@ a.chip { text-decoration: none; }
       <div class="cardx">
         <h4>Respostas do cliente</h4>
         <div style="display:grid;gap:8px">
-          ${fact('De que serviço precisa', l.servico)}
-          ${fact('Quando gostaria de iniciar o projecto', l.inicio)}
-          ${fact('Orçamento previsto', l.orcamento)}
-          ${fact('Orçamento mínimo de 100.000 MZN está dentro do orçamento', l.minimo_ok)}
-          ${fact('Onde está localizado o projecto', l.local)}
+          ${fact(mlSrc === 'veloura' ? 'Que tipo de mobiliário procura' : 'De que serviço precisa', l.servico)}
+          ${fact(mlSrc === 'veloura' ? 'Quando pretende iniciar o projecto' : 'Quando gostaria de iniciar o projecto', l.inicio)}
+          ${fact(mlSrc === 'veloura' ? 'Orçamento disponível para o projecto' : 'Orçamento previsto', l.orcamento)}
+          ${mlSrc === 'veloura' ? '' : fact('Orçamento mínimo de 100.000 MZN está dentro do orçamento', l.minimo_ok)}
+          ${mlSrc === 'veloura' ? '' : fact('Onde está localizado o projecto', l.local)}
         </div>
       </div>
       <div class="cardx">
@@ -2543,6 +2567,15 @@ a.chip { text-decoration: none; }
   $('#mlRows').addEventListener('click', e => { const r = e.target.closest('.row'); if (!r) return; const l = mlItems.find(x => x.id === r.dataset.mlid); if (l) { mlSel = l; renderMlDetail(); renderMlRows(); document.body.classList.add('chat-open'); } });
   $('#mlTabs').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) { mlTab = t.dataset.f; renderMlRows(); } });
   $('#mlBody').addEventListener('click', async e => {
+    const pj = e.target.closest('[data-proj]');
+    if (pj && mlSel && !mlProjBusy) {
+      const l = mlSel, k = pj.dataset.proj, valor = k === 'clear' ? '' : (($('#mlProjIn') || {}).value || '').trim();
+      const antes = l.projecto || '';
+      mlProjBusy = true; l.projecto = valor; renderMlDetail(); renderMlRows();
+      try { await mlPost({ action: 'projecto', id: l.id, valor }); }
+      catch (er) { l.projecto = antes; alert('Não foi possível guardar o projecto (' + er.message + '). Tente outra vez.'); }
+      mlProjBusy = false; renderMlDetail(); renderMlRows(); return;
+    }
     const nw = e.target.closest('[data-nowa]');
     if (nw && mlSel && !mlBusy) {
       const l = mlSel, v = nw.dataset.nowa === '1', antes = !!l.sem_whatsapp;
@@ -2562,7 +2595,7 @@ a.chip { text-decoration: none; }
       try { await mlPost({ action: 'followup', id: l.id, quando, estado: novoSt }); }
       catch (er) { l.followup = antesFu; l.estado = antesSt; alert('Não foi possível guardar o follow up (' + er.message + '). Tente outra vez.'); }
       mlFuBusy = false; renderMlDetail(); renderMlRows();
-      $('#rbMeta').textContent = mlItems.filter(x => x.estado === 'CREATED').length || '';
+      mlSetBadge(mlSrc, mlItems.filter(x => x.estado === 'CREATED').length);
       return;
     }
     const b = e.target.closest('[data-st]'); if (!b || !mlSel || mlBusy) return;
@@ -2571,7 +2604,7 @@ a.chip { text-decoration: none; }
     if (estado === antes) return;
     mlBusy = true; mlSel.estado = estado; renderMlDetail(); renderMlRows();
     try {
-      const r = await fetch(ML, { method: 'POST', headers: { 'content-type': 'application/json', 'x-inbox-token': token }, body: JSON.stringify({ action: 'status', id, estado }) });
+      const r = await fetch(ML0, { method: 'POST', headers: { 'content-type': 'application/json', 'x-inbox-token': token }, body: JSON.stringify({ action: 'status', id, estado, src: mlSrc }) });
       let d = {}; try { d = await r.json(); } catch (er) {}
       if (!r.ok || d.ok === false) throw new Error(d.error || ('HTTP ' + r.status));
     } catch (er) {
@@ -2581,11 +2614,20 @@ a.chip { text-decoration: none; }
       return;
     }
     mlBusy = false; renderMlDetail(); renderMlRows();
-    $('#rbMeta').textContent = mlItems.filter(l => l.estado === 'CREATED').length || '';
+    mlSetBadge(mlSrc, mlItems.filter(l => l.estado === 'CREATED').length);
   });
   $('#mlQ').addEventListener('input', e => { mlQ = e.target.value; renderMlRows(); });
   $('#mlReload').addEventListener('click', () => mlLoad());
-  setInterval(() => { if (ME && isAdmin() && document.visibilityState === 'visible') mlLoad(true); }, 60000);
+  async function mlBadgeOnly(src) {
+    try {
+      const r = await fetch(mlUrl(src), { headers: { 'x-inbox-token': token }, cache: 'no-store' });
+      const d = await r.json(); if (r.ok && d.ok !== false) mlSetBadge(src, (d.items || []).filter(l => l.estado === 'CREATED').length);
+    } catch (e) {}
+  }
+  setInterval(() => {
+    if (!(ME && isAdmin() && document.visibilityState === 'visible')) return;
+    if (mlIn()) { mlLoad(true); mlBadgeOnly(mlSrc === 'meta' ? 'veloura' : 'meta'); } else { mlBadgeOnly('meta'); mlBadgeOnly('veloura'); }
+  }, 60000);
 
   // Abre a Agenda diretamente no detalhe de uma reuniao (para reagendar ou cancelar).
   function agGoto(id) { agJump = id; setView('agenda'); document.body.classList.add('chat-open'); }
