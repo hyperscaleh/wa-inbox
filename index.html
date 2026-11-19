@@ -471,6 +471,10 @@ a.chip { text-decoration: none; }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3"/><path d="M3 13a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v5H3z"/><path d="M5 18v2M19 18v2"/></svg>
         Leads Veloura<span class="rb" id="rbVel"></span>
       </button>
+      <button class="rbtn" data-view="projleads" aria-pressed="false" type="button" hidden title="Leads Projectos: formulário projetos-development (só Dellon e Keano)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6"/></svg>
+        Leads Projectos<span class="rb" id="rbProj"></span>
+      </button>
       <button class="rbtn" id="guideBtn" type="button" hidden title="Guia: como usar o painel">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4.2"/><path d="M12 17.5h.01"/></svg>
         Guia
@@ -1183,7 +1187,7 @@ a.chip { text-decoration: none; }
   function applyAccess() {
     document.querySelectorAll('#rail .rbtn').forEach(b => {
       const v = b.dataset.view;
-      b.hidden = v === 'team' || v === 'metaleads' || v === 'velleads' ? !isAdmin() : v === 'agenda' ? !(can('agenda') || isAdmin()) : v === 'prosp' ? !(isAdmin() || (can('agenda') && (ME.zonas || []).length > 0)) : !can(v === 'mail' ? 'mail' : v);
+      b.hidden = v === 'team' || v === 'metaleads' || v === 'velleads' || v === 'projleads' ? !isAdmin() : v === 'agenda' ? !(can('agenda') || isAdmin()) : v === 'prosp' ? !(isAdmin() || (can('agenda') && (ME.zonas || []).length > 0)) : !can(v === 'mail' ? 'mail' : v);
     });
     $('#waDial').hidden = !can('calls');
     $('#guideBtn').hidden = !(isAdmin() || (can('agenda') && (ME.zonas || []).length));
@@ -1383,10 +1387,10 @@ a.chip { text-decoration: none; }
   // ---------- vistas ----------
   let view = 'wa';
   function setView(v) {
-    const ok = x => x === 'team' || x === 'metaleads' || x === 'velleads' ? isAdmin() : x === 'agenda' ? (can('agenda') || isAdmin()) : x === 'prosp' ? (isAdmin() || (can('agenda') && !!(ME && (ME.zonas || []).length))) : can(x);
-    if (!['wa', 'calls', 'mail', 'prosp', 'agenda', 'metaleads', 'velleads', 'team'].includes(v) || !ok(v)) v = ['wa', 'calls', 'mail', 'prosp', 'agenda', 'metaleads', 'velleads', 'team'].find(ok) || 'wa';
+    const ok = x => x === 'team' || x === 'metaleads' || x === 'velleads' || x === 'projleads' ? isAdmin() : x === 'agenda' ? (can('agenda') || isAdmin()) : x === 'prosp' ? (isAdmin() || (can('agenda') && !!(ME && (ME.zonas || []).length))) : can(x);
+    if (!['wa', 'calls', 'mail', 'prosp', 'agenda', 'metaleads', 'velleads', 'projleads', 'team'].includes(v) || !ok(v)) v = ['wa', 'calls', 'mail', 'prosp', 'agenda', 'metaleads', 'velleads', 'projleads', 'team'].find(ok) || 'wa';
     view = v;
-    const dv = v === 'velleads' ? 'metaleads' : v;
+    const dv = v === 'velleads' || v === 'projleads' ? 'metaleads' : v;
     document.querySelectorAll('[data-view]').forEach(el => {
       if (el.classList.contains('rbtn')) el.setAttribute('aria-pressed', String(el.dataset.view === v));
       else el.hidden = el.dataset.view !== dv;
@@ -1396,7 +1400,7 @@ a.chip { text-decoration: none; }
     if (v === 'calls') loadCalls(true);
     if (v === 'mail') loadMail(true);
     if (v === 'team') loadTeam();
-    if (v === 'metaleads' || v === 'velleads') mlSwitch(v === 'velleads' ? 'veloura' : 'meta');
+    if (v === 'metaleads' || v === 'velleads' || v === 'projleads') mlSwitch(v === 'velleads' ? 'veloura' : v === 'projleads' ? 'projectos' : 'meta');
     if (v === 'prosp') { if (!prLoaded) prLoad(); else renderPrRows(); }
     if (v === 'agenda') {
       if (agJump) {
@@ -2419,9 +2423,9 @@ a.chip { text-decoration: none; }
   // LEADS META: respostas do formulario da campanha (so super admins; o servidor tambem recusa os outros)
   // =====================================================================
   const ML0 = 'https://backend.automationbig8agency.com/webhook/indicostay-leads-meta-api';
-  let mlSrc = 'meta'; const mlCnt = { meta: 0, veloura: 0 }, mlBadge = { meta: '#rbMeta', veloura: '#rbVel' };
+  let mlSrc = 'meta'; const mlCnt = { meta: 0, veloura: 0, projectos: 0 }, mlBadge = { meta: '#rbMeta', veloura: '#rbVel', projectos: '#rbProj' };
   const mlUrl = src => ML0 + '?src=' + (src || mlSrc);
-  const mlIn = () => view === 'metaleads' || view === 'velleads';
+  const mlIn = () => view === 'metaleads' || view === 'velleads' || view === 'projleads';
   const mlSetBadge = (src, n) => { mlCnt[src] = n; const el = $(mlBadge[src]); if (el) el.textContent = n ? String(n) : ''; };
   let mlItems = [], mlSel = null, mlQ = '', mlSeq = 0, mlLoadedAt = 0, mlKnown = null, mlTab = 'todos', mlBusy = false, mlFuBusy = false, mlProjBusy = false;
   // Estados que se escolhem no painel (o valor e o do Notion). Os outros estados do Notion aparecem so em "Todos".
@@ -2462,10 +2466,10 @@ a.chip { text-decoration: none; }
     const mudou = src !== mlSrc;
     mlSrc = src;
     if (mudou) { mlItems = []; mlSel = null; mlQ = ''; mlTab = 'todos'; $('#mlQ').value = ''; $('#mlTitle').textContent = 'Escolha um lead'; $('#mlSub').textContent = ''; $('#mlBody').innerHTML = mlWelcome(); }
-    $('#mlWho').textContent = src === 'veloura' ? 'Formulário Veloura · mobiliário por medida' : 'Formulário Indico Development';
+    $('#mlWho').textContent = src === 'veloura' ? 'Formulário Veloura · mobiliário por medida' : src === 'projectos' ? 'Formulário Projectos · projetos-development' : 'Formulário Indico Development';
     mlLoad();
   }
-  const mlWelcome = () => `<div class="welcome"><div class="av lg brand">IS</div><h3>Escolha um lead</h3><p>${mlSrc === 'veloura' ? 'Cada pessoa que responde ao formulário Mobiliário por Medida (Veloura) aparece aqui, com as respostas dela, para ligar de imediato.' : 'Cada pessoa que responde ao formulário da campanha Meta aparece aqui, com as respostas dela, para ligar de imediato.'} Esta área só é visível para o Dellon e o Keano.</p></div>`;
+  const mlWelcome = () => `<div class="welcome"><div class="av lg brand">IS</div><h3>Escolha um lead</h3><p>${mlSrc === 'veloura' ? 'Cada pessoa que responde ao formulário Mobiliário por Medida (Veloura) aparece aqui, com as respostas dela, para ligar de imediato.' : mlSrc === 'projectos' ? 'Cada pessoa que responde ao formulário Projectos (projetos-development) aparece aqui, com as respostas dela, para ligar de imediato.' : 'Cada pessoa que responde ao formulário da campanha Meta aparece aqui, com as respostas dela, para ligar de imediato.'} Esta área só é visível para o Dellon e o Keano.</p></div>`;
   async function mlLoad(quiet) {
     if (!isAdmin()) return;
     const seq = ++mlSeq, src = mlSrc;
@@ -2549,11 +2553,12 @@ a.chip { text-decoration: none; }
       <div class="cardx">
         <h4>Respostas do cliente</h4>
         <div style="display:grid;gap:8px">
+          ${mlSrc === 'projectos' ? fact('Que tipo de projecto pretende desenvolver', l.tipo) + fact('Já possui um terreno para construir', l.terreno) + fact('Em que localização pretende desenvolver o projecto', l.local) + fact('Orçamento estimado para o projecto', l.orcamento) + fact('Que serviços procura', l.servico) + fact('Quando pretende iniciar o projecto', l.inicio) : `
           ${fact(mlSrc === 'veloura' ? 'Que tipo de mobiliário procura' : 'De que serviço precisa', l.servico)}
           ${fact(mlSrc === 'veloura' ? 'Quando pretende iniciar o projecto' : 'Quando gostaria de iniciar o projecto', l.inicio)}
           ${fact(mlSrc === 'veloura' ? 'Orçamento disponível para o projecto' : 'Orçamento previsto', l.orcamento)}
           ${mlSrc === 'veloura' ? '' : fact('Orçamento mínimo de 100.000 MZN está dentro do orçamento', l.minimo_ok)}
-          ${mlSrc === 'veloura' ? '' : fact('Onde está localizado o projecto', l.local)}
+          ${mlSrc === 'veloura' ? '' : fact('Onde está localizado o projecto', l.local)}`}
         </div>
       </div>
       <div class="cardx">
@@ -2626,7 +2631,7 @@ a.chip { text-decoration: none; }
   }
   setInterval(() => {
     if (!(ME && isAdmin() && document.visibilityState === 'visible')) return;
-    if (mlIn()) { mlLoad(true); mlBadgeOnly(mlSrc === 'meta' ? 'veloura' : 'meta'); } else { mlBadgeOnly('meta'); mlBadgeOnly('veloura'); }
+    if (mlIn()) { mlLoad(true); ['meta', 'veloura', 'projectos'].filter(s => s !== mlSrc).forEach(mlBadgeOnly); } else { ['meta', 'veloura', 'projectos'].forEach(mlBadgeOnly); }
   }, 60000);
 
   // Abre a Agenda diretamente no detalhe de uma reuniao (para reagendar ou cancelar).
